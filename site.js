@@ -227,31 +227,6 @@
       })
       .then(function () { return wait(400, mine) })
   }
-  // The Godot shooter: fly a small loop while holding fire.
-  function shooter(mine) {
-    key('keydown', 'Space')
-    return tap('KeyD', 500, mine)
-      .then(function () { return tap('KeyW', 450, mine) })
-      .then(function () { return tap('KeyA', 800, mine) })
-      .then(function () { return tap('KeyS', 450, mine) })
-      .then(function () { return tap('KeyD', 350, mine) })
-  }
-  // Afterwards the shooter is left playing, like a demo mode: it keeps firing and drifting, and
-  // starts a new game if the ship is lost, so the picture never rests on "game over".
-  function keepFlying(mine) {
-    var moves = ['KeyA', 'KeyW', 'KeyD', 'KeyS']
-    var n = 0
-    ;(function again() {
-      key('keydown', 'Space')
-      // Enter only does something on the game-over screen; it has to be held long enough to be noticed.
-      tap('Enter', 160, mine)
-        .then(function () { return tap(moves[n++ % 4], 420, mine) })
-        .then(function () { return wait(250, mine) })
-        .then(again)
-        .catch(function () {})
-    })()
-  }
-
   // ---------- the scenes ----------
 
   var SCENES = [
@@ -334,35 +309,6 @@
           reply: 'Fox Run is now an iOS app, running in the iOS Simulator. The Xcode project is in the <strong>ios/</strong> folder. Publishing to the App Store is your step, from Xcode.'
         }
       ]
-    },
-    {
-      id: 'godot',
-      label: 'Godot',
-      name: 'space-shooter',
-      badge: 'Godot 4 project',
-      device: 'Desktop ▾',
-      layout: 'wide',
-      caption: 'A real Godot project made with Mirg, running here from Godot\'s own web export.',
-      play: 'demo-godot/index.html',
-      turns: [
-        {
-          say: 'Make a Godot game: a top-down space shooter where I fly a ship, shoot asteroids, and the score goes up',
-          think: 1300,
-          steps: [
-            ['Write project.godot', 450],
-            ['Write main.tscn', 550],
-            ['Write ship.gd', 600],
-            ['Write bullet.gd', 450],
-            ['Write asteroid.gd', 600],
-            ['Write main.gd', 900],
-            ['Run the game', 3300, function () { load('demo-godot/index.html') }, function () { log.innerHTML = 'system&nbsp;&nbsp;&nbsp;Exported for the web with Godot 4.7.2<br />system&nbsp;&nbsp;&nbsp;Game running at http://127.0.0.1:52907/' }],
-            ['Look at the game', 2200, uncover],
-            ['Playtest (9 inputs)', 1500, shooter]
-          ],
-          reply: 'Your Godot space shooter is running in the Game tab. In a short playtest I flew the ship around while holding fire: asteroids broke apart and the score climbed. <strong>WASD</strong> to fly, <strong>Space</strong> to shoot.'
-        }
-      ],
-      after: keepFlying
     }
   ]
 
@@ -374,7 +320,7 @@
     send.classList.remove('ready', 'press')
     frame.classList.remove('on')
     frame.removeAttribute('src')
-    gameBox.className = 'm-game' + (scene.layout === 'wide' ? ' wide' : '')
+    gameBox.className = 'm-game'
     empty.hidden = false
     cover.hidden = true
     win.hidden = true
@@ -422,11 +368,7 @@
           return wait(n < scene.turns.length - 1 ? 2400 : 0, mine)
         })
     })
-    chain
-      .then(function () {
-        if (scene.after) scene.after(mine)
-      })
-      .catch(function () {})
+    chain.catch(function () {})
   }
 
   SCENES.forEach(function (scene, i) {

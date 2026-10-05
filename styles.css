@@ -441,11 +441,19 @@ footer.site .spacer {
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
-  margin: 44px auto 0;
+  margin: 18px auto 0;
 }
 
-.demo-picker + .demo-wrap {
-  margin-top: 16px;
+.demo-also {
+  max-width: 720px;
+  margin: 14px auto 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.demo-also strong {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .demo-picker button {
@@ -811,13 +819,6 @@ footer.site .spacer {
   background: #000;
 }
 
-/* Godot games are drawn at three to two. */
-.m-game.wide iframe {
-  width: auto;
-  height: 100%;
-  aspect-ratio: 3 / 2;
-}
-
 /* The preview steps back when another window comes to the front. */
 .m-game.behind iframe {
   opacity: 0.18;
@@ -954,12 +955,7 @@ footer.site .spacer {
     aspect-ratio: 2 / 1;
     flex: none;
   }
-  .m-game.wide {
-    aspect-ratio: 3 / 2;
-  }
-  .demo-picker {
-    margin-top: 32px;
-  }
+
   .m-tabs,
   .m-console,
   .m-right .m-pill,

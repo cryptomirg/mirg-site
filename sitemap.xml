@@ -1,8 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://mirg.ai/</loc><lastmod>2026-10-05</lastmod></url>
-  <url><loc>https://mirg.ai/pricing</loc><lastmod>2026-10-05</lastmod></url>
-  <url><loc>https://mirg.ai/download</loc><lastmod>2026-10-05</lastmod></url>
-  <url><loc>https://mirg.ai/terms</loc><lastmod>2026-10-05</lastmod></url>
-  <url><loc>https://mirg.ai/privacy</loc><lastmod>2026-10-05</lastmod></url>
+  <url><loc>https://mirg.ai/</loc></url>
+  <url><loc>https://mirg.ai/pricing</loc></url>
+  <url><loc>https://mirg.ai/download</loc></url>
+  <url><loc>https://mirg.ai/terms</loc></url>
+  <url><loc>https://mirg.ai/privacy</loc></url>
+  <url><loc>https://mirg.ai/web-games</loc></url>
+  <url><loc>https://mirg.ai/iphone-android-games</loc></url>
+  <url><loc>https://mirg.ai/godot</loc></url>
+  <url><loc>https://mirg.ai/unity</loc></url>
+  <url><loc>https://mirg.ai/unreal-engine</loc></url>
+  <url><loc>https://mirg.ai/roblox</loc></url>
+  <url><loc>https://mirg.ai/minecraft-mods</loc></url>
+  <url><loc>https://mirg.ai/renpy</loc></url>
+  <url><loc>https://mirg.ai/pygame</loc></url>
+  <url><loc>https://mirg.ai/love2d</loc></url>
+  <url><loc>https://mirg.ai/gamemaker</loc></url>
 </urlset>

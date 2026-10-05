@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Make a Unity game with AI · Mirg</title>
+    <meta name="description" content="Describe a game and the agent writes the C# scripts, builds the scene and compiles a playable Unity game. It opens in its own window, where the agent can look at it and play it." />
+    <meta property="og:title" content="Make a Unity game with AI · Mirg" />
+    <meta property="og:description" content="Describe a game and the agent writes the C# scripts, builds the scene and compiles a playable Unity game. It opens in its own window, where the agent can look at it and play it." />
+    <meta property="og:image" content="https://mirg.ai/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mirg: a chat on the left where a game is described, and the finished game running on the right" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mirg.ai/unity" />
+    <meta property="og:site_name" content="Mirg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0e0f14" />
+    <link rel="canonical" href="https://mirg.ai/unity" />
+    <link rel="icon" href="assets/icon.png" />
+    <script type="application/ld+json">[{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Does it work with my existing Unity project?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Open the project's folder in Mirg and ask for a change. The agent edits the C# scripts and can build the game to check it."}}, {"@type": "Question", "name": "Which version of Unity do I need?", "acceptedAnswer": {"@type": "Answer", "text": "A current Unity editor installed through Unity Hub. Mirg finds the editor that matches your project, or the closest one installed."}}, {"@type": "Question", "name": "Can the agent see my Unity game?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The game opens in its own window, and once you allow it in macOS, the agent takes screenshots of that window and presses keys in it."}}]}, {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Mirg", "item": "https://mirg.ai/"}, {"@type": "ListItem", "position": 2, "name": "Unity", "item": "https://mirg.ai/unity"}]}]</script>
+    <link rel="stylesheet" href="styles.css?v=14" />
+  </head>
+  <body>
+    <header class="site">
+      <div class="wrap">
+        <a class="logo" href="/"><img src="assets/icon.png" alt="" />Mirg</a>
+        <nav>
+          <a class="hide-small" href="/#how">How it works</a>
+          <a class="hide-small" href="/#engines">Engines</a>
+          <a href="/pricing">Pricing</a>
+          <a class="btn primary small" href="/download">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero platform-hero">
+        <div class="wrap narrow">
+          <p class="crumb"><a href="/#engines">Platforms</a> / Unity</p>
+          <h1>Make a Unity game with AI</h1>
+          <p class="lead">Describe a game and the agent writes the C# scripts, builds the scene and compiles a playable Unity game. It opens in its own window, where the agent can look at it and play it.</p>
+          <div class="cta" data-cta>
+            <a class="btn primary" data-download="auto" href="/download">Download for Mac</a>
+            <a class="btn" href="/#how">See how Mirg works</a>
+          </div>
+          <p class="fine"><span data-platform-note>Free to try. macOS 12 or later.</span> <a href="/download">All downloads</a></p>
+        </div>
+      </section>
+
+      <section class="platform">
+        <div class="wrap narrow">
+          <h2>A real example</h2>
+          <p class="sub">This is a real session, not a mock-up: the request as it was typed, and what the agent did.</p>
+          <blockquote class="prompt">Make a Unity game: a 3D ball that rolls around a platform collecting coins, with a score counter</blockquote>
+          <ol class="did"><li>Checked that Unity was installed, and which version</li><li>Wrote four C# scripts: the player, the coins, the score and the camera</li><li>Wrote an editor script that builds the scene in code: the platform, walls, the ball and 14 coins</li><li>Ran Unity from the command line to build the game. The build finished with no errors.</li><li>Launched the game, then looked at the window and rolled the ball to collect a coin</li></ol>
+          <p class="took">The first message took <strong>2 minutes 50 seconds</strong>.</p>
+          <p><strong>The result.</strong> A 3D Unity game built and compiled into a Mac app: a ball that rolls with physics, 14 spinning coins, a score counter and a camera that follows. The agent played it in its window and collected coins.</p>
+
+          <h2>How it works with Unity</h2>
+          <ul><li>The agent writes C# under Assets, as in any Unity project. It does not write scenes by hand, which is easy to get wrong; it writes a small editor script that builds the scene, and has Unity run it.</li><li>Unity builds the game from the command line. A build takes a minute or more.</li><li>The game opens in its own window. The agent takes screenshots of that window and sends key presses to it.</li><li>The project opens in the Unity editor as usual.</li></ul>
+
+          <h2>What you need</h2>
+          <ul><li>Unity Hub and a Unity editor, free for personal use, with a Unity account. About 12 GB.</li><li>Open the Unity editor once yourself first, so that your licence is active.</li><li>To let the agent see and play the game&#x27;s window, macOS asks for two permissions, once.</li></ul>
+          <p class="muted">Mirg lists what is installed and what is missing under "See what's installed" on its home screen. If you ask for a Unity game without the tools for it, it tells you what to get and offers to build a web game instead.</p>
+
+          <h2>Good to know</h2>
+          <ul><li>The agent works through code and the command line. It does not click around the Unity editor.</li><li>Builds are slower than web or Godot games, so each change takes longer to check.</li></ul>
+
+          <div class="faq">
+            <h2>Questions</h2>
+            <h3>Does it work with my existing Unity project?</h3><p>Yes. Open the project&#x27;s folder in Mirg and ask for a change. The agent edits the C# scripts and can build the game to check it.</p><h3>Which version of Unity do I need?</h3><p>A current Unity editor installed through Unity Hub. Mirg finds the editor that matches your project, or the closest one installed.</p><h3>Can the agent see my Unity game?</h3><p>Yes. The game opens in its own window, and once you allow it in macOS, the agent takes screenshots of that window and presses keys in it.</p>
+          </div>
+
+          <h2>Other platforms</h2>
+          <ul class="others"><li><a href="/web-games">Web games</a></li><li><a href="/iphone-android-games">iPhone and Android</a></li><li><a href="/godot">Godot</a></li><li><a href="/unreal-engine">Unreal Engine</a></li><li><a href="/roblox">Roblox</a></li><li><a href="/minecraft-mods">Minecraft mods</a></li><li><a href="/renpy">Ren&#x27;Py</a></li><li><a href="/pygame">Python (pygame)</a></li><li><a href="/love2d">LÖVE</a></li><li><a href="/gamemaker">GameMaker</a></li></ul>
+        </div>
+      </section>
+    </main>
+    <footer class="site">
+      <div class="wrap">
+        <span>© 2026 Mirg</span>
+        <a href="/pricing">Pricing</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:support@mirg.ai">support@mirg.ai</a>
+        <span class="spacer"></span>
+        <span data-version></span>
+      </div>
+    </footer>
+    <script src="site.js?v=18"></script>
+  </body>
+</html>

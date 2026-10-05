@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Make a Roblox game with AI · Mirg</title>
+    <meta name="description" content="Describe a Roblox game and the agent writes the Luau scripts, lays out the parts and builds a place file. It opens in Roblox Studio, where you press Play." />
+    <meta property="og:title" content="Make a Roblox game with AI · Mirg" />
+    <meta property="og:description" content="Describe a Roblox game and the agent writes the Luau scripts, lays out the parts and builds a place file. It opens in Roblox Studio, where you press Play." />
+    <meta property="og:image" content="https://mirg.ai/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mirg: a chat on the left where a game is described, and the finished game running on the right" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mirg.ai/roblox" />
+    <meta property="og:site_name" content="Mirg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0e0f14" />
+    <link rel="canonical" href="https://mirg.ai/roblox" />
+    <link rel="icon" href="assets/icon.png" />
+    <script type="application/ld+json">[{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can the agent test my Roblox game?", "acceptedAnswer": {"@type": "Answer", "text": "Not by playing it: Roblox games only run inside Roblox Studio. It checks that the game builds and that every part is where it should be, and you press Play in Studio to try it."}}, {"@type": "Question", "name": "Do I need Roblox Studio?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, to open and play the game. It is free. Mirg also uses a small free tool called Rojo, which it can install for you."}}, {"@type": "Question", "name": "What language are the scripts in?", "acceptedAnswer": {"@type": "Answer", "text": "Luau, the language Roblox uses. The scripts are ordinary files you can read and edit."}}]}, {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Mirg", "item": "https://mirg.ai/"}, {"@type": "ListItem", "position": 2, "name": "Roblox", "item": "https://mirg.ai/roblox"}]}]</script>
+    <link rel="stylesheet" href="styles.css?v=14" />
+  </head>
+  <body>
+    <header class="site">
+      <div class="wrap">
+        <a class="logo" href="/"><img src="assets/icon.png" alt="" />Mirg</a>
+        <nav>
+          <a class="hide-small" href="/#how">How it works</a>
+          <a class="hide-small" href="/#engines">Engines</a>
+          <a href="/pricing">Pricing</a>
+          <a class="btn primary small" href="/download">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero platform-hero">
+        <div class="wrap narrow">
+          <p class="crumb"><a href="/#engines">Platforms</a> / Roblox</p>
+          <h1>Make a Roblox game with AI</h1>
+          <p class="lead">Describe a Roblox game and the agent writes the Luau scripts, lays out the parts and builds a place file. It opens in Roblox Studio, where you press Play.</p>
+          <div class="cta" data-cta>
+            <a class="btn primary" data-download="auto" href="/download">Download for Mac</a>
+            <a class="btn" href="/#how">See how Mirg works</a>
+          </div>
+          <p class="fine"><span data-platform-note>Free to try. macOS 12 or later.</span> <a href="/download">All downloads</a></p>
+        </div>
+      </section>
+
+      <section class="platform">
+        <div class="wrap narrow">
+          <h2>A real example</h2>
+          <p class="sub">This is a real session, not a mock-up: the request as it was typed, and what the agent did.</p>
+          <blockquote class="prompt">Make a Roblox obby: five platforms to jump across, a checkpoint in the middle, and a finish line that shows a &quot;You win&quot; message</blockquote>
+          <ol class="did"><li>Checked that Roblox Studio and the Rojo build tool were installed</li><li>Wrote the project file that lays out the course: a spawn pad, five coloured platforms, a checkpoint, a finish line and a floor below to catch falls</li><li>Wrote the script for the checkpoint, the win message and resetting a player who falls</li><li>Built the place file and opened it in Roblox Studio</li></ol>
+          <p class="took">The first message took <strong>54 seconds</strong>.</p>
+          <p><strong>The result.</strong> A working obby: spawn, jump across five platforms, respawn at the checkpoint, and a You win message at the end.</p>
+
+          <h2>How it works with Roblox</h2>
+          <ul><li>Roblox games run only in Roblox Studio or the Roblox app, so the agent cannot see or play them. It builds the game and you press Play.</li><li>Because it cannot play, it checks its work another way: it builds the place as a readable file and confirms each part is where it was meant to be.</li><li>That check exists because of a real mistake. In the first version of this example every part loaded stacked in one spot, and the player died on spawning. Told only that, the agent found the cause, fixed it and verified every position.</li><li>Code is Luau, in ordinary files. The Rojo tool turns the project into a Roblox place.</li></ul>
+
+          <h2>What you need</h2>
+          <ul><li>Roblox Studio, free, with a Roblox account.</li><li>Rojo, a small free build tool. Mirg installs it for you with one button.</li></ul>
+          <p class="muted">Mirg lists what is installed and what is missing under "See what's installed" on its home screen. If you ask for a Roblox game without the tools for it, it tells you what to get and offers to build a web game instead.</p>
+
+          <h2>Good to know</h2>
+          <ul><li>You are the playtester. Tell the agent what you see in Studio and it will fix it.</li><li>Publishing to Roblox is done from Roblox Studio.</li></ul>
+
+          <div class="faq">
+            <h2>Questions</h2>
+            <h3>Can the agent test my Roblox game?</h3><p>Not by playing it: Roblox games only run inside Roblox Studio. It checks that the game builds and that every part is where it should be, and you press Play in Studio to try it.</p><h3>Do I need Roblox Studio?</h3><p>Yes, to open and play the game. It is free. Mirg also uses a small free tool called Rojo, which it can install for you.</p><h3>What language are the scripts in?</h3><p>Luau, the language Roblox uses. The scripts are ordinary files you can read and edit.</p>
+          </div>
+
+          <h2>Other platforms</h2>
+          <ul class="others"><li><a href="/web-games">Web games</a></li><li><a href="/iphone-android-games">iPhone and Android</a></li><li><a href="/godot">Godot</a></li><li><a href="/unity">Unity</a></li><li><a href="/unreal-engine">Unreal Engine</a></li><li><a href="/minecraft-mods">Minecraft mods</a></li><li><a href="/renpy">Ren&#x27;Py</a></li><li><a href="/pygame">Python (pygame)</a></li><li><a href="/love2d">LÖVE</a></li><li><a href="/gamemaker">GameMaker</a></li></ul>
+        </div>
+      </section>
+    </main>
+    <footer class="site">
+      <div class="wrap">
+        <span>© 2026 Mirg</span>
+        <a href="/pricing">Pricing</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:support@mirg.ai">support@mirg.ai</a>
+        <span class="spacer"></span>
+        <span data-version></span>
+      </div>
+    </footer>
+    <script src="site.js?v=18"></script>
+  </body>
+</html>

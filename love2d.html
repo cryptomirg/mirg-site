@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Make a LÖVE (Love2D) game with AI · Mirg</title>
+    <meta name="description" content="Describe a game and the agent writes it in Lua for LÖVE, checks the code, and starts it. Small, fast 2D games in a couple of files." />
+    <meta property="og:title" content="Make a LÖVE (Love2D) game with AI · Mirg" />
+    <meta property="og:description" content="Describe a game and the agent writes it in Lua for LÖVE, checks the code, and starts it. Small, fast 2D games in a couple of files." />
+    <meta property="og:image" content="https://mirg.ai/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mirg: a chat on the left where a game is described, and the finished game running on the right" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mirg.ai/love2d" />
+    <meta property="og:site_name" content="Mirg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0e0f14" />
+    <link rel="canonical" href="https://mirg.ai/love2d" />
+    <link rel="icon" href="assets/icon.png" />
+    <script type="application/ld+json">[{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is LÖVE?", "acceptedAnswer": {"@type": "Answer", "text": "A free framework for making 2D games in the Lua language, also written Love2D. It is small and popular for hobby and jam games."}}, {"@type": "Question", "name": "Do I need to know Lua?", "acceptedAnswer": {"@type": "Answer", "text": "No. You describe the game and the agent writes the Lua. The code is short and readable if you want to learn from it."}}, {"@type": "Question", "name": "Can the agent play my LÖVE game?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, once macOS has been allowed to let Mirg see and control other windows. Mirg asks for both permissions in one step."}}]}, {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Mirg", "item": "https://mirg.ai/"}, {"@type": "ListItem", "position": 2, "name": "LÖVE", "item": "https://mirg.ai/love2d"}]}]</script>
+    <link rel="stylesheet" href="styles.css?v=14" />
+  </head>
+  <body>
+    <header class="site">
+      <div class="wrap">
+        <a class="logo" href="/"><img src="assets/icon.png" alt="" />Mirg</a>
+        <nav>
+          <a class="hide-small" href="/#how">How it works</a>
+          <a class="hide-small" href="/#engines">Engines</a>
+          <a href="/pricing">Pricing</a>
+          <a class="btn primary small" href="/download">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero platform-hero">
+        <div class="wrap narrow">
+          <p class="crumb"><a href="/#engines">Platforms</a> / LÖVE</p>
+          <h1>Make a LÖVE (Love2D) game with AI</h1>
+          <p class="lead">Describe a game and the agent writes it in Lua for LÖVE, checks the code, and starts it. Small, fast 2D games in a couple of files.</p>
+          <div class="cta" data-cta>
+            <a class="btn primary" data-download="auto" href="/download">Download for Mac</a>
+            <a class="btn" href="/#how">See how Mirg works</a>
+          </div>
+          <p class="fine"><span data-platform-note>Free to try. macOS 12 or later.</span> <a href="/download">All downloads</a></p>
+        </div>
+      </section>
+
+      <section class="platform">
+        <div class="wrap narrow">
+          <h2>A real example</h2>
+          <p class="sub">This is a real session, not a mock-up: the request as it was typed, and what the agent did.</p>
+          <blockquote class="prompt">Make a LÖVE game: a breakout clone with a paddle, a ball, and three rows of bricks</blockquote>
+          <ol class="did"><li>Checked that LÖVE was installed</li><li>Wrote the game and its settings: two small files</li><li>Checked the Lua for errors</li><li>Started the game and read LÖVE&#x27;s output, which showed none</li></ol>
+          <p class="took">The first message took <strong>44 seconds</strong>.</p>
+          <p><strong>The result.</strong> A Breakout clone: a paddle, a ball whose bounce angle depends on where it hits, three rows of bricks worth different points, three lives, and a win when the bricks are gone.</p>
+
+          <h2>How it works with LÖVE</h2>
+          <ul><li>The agent writes main.lua and conf.lua, the standard layout for a LÖVE game.</li><li>The game opens in its own window. With macOS permission the agent can look at it and play it; without, it checks the code and the engine&#x27;s output and tells you it has not seen the game.</li><li>LÖVE games are small and start instantly, so changes are quick to try.</li></ul>
+
+          <h2>What you need</h2>
+          <ul><li>LÖVE, free, about 15 MB. Drag it into Applications.</li></ul>
+          <p class="muted">Mirg lists what is installed and what is missing under "See what's installed" on its home screen. If you ask for a LÖVE game without the tools for it, it tells you what to get and offers to build a web game instead.</p>
+
+          <h2>Good to know</h2>
+          <ul><li>LÖVE is for 2D games.</li></ul>
+
+          <div class="faq">
+            <h2>Questions</h2>
+            <h3>What is LÖVE?</h3><p>A free framework for making 2D games in the Lua language, also written Love2D. It is small and popular for hobby and jam games.</p><h3>Do I need to know Lua?</h3><p>No. You describe the game and the agent writes the Lua. The code is short and readable if you want to learn from it.</p><h3>Can the agent play my LÖVE game?</h3><p>Yes, once macOS has been allowed to let Mirg see and control other windows. Mirg asks for both permissions in one step.</p>
+          </div>
+
+          <h2>Other platforms</h2>
+          <ul class="others"><li><a href="/web-games">Web games</a></li><li><a href="/iphone-android-games">iPhone and Android</a></li><li><a href="/godot">Godot</a></li><li><a href="/unity">Unity</a></li><li><a href="/unreal-engine">Unreal Engine</a></li><li><a href="/roblox">Roblox</a></li><li><a href="/minecraft-mods">Minecraft mods</a></li><li><a href="/renpy">Ren&#x27;Py</a></li><li><a href="/pygame">Python (pygame)</a></li><li><a href="/gamemaker">GameMaker</a></li></ul>
+        </div>
+      </section>
+    </main>
+    <footer class="site">
+      <div class="wrap">
+        <span>© 2026 Mirg</span>
+        <a href="/pricing">Pricing</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:support@mirg.ai">support@mirg.ai</a>
+        <span class="spacer"></span>
+        <span data-version></span>
+      </div>
+    </footer>
+    <script src="site.js?v=18"></script>
+  </body>
+</html>

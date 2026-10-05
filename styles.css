@@ -1151,3 +1151,116 @@ footer.site .spacer {
 .demo-form .fine {
   margin: 0;
 }
+
+/* ---------- platform pages ---------- */
+
+.platform-hero {
+  padding-bottom: 24px;
+  text-align: left;
+}
+
+.platform-hero h1,
+.platform-hero p.lead {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.platform-hero .cta {
+  justify-content: flex-start;
+}
+
+.crumb {
+  margin: 0 0 14px;
+  font-size: 14.5px;
+  color: var(--muted);
+}
+
+.crumb a {
+  color: var(--muted);
+}
+
+.platform {
+  padding-top: 24px;
+}
+
+.platform h2 {
+  font-size: 26px;
+  margin: 44px 0 10px;
+}
+
+.platform .sub {
+  margin-bottom: 18px;
+}
+
+.platform ul,
+.platform ol {
+  padding-left: 22px;
+  color: #c9cdd8;
+}
+
+.platform li {
+  margin: 7px 0;
+}
+
+.platform p {
+  color: #c9cdd8;
+}
+
+.prompt {
+  margin: 0 0 18px;
+  padding: 14px 18px;
+  border: 1px solid rgba(139, 108, 255, 0.35);
+  border-radius: 14px 14px 4px 14px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 18px;
+}
+
+.took {
+  color: var(--muted) !important;
+}
+
+.took strong {
+  color: var(--text);
+}
+
+.others {
+  list-style: none;
+  padding: 0 !important;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.others li {
+  margin: 0;
+}
+
+.others a {
+  display: block;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: var(--panel-2);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 15px;
+}
+
+.others a:hover {
+  border-color: #3a4052;
+}
+
+/* On the home page, a platform's tile is a link to its page. */
+.engines li a {
+  display: block;
+  margin: -12px -14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.engines li a:hover {
+  background: rgba(255, 255, 255, 0.04);
+}

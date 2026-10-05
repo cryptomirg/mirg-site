@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Make a Ren&#x27;Py visual novel with AI · Mirg</title>
+    <meta name="description" content="Describe a story and the agent writes a Ren&#x27;Py visual novel: the script, the characters, the choices and the endings. It runs Ren&#x27;Py&#x27;s own checker, then opens the game." />
+    <meta property="og:title" content="Make a Ren&#x27;Py visual novel with AI · Mirg" />
+    <meta property="og:description" content="Describe a story and the agent writes a Ren&#x27;Py visual novel: the script, the characters, the choices and the endings. It runs Ren&#x27;Py&#x27;s own checker, then opens the game." />
+    <meta property="og:image" content="https://mirg.ai/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mirg: a chat on the left where a game is described, and the finished game running on the right" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mirg.ai/renpy" />
+    <meta property="og:site_name" content="Mirg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0e0f14" />
+    <link rel="canonical" href="https://mirg.ai/renpy" />
+    <link rel="icon" href="assets/icon.png" />
+    <script type="application/ld+json">[{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can I change the story afterwards?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Ask for the change in plain words, or open the script file and edit it. Ren'Py scripts read almost like a screenplay."}}, {"@type": "Question", "name": "Can it add my own artwork?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Put image files in the game's images folder, named to match each scene or character, or ask Mirg to generate art."}}, {"@type": "Question", "name": "Can I release the game?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Ren'Py builds versions for Windows, Mac and Linux from its own launcher."}}]}, {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Mirg", "item": "https://mirg.ai/"}, {"@type": "ListItem", "position": 2, "name": "Ren'Py", "item": "https://mirg.ai/renpy"}]}]</script>
+    <link rel="stylesheet" href="styles.css?v=14" />
+  </head>
+  <body>
+    <header class="site">
+      <div class="wrap">
+        <a class="logo" href="/"><img src="assets/icon.png" alt="" />Mirg</a>
+        <nav>
+          <a class="hide-small" href="/#how">How it works</a>
+          <a class="hide-small" href="/#engines">Engines</a>
+          <a href="/pricing">Pricing</a>
+          <a class="btn primary small" href="/download">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero platform-hero">
+        <div class="wrap narrow">
+          <p class="crumb"><a href="/#engines">Platforms</a> / Ren&#x27;Py</p>
+          <h1>Make a Ren&#x27;Py visual novel with AI</h1>
+          <p class="lead">Describe a story and the agent writes a Ren&#x27;Py visual novel: the script, the characters, the choices and the endings. It runs Ren&#x27;Py&#x27;s own checker, then opens the game.</p>
+          <div class="cta" data-cta>
+            <a class="btn primary" data-download="auto" href="/download">Download for Mac</a>
+            <a class="btn" href="/#how">See how Mirg works</a>
+          </div>
+          <p class="fine"><span data-platform-note>Free to try. macOS 12 or later.</span> <a href="/download">All downloads</a></p>
+        </div>
+      </section>
+
+      <section class="platform">
+        <div class="wrap narrow">
+          <h2>A real example</h2>
+          <p class="sub">This is a real session, not a mock-up: the request as it was typed, and what the agent did.</p>
+          <blockquote class="prompt">Make a Ren&#x27;Py visual novel: a short mystery with two characters and two different endings</blockquote>
+          <ol class="did"><li>Checked that Ren&#x27;Py was installed</li><li>Wrote the story script, the character and image definitions and the game&#x27;s settings</li><li>Ran Ren&#x27;Py&#x27;s built-in checker, which found no problems</li><li>Launched the game, which reached its main menu with no errors</li></ol>
+          <p class="took">The first message took <strong>2 minutes 47 seconds</strong>.</p>
+          <p><strong>The result.</strong> The Stopped Clock: a detective caught in a storm at a mountain inn, and an innkeeper whose gold watch has gone missing. You choose where to look for clues, then name the thief. Find enough evidence and the culprit confesses; accuse without it and they get away.</p>
+
+          <h2>How it works with Ren&#x27;Py</h2>
+          <ul><li>The agent writes .rpy script files, the same ones you would write by hand, so the story is easy to read and edit.</li><li>Ren&#x27;Py&#x27;s own lint tool checks the script for mistakes before the game is run.</li><li>Backgrounds and characters start as simple shapes, so the story is playable at once. Drop your own images into the images folder, or ask for generated art.</li><li>The game opens in its own window. Play through the branches yourself: it is the best test of a story.</li></ul>
+
+          <h2>What you need</h2>
+          <ul><li>The Ren&#x27;Py SDK, free, about 150 MB. Unzip it and put the folder in Applications.</li></ul>
+          <p class="muted">Mirg lists what is installed and what is missing under "See what's installed" on its home screen. If you ask for a visual novel without the tools for it, it tells you what to get and offers to build a web game instead.</p>
+
+          <h2>Good to know</h2>
+          <ul><li>The agent can check that the script is valid. Whether the story is any good is for you to judge.</li></ul>
+
+          <div class="faq">
+            <h2>Questions</h2>
+            <h3>Can I change the story afterwards?</h3><p>Yes. Ask for the change in plain words, or open the script file and edit it. Ren&#x27;Py scripts read almost like a screenplay.</p><h3>Can it add my own artwork?</h3><p>Yes. Put image files in the game&#x27;s images folder, named to match each scene or character, or ask Mirg to generate art.</p><h3>Can I release the game?</h3><p>Yes. Ren&#x27;Py builds versions for Windows, Mac and Linux from its own launcher.</p>
+          </div>
+
+          <h2>Other platforms</h2>
+          <ul class="others"><li><a href="/web-games">Web games</a></li><li><a href="/iphone-android-games">iPhone and Android</a></li><li><a href="/godot">Godot</a></li><li><a href="/unity">Unity</a></li><li><a href="/unreal-engine">Unreal Engine</a></li><li><a href="/roblox">Roblox</a></li><li><a href="/minecraft-mods">Minecraft mods</a></li><li><a href="/pygame">Python (pygame)</a></li><li><a href="/love2d">LÖVE</a></li><li><a href="/gamemaker">GameMaker</a></li></ul>
+        </div>
+      </section>
+    </main>
+    <footer class="site">
+      <div class="wrap">
+        <span>© 2026 Mirg</span>
+        <a href="/pricing">Pricing</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:support@mirg.ai">support@mirg.ai</a>
+        <span class="spacer"></span>
+        <span data-version></span>
+      </div>
+    </footer>
+    <script src="site.js?v=18"></script>
+  </body>
+</html>

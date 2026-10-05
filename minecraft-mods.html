@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Make a Minecraft mod with AI · Mirg</title>
+    <meta name="description" content="Describe what you want added to Minecraft and the agent writes a real Java Edition mod, compiles it, and starts a test copy of the game with the mod loaded." />
+    <meta property="og:title" content="Make a Minecraft mod with AI · Mirg" />
+    <meta property="og:description" content="Describe what you want added to Minecraft and the agent writes a real Java Edition mod, compiles it, and starts a test copy of the game with the mod loaded." />
+    <meta property="og:image" content="https://mirg.ai/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mirg: a chat on the left where a game is described, and the finished game running on the right" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mirg.ai/minecraft-mods" />
+    <meta property="og:site_name" content="Mirg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0e0f14" />
+    <link rel="canonical" href="https://mirg.ai/minecraft-mods" />
+    <link rel="icon" href="assets/icon.png" />
+    <script type="application/ld+json">[{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Do I need to own Minecraft to make a mod?", "acceptedAnswer": {"@type": "Answer", "text": "Not to build and test one. The modding tools download a development copy of the game. To play the mod in your own worlds you need Minecraft: Java Edition and Fabric."}}, {"@type": "Question", "name": "Which mod loader does it use?", "acceptedAnswer": {"@type": "Answer", "text": "Fabric for new mods. If you open an existing Forge or NeoForge project, the agent works in that."}}, {"@type": "Question", "name": "Does it work with Bedrock Edition?", "acceptedAnswer": {"@type": "Answer", "text": "Mirg can write Bedrock add-ons, which are made of JSON files and scripts. The example on this page is a Java Edition mod."}}]}, {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Mirg", "item": "https://mirg.ai/"}, {"@type": "ListItem", "position": 2, "name": "Minecraft mods", "item": "https://mirg.ai/minecraft-mods"}]}]</script>
+    <link rel="stylesheet" href="styles.css?v=14" />
+  </head>
+  <body>
+    <header class="site">
+      <div class="wrap">
+        <a class="logo" href="/"><img src="assets/icon.png" alt="" />Mirg</a>
+        <nav>
+          <a class="hide-small" href="/#how">How it works</a>
+          <a class="hide-small" href="/#engines">Engines</a>
+          <a href="/pricing">Pricing</a>
+          <a class="btn primary small" href="/download">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero platform-hero">
+        <div class="wrap narrow">
+          <p class="crumb"><a href="/#engines">Platforms</a> / Minecraft mods</p>
+          <h1>Make a Minecraft mod with AI</h1>
+          <p class="lead">Describe what you want added to Minecraft and the agent writes a real Java Edition mod, compiles it, and starts a test copy of the game with the mod loaded.</p>
+          <div class="cta" data-cta>
+            <a class="btn primary" data-download="auto" href="/download">Download for Mac</a>
+            <a class="btn" href="/#how">See how Mirg works</a>
+          </div>
+          <p class="fine"><span data-platform-note>Free to try. macOS 12 or later.</span> <a href="/download">All downloads</a></p>
+        </div>
+      </section>
+
+      <section class="platform">
+        <div class="wrap narrow">
+          <h2>A real example</h2>
+          <p class="sub">This is a real session, not a mock-up: the request as it was typed, and what the agent did.</p>
+          <blockquote class="prompt">Make a Minecraft mod that adds a ruby ore, a ruby gem, and a ruby sword that sets enemies on fire</blockquote>
+          <ol class="did"><li>Checked which Java and modding tools were installed</li><li>Set up a Fabric mod project for the current version of Minecraft</li><li>Wrote the ore, the gem and the sword, with their recipes, textures and world generation</li><li>Compiled the mod</li><li>Started a test server with the mod loaded. It ran with no errors, and ruby ore generated underground.</li><li>That test caught one real problem, a change in the newest Minecraft version, which it fixed</li></ol>
+          <p class="took">The first message took <strong>4 minutes 52 seconds</strong>.</p>
+          <p><strong>The result.</strong> A working mod: ruby ore that spawns underground, a ruby gem, and a ruby sword crafted like a diamond one that sets what it hits on fire for five seconds. The finished mod is a single file you can add to a normal Fabric install.</p>
+
+          <h2>How it works with Minecraft mods</h2>
+          <ul><li>The agent writes a standard Fabric mod in Java, with Gradle. It also works with Forge and NeoForge projects.</li><li>Mirg picks the right version of Java for your Minecraft version.</li><li>Running the mod starts a development copy of Minecraft, downloaded by the modding tools. You do not need to own the game to test a mod this way.</li><li>The agent could not check the fire effect, because that needs someone in the game hitting a mob, and it said so. Tried by hand, it worked.</li></ul>
+
+          <h2>What you need</h2>
+          <ul><li>Java 21 or newer, free.</li><li>That is all. The modding tools download what else they need the first time.</li></ul>
+          <p class="muted">Mirg lists what is installed and what is missing under "See what's installed" on its home screen. If you ask for a Minecraft mod without the tools for it, it tells you what to get and offers to build a web game instead.</p>
+
+          <h2>Good to know</h2>
+          <ul><li>The first build downloads the modding tools and a test copy of the game, and can take several minutes.</li><li>Resource packs and data packs need no Java at all, and Mirg can make those too.</li></ul>
+
+          <div class="faq">
+            <h2>Questions</h2>
+            <h3>Do I need to own Minecraft to make a mod?</h3><p>Not to build and test one. The modding tools download a development copy of the game. To play the mod in your own worlds you need Minecraft: Java Edition and Fabric.</p><h3>Which mod loader does it use?</h3><p>Fabric for new mods. If you open an existing Forge or NeoForge project, the agent works in that.</p><h3>Does it work with Bedrock Edition?</h3><p>Mirg can write Bedrock add-ons, which are made of JSON files and scripts. The example on this page is a Java Edition mod.</p>
+          </div>
+
+          <h2>Other platforms</h2>
+          <ul class="others"><li><a href="/web-games">Web games</a></li><li><a href="/iphone-android-games">iPhone and Android</a></li><li><a href="/godot">Godot</a></li><li><a href="/unity">Unity</a></li><li><a href="/unreal-engine">Unreal Engine</a></li><li><a href="/roblox">Roblox</a></li><li><a href="/renpy">Ren&#x27;Py</a></li><li><a href="/pygame">Python (pygame)</a></li><li><a href="/love2d">LÖVE</a></li><li><a href="/gamemaker">GameMaker</a></li></ul>
+        </div>
+      </section>
+    </main>
+    <footer class="site">
+      <div class="wrap">
+        <span>© 2026 Mirg</span>
+        <a href="/pricing">Pricing</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:support@mirg.ai">support@mirg.ai</a>
+        <span class="spacer"></span>
+        <span data-version></span>
+      </div>
+    </footer>
+    <script src="site.js?v=18"></script>
+  </body>
+</html>

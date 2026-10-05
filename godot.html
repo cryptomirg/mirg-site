@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Make a Godot game with AI · Mirg</title>
+    <meta name="description" content="Describe a game and the agent writes a real Godot 4 project: scenes, scripts and settings. Godot games play inside Mirg, so the agent can see and test them, and Mirg can install Godot for you." />
+    <meta property="og:title" content="Make a Godot game with AI · Mirg" />
+    <meta property="og:description" content="Describe a game and the agent writes a real Godot 4 project: scenes, scripts and settings. Godot games play inside Mirg, so the agent can see and test them, and Mirg can install Godot for you." />
+    <meta property="og:image" content="https://mirg.ai/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mirg: a chat on the left where a game is described, and the finished game running on the right" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mirg.ai/godot" />
+    <meta property="og:site_name" content="Mirg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0e0f14" />
+    <link rel="canonical" href="https://mirg.ai/godot" />
+    <link rel="icon" href="assets/icon.png" />
+    <script type="application/ld+json">[{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Do I need to install Godot myself?", "acceptedAnswer": {"@type": "Answer", "text": "No. Mirg can download and install Godot and its web export templates for you, from Godot's official release. If Godot is already installed, Mirg uses it."}}, {"@type": "Question", "name": "Can I open the project in the Godot editor?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. It is a normal Godot 4 project: scenes, scripts and a project file in a folder on your computer."}}, {"@type": "Question", "name": "Does it use GDScript or C#?", "acceptedAnswer": {"@type": "Answer", "text": "GDScript by default, which is what lets the game play inside Mirg. C# projects work too and run in their own window."}}]}, {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Mirg", "item": "https://mirg.ai/"}, {"@type": "ListItem", "position": 2, "name": "Godot", "item": "https://mirg.ai/godot"}]}]</script>
+    <link rel="stylesheet" href="styles.css?v=14" />
+  </head>
+  <body>
+    <header class="site">
+      <div class="wrap">
+        <a class="logo" href="/"><img src="assets/icon.png" alt="" />Mirg</a>
+        <nav>
+          <a class="hide-small" href="/#how">How it works</a>
+          <a class="hide-small" href="/#engines">Engines</a>
+          <a href="/pricing">Pricing</a>
+          <a class="btn primary small" href="/download">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero platform-hero">
+        <div class="wrap narrow">
+          <p class="crumb"><a href="/#engines">Platforms</a> / Godot</p>
+          <h1>Make a Godot game with AI</h1>
+          <p class="lead">Describe a game and the agent writes a real Godot 4 project: scenes, scripts and settings. Godot games play inside Mirg, so the agent can see and test them, and Mirg can install Godot for you.</p>
+          <div class="cta" data-cta>
+            <a class="btn primary" data-download="auto" href="/download">Download for Mac</a>
+            <a class="btn" href="/#how">See how Mirg works</a>
+          </div>
+          <p class="fine"><span data-platform-note>Free to try. macOS 12 or later.</span> <a href="/download">All downloads</a></p>
+        </div>
+      </section>
+
+      <section class="platform">
+        <div class="wrap narrow">
+          <h2>A real example</h2>
+          <p class="sub">This is a real session, not a mock-up: the request as it was typed, and what the agent did.</p>
+          <blockquote class="prompt">Make a Godot game: a top-down space shooter where I fly a ship, shoot asteroids, and the score goes up</blockquote>
+          <ol class="did"><li>Wrote the project file, the main scene and four scripts: the ship, the bullets, the asteroids and the game itself</li><li>Had Godot check every script for errors</li><li>Exported the game and started it in the Game tab</li><li>Flew the ship while holding fire, and read the score</li><li>Changed one thing it noticed, then played again to confirm</li></ol>
+          <p class="took">The first message took <strong>1 minute 29 seconds</strong>.</p>
+          <p><strong>The result.</strong> A playable Godot shooter in a minute and a half, with no errors: asteroids break apart, the score climbs. The same project then ran in its own window, where the agent looked at it and played it too.</p>
+
+          <h2>How it works with Godot</h2>
+          <ul><li>The agent writes Godot&#x27;s own text formats: project.godot, .tscn scenes and GDScript. The project opens in the Godot editor like any other.</li><li>Mirg exports the game for the web with Godot itself and shows it in the Game tab, where the agent can take screenshots and press keys.</li><li>A Godot game can also run in its own window. The agent can look at and play that too, once macOS has been given permission.</li><li>Projects in C# run in their own window, since Godot cannot export C# to the web.</li></ul>
+
+          <h2>What you need</h2>
+          <ul><li>Godot 4 and its web export templates. Mirg installs both for you with one button, from Godot&#x27;s official release, and checks the download against Godot&#x27;s published checksum.</li></ul>
+          <p class="muted">Mirg lists what is installed and what is missing under "See what's installed" on its home screen. If you ask for a Godot game without the tools for it, it tells you what to get and offers to build a web game instead.</p>
+
+          <h2>Good to know</h2>
+          <ul><li>The first export of a project takes longer than later ones.</li></ul>
+
+          <div class="faq">
+            <h2>Questions</h2>
+            <h3>Do I need to install Godot myself?</h3><p>No. Mirg can download and install Godot and its web export templates for you, from Godot&#x27;s official release. If Godot is already installed, Mirg uses it.</p><h3>Can I open the project in the Godot editor?</h3><p>Yes. It is a normal Godot 4 project: scenes, scripts and a project file in a folder on your computer.</p><h3>Does it use GDScript or C#?</h3><p>GDScript by default, which is what lets the game play inside Mirg. C# projects work too and run in their own window.</p>
+          </div>
+
+          <h2>Other platforms</h2>
+          <ul class="others"><li><a href="/web-games">Web games</a></li><li><a href="/iphone-android-games">iPhone and Android</a></li><li><a href="/unity">Unity</a></li><li><a href="/unreal-engine">Unreal Engine</a></li><li><a href="/roblox">Roblox</a></li><li><a href="/minecraft-mods">Minecraft mods</a></li><li><a href="/renpy">Ren&#x27;Py</a></li><li><a href="/pygame">Python (pygame)</a></li><li><a href="/love2d">LÖVE</a></li><li><a href="/gamemaker">GameMaker</a></li></ul>
+        </div>
+      </section>
+    </main>
+    <footer class="site">
+      <div class="wrap">
+        <span>© 2026 Mirg</span>
+        <a href="/pricing">Pricing</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:support@mirg.ai">support@mirg.ai</a>
+        <span class="spacer"></span>
+        <span data-version></span>
+      </div>
+    </footer>
+    <script src="site.js?v=18"></script>
+  </body>
+</html>

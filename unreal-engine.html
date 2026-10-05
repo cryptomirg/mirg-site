@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Make an Unreal Engine game with AI · Mirg</title>
+    <meta name="description" content="Describe a game and the agent sets up an Unreal project from the engine&#x27;s own templates, builds the level with a script, and launches it. Unreal games open in their own window." />
+    <meta property="og:title" content="Make an Unreal Engine game with AI · Mirg" />
+    <meta property="og:description" content="Describe a game and the agent sets up an Unreal project from the engine&#x27;s own templates, builds the level with a script, and launches it. Unreal games open in their own window." />
+    <meta property="og:image" content="https://mirg.ai/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mirg: a chat on the left where a game is described, and the finished game running on the right" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mirg.ai/unreal-engine" />
+    <meta property="og:site_name" content="Mirg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0e0f14" />
+    <link rel="canonical" href="https://mirg.ai/unreal-engine" />
+    <link rel="icon" href="assets/icon.png" />
+    <script type="application/ld+json">[{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can the agent edit Blueprints?", "acceptedAnswer": {"@type": "Answer", "text": "No. Blueprints are binary files that cannot be read or written as text. The agent writes C++ and Python, and uses Unreal's own templates where a Blueprint is needed."}}, {"@type": "Question", "name": "Why did my Unreal game stop as it started?", "acceptedAnswer": {"@type": "Answer", "text": "On a Mac, Unreal needs Apple's Metal Toolchain to compile shaders, and recent versions of Xcode do not install it by default. Mirg checks for it and offers a button to install it."}}, {"@type": "Question", "name": "How long does an Unreal game take to build?", "acceptedAnswer": {"@type": "Answer", "text": "The example on this page took about seven and a half minutes for the first message. The first launch of any Unreal project adds several minutes while shaders compile."}}]}, {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Mirg", "item": "https://mirg.ai/"}, {"@type": "ListItem", "position": 2, "name": "Unreal Engine", "item": "https://mirg.ai/unreal-engine"}]}]</script>
+    <link rel="stylesheet" href="styles.css?v=14" />
+  </head>
+  <body>
+    <header class="site">
+      <div class="wrap">
+        <a class="logo" href="/"><img src="assets/icon.png" alt="" />Mirg</a>
+        <nav>
+          <a class="hide-small" href="/#how">How it works</a>
+          <a class="hide-small" href="/#engines">Engines</a>
+          <a href="/pricing">Pricing</a>
+          <a class="btn primary small" href="/download">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero platform-hero">
+        <div class="wrap narrow">
+          <p class="crumb"><a href="/#engines">Platforms</a> / Unreal Engine</p>
+          <h1>Make an Unreal Engine game with AI</h1>
+          <p class="lead">Describe a game and the agent sets up an Unreal project from the engine&#x27;s own templates, builds the level with a script, and launches it. Unreal games open in their own window.</p>
+          <div class="cta" data-cta>
+            <a class="btn primary" data-download="auto" href="/download">Download for Mac</a>
+            <a class="btn" href="/#how">See how Mirg works</a>
+          </div>
+          <p class="fine"><span data-platform-note>Free to try. macOS 12 or later.</span> <a href="/download">All downloads</a></p>
+        </div>
+      </section>
+
+      <section class="platform">
+        <div class="wrap narrow">
+          <h2>A real example</h2>
+          <p class="sub">This is a real session, not a mock-up: the request as it was typed, and what the agent did.</p>
+          <blockquote class="prompt">Make an Unreal game: a third-person character that can run and jump around a small level with a few platforms</blockquote>
+          <ol class="did"><li>Checked that Unreal Engine was installed, and looked at the templates that come with it</li><li>Started the project from Unreal&#x27;s Third Person template, for the character, its animations and the camera</li><li>Wrote a script that builds the level inside the editor: a floor with walls, six rising platforms, a ramp, stairs and crates, with sky and lighting</li><li>Ran the script and confirmed every platform was at its planned position</li><li>Launched the game. It stopped, because a piece of Apple&#x27;s developer tools was missing. The agent explained the problem and gave the one command to fix it, without installing anything itself.</li></ol>
+          <p class="took">The first message took <strong>7 minutes 37 seconds</strong>.</p>
+          <p><strong>The result.</strong> A third-person Unreal game with a character that runs and jumps across a level of platforms. After the missing Apple component was installed, the game ran.</p>
+
+          <h2>How it works with Unreal Engine</h2>
+          <ul><li>Most Unreal game logic lives in Blueprints, which are binary files an AI cannot read or write. The agent works in C++ and Python, and starts from Unreal&#x27;s own templates for things like the character.</li><li>Levels are built by a script that runs inside the Unreal editor, so the layout is described in a file you can read and change.</li><li>The first launch compiles shaders and takes several minutes before a window appears.</li><li>The game opens in its own window, which the agent can look at and play once macOS allows it.</li></ul>
+
+          <h2>What you need</h2>
+          <ul><li>Unreal Engine 5, through the Epic Games Launcher, with an Epic Games account. 60 to 100 GB.</li><li>Xcode, and Apple&#x27;s Metal Toolchain. Mirg checks for the toolchain and can install it with one button.</li><li>Open Unreal once from the launcher first, so it finishes its own setup.</li></ul>
+          <p class="muted">Mirg lists what is installed and what is missing under "See what's installed" on its home screen. If you ask for a Unreal game without the tools for it, it tells you what to get and offers to build a web game instead.</p>
+
+          <h2>Good to know</h2>
+          <ul><li>Unreal is the slowest platform to work with here: big downloads, long first compiles, and no access to Blueprints.</li><li>For a first game, a web game or Godot will get you playing much sooner.</li></ul>
+
+          <div class="faq">
+            <h2>Questions</h2>
+            <h3>Can the agent edit Blueprints?</h3><p>No. Blueprints are binary files that cannot be read or written as text. The agent writes C++ and Python, and uses Unreal&#x27;s own templates where a Blueprint is needed.</p><h3>Why did my Unreal game stop as it started?</h3><p>On a Mac, Unreal needs Apple&#x27;s Metal Toolchain to compile shaders, and recent versions of Xcode do not install it by default. Mirg checks for it and offers a button to install it.</p><h3>How long does an Unreal game take to build?</h3><p>The example on this page took about seven and a half minutes for the first message. The first launch of any Unreal project adds several minutes while shaders compile.</p>
+          </div>
+
+          <h2>Other platforms</h2>
+          <ul class="others"><li><a href="/web-games">Web games</a></li><li><a href="/iphone-android-games">iPhone and Android</a></li><li><a href="/godot">Godot</a></li><li><a href="/unity">Unity</a></li><li><a href="/roblox">Roblox</a></li><li><a href="/minecraft-mods">Minecraft mods</a></li><li><a href="/renpy">Ren&#x27;Py</a></li><li><a href="/pygame">Python (pygame)</a></li><li><a href="/love2d">LÖVE</a></li><li><a href="/gamemaker">GameMaker</a></li></ul>
+        </div>
+      </section>
+    </main>
+    <footer class="site">
+      <div class="wrap">
+        <span>© 2026 Mirg</span>
+        <a href="/pricing">Pricing</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:support@mirg.ai">support@mirg.ai</a>
+        <span class="spacer"></span>
+        <span data-version></span>
+      </div>
+    </footer>
+    <script src="site.js?v=18"></script>
+  </body>
+</html>

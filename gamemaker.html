@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Change a GameMaker game with AI · Mirg</title>
+    <meta name="description" content="Open a GameMaker project in Mirg and ask for changes in plain words. The agent edits the GML code; you press Run in GameMaker to see them." />
+    <meta property="og:title" content="Change a GameMaker game with AI · Mirg" />
+    <meta property="og:description" content="Open a GameMaker project in Mirg and ask for changes in plain words. The agent edits the GML code; you press Run in GameMaker to see them." />
+    <meta property="og:image" content="https://mirg.ai/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mirg: a chat on the left where a game is described, and the finished game running on the right" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mirg.ai/gamemaker" />
+    <meta property="og:site_name" content="Mirg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0e0f14" />
+    <link rel="canonical" href="https://mirg.ai/gamemaker" />
+    <link rel="icon" href="assets/icon.png" />
+    <script type="application/ld+json">[{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can Mirg create a GameMaker project from scratch?", "acceptedAnswer": {"@type": "Answer", "text": "It is better to start the project in GameMaker, from a template or empty, and then open it in Mirg. Mirg edits the code in an existing project."}}, {"@type": "Question", "name": "Can the agent run my GameMaker game?", "acceptedAnswer": {"@type": "Answer", "text": "No. You run it from GameMaker. The agent edits the GML code and relies on you to say what happened."}}, {"@type": "Question", "name": "What language does it edit?", "acceptedAnswer": {"@type": "Answer", "text": "GML, GameMaker's own language, in your project's .gml files."}}]}, {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Mirg", "item": "https://mirg.ai/"}, {"@type": "ListItem", "position": 2, "name": "GameMaker", "item": "https://mirg.ai/gamemaker"}]}]</script>
+    <link rel="stylesheet" href="styles.css?v=14" />
+  </head>
+  <body>
+    <header class="site">
+      <div class="wrap">
+        <a class="logo" href="/"><img src="assets/icon.png" alt="" />Mirg</a>
+        <nav>
+          <a class="hide-small" href="/#how">How it works</a>
+          <a class="hide-small" href="/#engines">Engines</a>
+          <a href="/pricing">Pricing</a>
+          <a class="btn primary small" href="/download">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero platform-hero">
+        <div class="wrap narrow">
+          <p class="crumb"><a href="/#engines">Platforms</a> / GameMaker</p>
+          <h1>Change a GameMaker game with AI</h1>
+          <p class="lead">Open a GameMaker project in Mirg and ask for changes in plain words. The agent edits the GML code; you press Run in GameMaker to see them.</p>
+          <div class="cta" data-cta>
+            <a class="btn primary" data-download="auto" href="/download">Download for Mac</a>
+            <a class="btn" href="/#how">See how Mirg works</a>
+          </div>
+          <p class="fine"><span data-platform-note>Free to try. macOS 12 or later.</span> <a href="/download">All downloads</a></p>
+        </div>
+      </section>
+
+      <section class="platform">
+        <div class="wrap narrow">
+          <h2>A real example</h2>
+          <p class="sub">This is a real session, not a mock-up: the request as it was typed, and what the agent did.</p>
+          <blockquote class="prompt">Make the player move twice as fast and add a score that goes up over time</blockquote>
+          <ol class="did"><li>Opened an existing GameMaker project, a cover shooter made from one of GameMaker&#x27;s own templates</li><li>Read the project&#x27;s objects to find how the player moves and where the score is kept</li><li>Found that the player in this game does not walk: they duck behind cover and pop up to shoot. So it doubled the speed of that, and said so, instead of pretending there was walking to speed up.</li><li>Found the game already had a score for defeating enemies. Kept it, and added 10 points a second while playing, but not during the countdown, while paused, or after winning or losing.</li><li>Said plainly that it had not run the game, and asked for Play to be pressed in GameMaker</li></ol>
+          <p class="took">The first message took <strong>58 seconds</strong>.</p>
+          <p><strong>The result.</strong> Both changes worked when the game was run from GameMaker. Each is a single number in the code that the agent pointed to, so it is easy to adjust.</p>
+
+          <h2>How it works with GameMaker</h2>
+          <ul><li>Mirg reads and edits the GML code in your project. GameMaker picks up the changes.</li><li>The game is run from GameMaker itself, so the agent cannot see or play it. Tell it what you see.</li><li>Start the project in GameMaker, from a template or from scratch, then open its folder in Mirg. GameMaker&#x27;s project files are intricate, and it is the best tool for creating them.</li></ul>
+
+          <h2>What you need</h2>
+          <ul><li>GameMaker, free for non-commercial use, with a GameMaker account.</li></ul>
+          <p class="muted">Mirg lists what is installed and what is missing under "See what's installed" on its home screen. If you ask for a GameMaker game without the tools for it, it tells you what to get and offers to build a web game instead.</p>
+
+          <h2>Good to know</h2>
+          <ul><li>This is the lightest of Mirg&#x27;s integrations: it edits code, and GameMaker does the rest.</li><li>For a game built from nothing by the agent, a web game or Godot is a better fit.</li></ul>
+
+          <div class="faq">
+            <h2>Questions</h2>
+            <h3>Can Mirg create a GameMaker project from scratch?</h3><p>It is better to start the project in GameMaker, from a template or empty, and then open it in Mirg. Mirg edits the code in an existing project.</p><h3>Can the agent run my GameMaker game?</h3><p>No. You run it from GameMaker. The agent edits the GML code and relies on you to say what happened.</p><h3>What language does it edit?</h3><p>GML, GameMaker&#x27;s own language, in your project&#x27;s .gml files.</p>
+          </div>
+
+          <h2>Other platforms</h2>
+          <ul class="others"><li><a href="/web-games">Web games</a></li><li><a href="/iphone-android-games">iPhone and Android</a></li><li><a href="/godot">Godot</a></li><li><a href="/unity">Unity</a></li><li><a href="/unreal-engine">Unreal Engine</a></li><li><a href="/roblox">Roblox</a></li><li><a href="/minecraft-mods">Minecraft mods</a></li><li><a href="/renpy">Ren&#x27;Py</a></li><li><a href="/pygame">Python (pygame)</a></li><li><a href="/love2d">LÖVE</a></li></ul>
+        </div>
+      </section>
+    </main>
+    <footer class="site">
+      <div class="wrap">
+        <span>© 2026 Mirg</span>
+        <a href="/pricing">Pricing</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:support@mirg.ai">support@mirg.ai</a>
+        <span class="spacer"></span>
+        <span data-version></span>
+      </div>
+    </footer>
+    <script src="site.js?v=18"></script>
+  </body>
+</html>

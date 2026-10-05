@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Make a Python game with AI · Mirg</title>
+    <meta name="description" content="Describe a game and the agent writes it in Python with pygame, tests it without opening a window, and then runs it. A common first game, and a good way to learn from working code." />
+    <meta property="og:title" content="Make a Python game with AI · Mirg" />
+    <meta property="og:description" content="Describe a game and the agent writes it in Python with pygame, tests it without opening a window, and then runs it. A common first game, and a good way to learn from working code." />
+    <meta property="og:image" content="https://mirg.ai/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mirg: a chat on the left where a game is described, and the finished game running on the right" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mirg.ai/pygame" />
+    <meta property="og:site_name" content="Mirg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0e0f14" />
+    <link rel="canonical" href="https://mirg.ai/pygame" />
+    <link rel="icon" href="assets/icon.png" />
+    <script type="application/ld+json">[{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Do I need to install pygame myself?", "acceptedAnswer": {"@type": "Answer", "text": "No. If Python is on your Mac, Mirg can install pygame for you with one button."}}, {"@type": "Question", "name": "Can I use this to learn Python?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The game is a normal Python file, and you can ask the agent to explain how any part of it works, or to change it."}}, {"@type": "Question", "name": "Can the game be sent to friends?", "acceptedAnswer": {"@type": "Answer", "text": "It is a Python file, so anyone with Python and pygame can run it."}}]}, {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Mirg", "item": "https://mirg.ai/"}, {"@type": "ListItem", "position": 2, "name": "Python (pygame)", "item": "https://mirg.ai/pygame"}]}]</script>
+    <link rel="stylesheet" href="styles.css?v=14" />
+  </head>
+  <body>
+    <header class="site">
+      <div class="wrap">
+        <a class="logo" href="/"><img src="assets/icon.png" alt="" />Mirg</a>
+        <nav>
+          <a class="hide-small" href="/#how">How it works</a>
+          <a class="hide-small" href="/#engines">Engines</a>
+          <a href="/pricing">Pricing</a>
+          <a class="btn primary small" href="/download">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero platform-hero">
+        <div class="wrap narrow">
+          <p class="crumb"><a href="/#engines">Platforms</a> / Python (pygame)</p>
+          <h1>Make a Python game with AI</h1>
+          <p class="lead">Describe a game and the agent writes it in Python with pygame, tests it without opening a window, and then runs it. A common first game, and a good way to learn from working code.</p>
+          <div class="cta" data-cta>
+            <a class="btn primary" data-download="auto" href="/download">Download for Mac</a>
+            <a class="btn" href="/#how">See how Mirg works</a>
+          </div>
+          <p class="fine"><span data-platform-note>Free to try. macOS 12 or later.</span> <a href="/download">All downloads</a></p>
+        </div>
+      </section>
+
+      <section class="platform">
+        <div class="wrap narrow">
+          <h2>A real example</h2>
+          <p class="sub">This is a real session, not a mock-up: the request as it was typed, and what the agent did.</p>
+          <blockquote class="prompt">Make a pygame game: a snake game with a score and a game over screen</blockquote>
+          <ol class="did"><li>Checked that Python and pygame were installed</li><li>Wrote the game in one file</li><li>Ran it in a hidden test mode: eating an apple added a point and a segment, hitting a wall ended the game and saved the best score, and starting again reset everything</li><li>Saved a picture of the game over screen and looked at it</li><li>Started the game in its own window</li></ol>
+          <p class="took">The first message took <strong>43 seconds</strong>.</p>
+          <p><strong>The result.</strong> A complete Snake: a checkered grid, apples, a score and best score, the snake speeding up as it grows, and a game over screen with a way to play again.</p>
+
+          <h2>How it works with Python (pygame)</h2>
+          <ul><li>The game is ordinary Python. Run it from Mirg or from a terminal.</li><li>The agent can run a pygame game with no window at all and inspect it, which is how it tests the rules before you ever see it.</li><li>The game then opens in its own window, which the agent can also look at and play once macOS allows it.</li></ul>
+
+          <h2>What you need</h2>
+          <ul><li>Python, and the pygame package. Mirg installs pygame for you with one button.</li></ul>
+          <p class="muted">Mirg lists what is installed and what is missing under "See what's installed" on its home screen. If you ask for a Python game without the tools for it, it tells you what to get and offers to build a web game instead.</p>
+
+          <h2>Good to know</h2>
+          <ul><li>If you are learning Python, ask the agent to explain any part of the code it wrote.</li></ul>
+
+          <div class="faq">
+            <h2>Questions</h2>
+            <h3>Do I need to install pygame myself?</h3><p>No. If Python is on your Mac, Mirg can install pygame for you with one button.</p><h3>Can I use this to learn Python?</h3><p>Yes. The game is a normal Python file, and you can ask the agent to explain how any part of it works, or to change it.</p><h3>Can the game be sent to friends?</h3><p>It is a Python file, so anyone with Python and pygame can run it.</p>
+          </div>
+
+          <h2>Other platforms</h2>
+          <ul class="others"><li><a href="/web-games">Web games</a></li><li><a href="/iphone-android-games">iPhone and Android</a></li><li><a href="/godot">Godot</a></li><li><a href="/unity">Unity</a></li><li><a href="/unreal-engine">Unreal Engine</a></li><li><a href="/roblox">Roblox</a></li><li><a href="/minecraft-mods">Minecraft mods</a></li><li><a href="/renpy">Ren&#x27;Py</a></li><li><a href="/love2d">LÖVE</a></li><li><a href="/gamemaker">GameMaker</a></li></ul>
+        </div>
+      </section>
+    </main>
+    <footer class="site">
+      <div class="wrap">
+        <span>© 2026 Mirg</span>
+        <a href="/pricing">Pricing</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:support@mirg.ai">support@mirg.ai</a>
+        <span class="spacer"></span>
+        <span data-version></span>
+      </div>
+    </footer>
+    <script src="site.js?v=18"></script>
+  </body>
+</html>

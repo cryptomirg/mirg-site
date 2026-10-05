@@ -39,6 +39,22 @@ Web, phone and Godot games play inside Mirg, where the agent can see and test th
 
 Plans can be cancelled at any time. Usage means the cost of the AI models running your requests; bigger games and more capable models use it faster.
 
+## Platform guides
+
+Each has a real example: the request, what the agent did, how long it took, and what is needed.
+
+- [Make a web game with AI](https://mirg.ai/web-games): Describe a game and play it in about a minute. Web games need nothing installed, and they run inside Mirg, where the agent can see the screen, press the keys and read the score to check its own work.
+- [Make an iPhone or Android game with AI](https://mirg.ai/iphone-android-games): Build a game with touch controls in a phone preview, then turn it into a real app that runs in the iOS Simulator or the Android emulator. The agent plays it with taps and swipes to check it.
+- [Make a Godot game with AI](https://mirg.ai/godot): Describe a game and the agent writes a real Godot 4 project: scenes, scripts and settings. Godot games play inside Mirg, so the agent can see and test them, and Mirg can install Godot for you.
+- [Make a Unity game with AI](https://mirg.ai/unity): Describe a game and the agent writes the C# scripts, builds the scene and compiles a playable Unity game. It opens in its own window, where the agent can look at it and play it.
+- [Make an Unreal Engine game with AI](https://mirg.ai/unreal-engine): Describe a game and the agent sets up an Unreal project from the engine's own templates, builds the level with a script, and launches it. Unreal games open in their own window.
+- [Make a Roblox game with AI](https://mirg.ai/roblox): Describe a Roblox game and the agent writes the Luau scripts, lays out the parts and builds a place file. It opens in Roblox Studio, where you press Play.
+- [Make a Minecraft mod with AI](https://mirg.ai/minecraft-mods): Describe what you want added to Minecraft and the agent writes a real Java Edition mod, compiles it, and starts a test copy of the game with the mod loaded.
+- [Make a Ren'Py visual novel with AI](https://mirg.ai/renpy): Describe a story and the agent writes a Ren'Py visual novel: the script, the characters, the choices and the endings. It runs Ren'Py's own checker, then opens the game.
+- [Make a Python game with AI](https://mirg.ai/pygame): Describe a game and the agent writes it in Python with pygame, tests it without opening a window, and then runs it. A common first game, and a good way to learn from working code.
+- [Make a LÖVE (Love2D) game with AI](https://mirg.ai/love2d): Describe a game and the agent writes it in Lua for LÖVE, checks the code, and starts it. Small, fast 2D games in a couple of files.
+- [Change a GameMaker game with AI](https://mirg.ai/gamemaker): Open a GameMaker project in Mirg and ask for changes in plain words. The agent edits the GML code; you press Run in GameMaker to see them.
+
 ## Links
 
 - [Home](https://mirg.ai/): overview and a demonstration

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Make a web game with AI · Mirg</title>
+    <meta name="description" content="Describe a game and play it in about a minute. Web games need nothing installed, and they run inside Mirg, where the agent can see the screen, press the keys and read the score to check its own work." />
+    <meta property="og:title" content="Make a web game with AI · Mirg" />
+    <meta property="og:description" content="Describe a game and play it in about a minute. Web games need nothing installed, and they run inside Mirg, where the agent can see the screen, press the keys and read the score to check its own work." />
+    <meta property="og:image" content="https://mirg.ai/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mirg: a chat on the left where a game is described, and the finished game running on the right" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mirg.ai/web-games" />
+    <meta property="og:site_name" content="Mirg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0e0f14" />
+    <link rel="canonical" href="https://mirg.ai/web-games" />
+    <link rel="icon" href="assets/icon.png" />
+    <script type="application/ld+json">[{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Do I need to know how to code?", "acceptedAnswer": {"@type": "Answer", "text": "No. You describe what you want in plain words and the agent writes the code. The code is there in the Code tab if you want to read or change it."}}, {"@type": "Question", "name": "Can I put the game on my own website?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. A web game made with Mirg is a folder of ordinary files that any web host can serve."}}, {"@type": "Question", "name": "Can it make 3D games?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The agent uses Three.js for 3D web games and plain Canvas for 2D."}}]}, {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Mirg", "item": "https://mirg.ai/"}, {"@type": "ListItem", "position": 2, "name": "Web games", "item": "https://mirg.ai/web-games"}]}]</script>
+    <link rel="stylesheet" href="styles.css?v=14" />
+  </head>
+  <body>
+    <header class="site">
+      <div class="wrap">
+        <a class="logo" href="/"><img src="assets/icon.png" alt="" />Mirg</a>
+        <nav>
+          <a class="hide-small" href="/#how">How it works</a>
+          <a class="hide-small" href="/#engines">Engines</a>
+          <a href="/pricing">Pricing</a>
+          <a class="btn primary small" href="/download">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero platform-hero">
+        <div class="wrap narrow">
+          <p class="crumb"><a href="/#engines">Platforms</a> / Web games</p>
+          <h1>Make a web game with AI</h1>
+          <p class="lead">Describe a game and play it in about a minute. Web games need nothing installed, and they run inside Mirg, where the agent can see the screen, press the keys and read the score to check its own work.</p>
+          <div class="cta" data-cta>
+            <a class="btn primary" data-download="auto" href="/download">Download for Mac</a>
+            <a class="btn" href="/#how">See how Mirg works</a>
+          </div>
+          <p class="fine"><span data-platform-note>Free to try. macOS 12 or later.</span> <a href="/download">All downloads</a></p>
+        </div>
+      </section>
+
+      <section class="platform">
+        <div class="wrap narrow">
+          <h2>A real example</h2>
+          <p class="sub">This is a real session, not a mock-up: the request as it was typed, and what the agent did.</p>
+          <blockquote class="prompt">A top-down zombie survival shooter with waves, three weapon types, upgrades between waves, and a boss every fifth wave</blockquote>
+          <ol class="did"><li>Wrote the game as five small files: the page, the world and enemies, the effects, the upgrades and the main loop</li><li>Started the game in the Game tab</li><li>Played it three times, moving and shooting, and read the game&#x27;s own numbers after each to check waves, weapons and score</li><li>Reported what it had checked and how to play</li></ol>
+          <p class="took">The first message took <strong>4 minutes 20 seconds</strong>.</p>
+          <p><strong>The result.</strong> A complete wave shooter, 626 lines across five files, playable straight away. Follow-up messages changed it in seconds: the same approach built a fox platformer and then added a double jump, a walking enemy and generated artwork, one request at a time.</p>
+
+          <h2>How it works with Web games</h2>
+          <ul><li>The game runs in Mirg&#x27;s Game tab, next to the chat. Edit a file and it reloads.</li><li>The agent takes screenshots, presses keys and clicks, and reads exact values such as positions and score, so it tests behaviour and not just whether the page loads.</li><li>Games are plain files: HTML and JavaScript, using Canvas for 2D or Three.js for 3D. You can open them in any editor or put them on any web host.</li><li>Artwork starts as clean shapes drawn in code, so the game is playable at once. Ask for real art when you want it.</li></ul>
+
+          <h2>What you need</h2>
+          <ul><li>Nothing. Web games work the moment Mirg is installed.</li></ul>
+          <p class="muted">Mirg lists what is installed and what is missing under "See what's installed" on its home screen. If you ask for a web game without the tools for it, it tells you what to get and offers to build a web game instead.</p>
+
+          <h2>Good to know</h2>
+          <ul><li>A web game is the fastest way to try an idea, and the starting point for a phone app.</li><li>Very large 3D games are better suited to an engine such as Godot or Unity.</li></ul>
+
+          <div class="faq">
+            <h2>Questions</h2>
+            <h3>Do I need to know how to code?</h3><p>No. You describe what you want in plain words and the agent writes the code. The code is there in the Code tab if you want to read or change it.</p><h3>Can I put the game on my own website?</h3><p>Yes. A web game made with Mirg is a folder of ordinary files that any web host can serve.</p><h3>Can it make 3D games?</h3><p>Yes. The agent uses Three.js for 3D web games and plain Canvas for 2D.</p>
+          </div>
+
+          <h2>Other platforms</h2>
+          <ul class="others"><li><a href="/iphone-android-games">iPhone and Android</a></li><li><a href="/godot">Godot</a></li><li><a href="/unity">Unity</a></li><li><a href="/unreal-engine">Unreal Engine</a></li><li><a href="/roblox">Roblox</a></li><li><a href="/minecraft-mods">Minecraft mods</a></li><li><a href="/renpy">Ren&#x27;Py</a></li><li><a href="/pygame">Python (pygame)</a></li><li><a href="/love2d">LÖVE</a></li><li><a href="/gamemaker">GameMaker</a></li></ul>
+        </div>
+      </section>
+    </main>
+    <footer class="site">
+      <div class="wrap">
+        <span>© 2026 Mirg</span>
+        <a href="/pricing">Pricing</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:support@mirg.ai">support@mirg.ai</a>
+        <span class="spacer"></span>
+        <span data-version></span>
+      </div>
+    </footer>
+    <script src="site.js?v=18"></script>
+  </body>
+</html>

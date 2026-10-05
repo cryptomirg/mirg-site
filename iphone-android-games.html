@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Make an iPhone or Android game with AI · Mirg</title>
+    <meta name="description" content="Build a game with touch controls in a phone preview, then turn it into a real app that runs in the iOS Simulator or the Android emulator. The agent plays it with taps and swipes to check it." />
+    <meta property="og:title" content="Make an iPhone or Android game with AI · Mirg" />
+    <meta property="og:description" content="Build a game with touch controls in a phone preview, then turn it into a real app that runs in the iOS Simulator or the Android emulator. The agent plays it with taps and swipes to check it." />
+    <meta property="og:image" content="https://mirg.ai/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Mirg: a chat on the left where a game is described, and the finished game running on the right" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mirg.ai/iphone-android-games" />
+    <meta property="og:site_name" content="Mirg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0e0f14" />
+    <link rel="canonical" href="https://mirg.ai/iphone-android-games" />
+    <link rel="icon" href="assets/icon.png" />
+    <script type="application/ld+json">[{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is it a real app or just a website?", "acceptedAnswer": {"@type": "Answer", "text": "A real, installable app. The game is written with web technology and wrapped in a native iOS or Android app, with its own Xcode or Android Studio project."}}, {"@type": "Question", "name": "Can Mirg publish to the App Store for me?", "acceptedAnswer": {"@type": "Answer", "text": "No. Submitting to the App Store or Google Play is done by you, from Xcode or Android Studio, with your own developer account. Mirg builds the app and the project you submit."}}, {"@type": "Question", "name": "Do I need a Mac to make an iPhone app?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Apple's tools for building iPhone apps only run on a Mac, and Mirg runs on Mac today."}}]}, {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Mirg", "item": "https://mirg.ai/"}, {"@type": "ListItem", "position": 2, "name": "iPhone and Android", "item": "https://mirg.ai/iphone-android-games"}]}]</script>
+    <link rel="stylesheet" href="styles.css?v=14" />
+  </head>
+  <body>
+    <header class="site">
+      <div class="wrap">
+        <a class="logo" href="/"><img src="assets/icon.png" alt="" />Mirg</a>
+        <nav>
+          <a class="hide-small" href="/#how">How it works</a>
+          <a class="hide-small" href="/#engines">Engines</a>
+          <a href="/pricing">Pricing</a>
+          <a class="btn primary small" href="/download">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero platform-hero">
+        <div class="wrap narrow">
+          <p class="crumb"><a href="/#engines">Platforms</a> / iPhone and Android</p>
+          <h1>Make an iPhone or Android game with AI</h1>
+          <p class="lead">Build a game with touch controls in a phone preview, then turn it into a real app that runs in the iOS Simulator or the Android emulator. The agent plays it with taps and swipes to check it.</p>
+          <div class="cta" data-cta>
+            <a class="btn primary" data-download="auto" href="/download">Download for Mac</a>
+            <a class="btn" href="/#how">See how Mirg works</a>
+          </div>
+          <p class="fine"><span data-platform-note>Free to try. macOS 12 or later.</span> <a href="/download">All downloads</a></p>
+        </div>
+      </section>
+
+      <section class="platform">
+        <div class="wrap narrow">
+          <h2>A real example</h2>
+          <p class="sub">This is a real session, not a mock-up: the request as it was typed, and what the agent did.</p>
+          <blockquote class="prompt">Make it work on phones with touch controls</blockquote>
+          <ol class="did"><li>Added on-screen buttons and made the layout fit a phone held sideways</li><li>Switched the Game tab to an iPhone preview and played the game by touch</li><li>Asked to make an iOS app: packaged the game, built it with Xcode and launched it in the iOS Simulator</li><li>Noticed two things that only looked wrong on iOS, button symbols drawn as emoji and a line of text running off the edge, and fixed both</li><li>Asked for Android: built it, launched it in the emulator, hid the system bars for true full screen and tapped through the title screen</li></ol>
+          <p class="took">The first message took <strong>41 seconds for touch controls, 3 minutes 28 seconds for the iOS app, 1 minute 26 seconds for Android</strong>.</p>
+          <p><strong>The result.</strong> One game, running as a web game, an iPhone app and an Android app, from the same code. The Xcode project is in an ios folder and the Android Studio project in an android folder.</p>
+
+          <h2>How it works with iPhone and Android</h2>
+          <ul><li>The Game tab can show the game on an iPhone, iPad or Android screen, with touch input, in either orientation.</li><li>Phone games are written with web technology and wrapped as real, installable apps. The agent says so plainly, since many people expect an iPhone app to be written in Swift.</li><li>On the Android emulator the agent can tap the screen itself. On the iOS Simulator it can look but not tap, and it tells you that.</li><li>Publishing to the App Store or Google Play is your step, from Xcode or Android Studio, with your own developer account.</li></ul>
+
+          <h2>What you need</h2>
+          <ul><li>For the phone preview: nothing.</li><li>For an iOS app: Xcode, free from the Mac App Store.</li><li>For an Android app: Android Studio, free from Google.</li><li>Mirg shows which of these are installed, under the phone icon.</li></ul>
+          <p class="muted">Mirg lists what is installed and what is missing under "See what's installed" on its home screen. If you ask for a phone game without the tools for it, it tells you what to get and offers to build a web game instead.</p>
+
+          <h2>Good to know</h2>
+          <ul><li>A first iOS build takes a few minutes, because Xcode compiles the app.</li><li>Selling in the App Store needs an Apple Developer membership, which Apple charges for.</li></ul>
+
+          <div class="faq">
+            <h2>Questions</h2>
+            <h3>Is it a real app or just a website?</h3><p>A real, installable app. The game is written with web technology and wrapped in a native iOS or Android app, with its own Xcode or Android Studio project.</p><h3>Can Mirg publish to the App Store for me?</h3><p>No. Submitting to the App Store or Google Play is done by you, from Xcode or Android Studio, with your own developer account. Mirg builds the app and the project you submit.</p><h3>Do I need a Mac to make an iPhone app?</h3><p>Yes. Apple&#x27;s tools for building iPhone apps only run on a Mac, and Mirg runs on Mac today.</p>
+          </div>
+
+          <h2>Other platforms</h2>
+          <ul class="others"><li><a href="/web-games">Web games</a></li><li><a href="/godot">Godot</a></li><li><a href="/unity">Unity</a></li><li><a href="/unreal-engine">Unreal Engine</a></li><li><a href="/roblox">Roblox</a></li><li><a href="/minecraft-mods">Minecraft mods</a></li><li><a href="/renpy">Ren&#x27;Py</a></li><li><a href="/pygame">Python (pygame)</a></li><li><a href="/love2d">LÖVE</a></li><li><a href="/gamemaker">GameMaker</a></li></ul>
+        </div>
+      </section>
+    </main>
+    <footer class="site">
+      <div class="wrap">
+        <span>© 2026 Mirg</span>
+        <a href="/pricing">Pricing</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:support@mirg.ai">support@mirg.ai</a>
+        <span class="spacer"></span>
+        <span data-version></span>
+      </div>
+    </footer>
+    <script src="site.js?v=18"></script>
+  </body>
+</html>

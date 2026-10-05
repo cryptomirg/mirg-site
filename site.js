@@ -113,7 +113,7 @@
   var box = document.getElementById('demo-captcha')
   var API = 'https://dlnmbeqdtpyjkprkxfvt.supabase.co/functions/v1/demo-request'
   // Cloudflare Turnstile's public site key. While it is empty, no check is shown.
-  var CAPTCHA_KEY = ''
+  var CAPTCHA_KEY = '0x4AAAAAAFOZ0Roo6D6Ag9sT'
   var captcha = { token: '', widget: null }
 
   function showCaptcha() {

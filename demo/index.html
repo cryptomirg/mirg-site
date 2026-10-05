@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Fox Run · made with Mirg</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #1b1625; overflow: hidden; touch-action: none;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  body { display: flex; align-items: center; justify-content: center; height: 100dvh; }
+  canvas { display: block; width: min(100vw, 200dvh); height: auto; aspect-ratio: 2 / 1; }
+
+  #touch { display: none; }
+  body.touch #touch { display: block; }
+  .btn { position: fixed; width: clamp(40px, 9vw, 84px); height: clamp(40px, 9vw, 84px); border-radius: 50%;
+    background: rgba(255,255,255,0.18); border: 2px solid rgba(255,255,255,0.45);
+    color: rgba(255,255,255,0.9); font: bold clamp(15px, 3.6vw, 34px) "Trebuchet MS", sans-serif;
+    display: flex; align-items: center; justify-content: center; touch-action: none; }
+  .btn.down { background: rgba(255,210,90,0.45); border-color: #ffd34d; transform: scale(0.94); }
+  #bl { left: 2vw; bottom: 3vw; }
+  #br { left: calc(4vw + clamp(40px, 9vw, 84px)); bottom: 3vw; }
+  #bj { right: 2.5vw; bottom: 3vw; width: clamp(48px, 11vw, 100px); height: clamp(48px, 11vw, 100px); font-size: clamp(10px, 2.4vw, 22px); }
+
+  #rotate { display: none; position: fixed; inset: 0; background: #1b1625; color: #ffe9c4;
+    font: bold 22px "Trebuchet MS", sans-serif; text-align: center; align-items: center; justify-content: center; flex-direction: column; gap: 16px; padding: 24px; }
+  #rotate .phone { font-size: 64px; animation: spin 2s ease-in-out infinite; }
+  @keyframes spin { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(90deg); } }
+  @media (orientation: portrait) { body.touch #rotate { display: flex; } }
+</style>
+</head>
+<body>
+<canvas id="game" width="960" height="480"></canvas>
+<div id="touch">
+  <div class="btn" id="bl" data-key="ArrowLeft">◀&#xFE0E;</div>
+  <div class="btn" id="br" data-key="ArrowRight">▶&#xFE0E;</div>
+  <div class="btn" id="bj" data-key="Space">JUMP</div>
+</div>
+<div id="rotate"><div class="phone">📱</div>Turn your phone sideways to play</div>
+<script type="module" src="main.js"></script>
+</body>
+</html>

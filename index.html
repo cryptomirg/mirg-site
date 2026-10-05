@@ -11,12 +11,12 @@
     <meta property="og:type" content="website" />
     <meta name="theme-color" content="#0e0f14" />
     <link rel="icon" href="assets/icon.png" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=4" />
   </head>
   <body>
     <header class="site">
       <div class="wrap">
-        <a class="logo" href="index.html"><img src="assets/icon.png" alt="" />Mirg<span>.ai</span></a>
+        <a class="logo" href="index.html"><img src="assets/icon.png" alt="" />Mirg</a>
         <nav>
           <a class="hide-small" href="index.html#how">How it works</a>
           <a class="hide-small" href="index.html#engines">Engines</a>
@@ -36,7 +36,42 @@
             <a class="btn" data-download="mac-x64" href="https://github.com/cryptomirg/mirg-releases/releases/latest">Mac (Intel)</a>
           </div>
           <p class="fine">Free to try. macOS 12 or later. Windows and Linux are on the way.</p>
-          <img class="shot" src="assets/app-platformer.png" width="1440" height="900" alt="Mirg with a chat on the left and a fox platformer running in a phone preview on the right" />
+          <div class="demo" id="demo" aria-label="A replay of a real Mirg session, with the finished game playable on the right">
+            <div class="demo-bar">
+              <span class="demo-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="demo-name">fox-platformer</span>
+              <span class="demo-tabs" aria-hidden="true"><b>Game</b><span>Code</span><span>Assets</span></span>
+              <span class="demo-run" aria-hidden="true">▶ Run</span>
+            </div>
+            <div class="demo-body">
+              <div class="demo-chat">
+                <div class="demo-scroll">
+                  <div class="d-user" data-step>A side-scrolling platformer where a fox collects coins and avoids spikes. Three short levels.</div>
+                  <div class="d-tool" data-step>Write index.html</div>
+                  <div class="d-tool" data-step>Write levels.js</div>
+                  <div class="d-tool" data-step>Write main.js</div>
+                  <div class="d-tool" data-step>Run the game</div>
+                  <div class="d-tool" data-step>Playtest (7 inputs)</div>
+                  <div class="d-agent" data-step>Your platformer is running in the Game tab. I played level 1 to check it: the fox runs, jumps, collects coins and loses a life on spikes.</div>
+                  <div class="d-user" data-step>Add a double jump</div>
+                  <div class="d-tool" data-step>Edit main.js</div>
+                  <div class="d-tool" data-step>Playtest (6 inputs)</div>
+                  <div class="d-user" data-step>Generate real art for the fox and use it in the game</div>
+                  <div class="d-tool" data-step>Generate assets/fox.png</div>
+                  <div class="d-agent" data-step data-done>Done. The fox now uses the new artwork. Have a go.</div>
+                </div>
+                <div class="demo-composer" aria-hidden="true"><span>Ask for a change…</span><em>Claude Opus 5.5</em></div>
+              </div>
+              <div class="demo-game">
+                <iframe id="demo-frame" title="Fox Run, a platformer made with Mirg" data-src="demo/index.html" loading="lazy" tabindex="-1"></iframe>
+                <div class="demo-cover" id="demo-cover">
+                  <div class="demo-building"><span class="demo-spinner"></span>The agent is building and testing your game</div>
+                  <button class="btn primary demo-play" id="demo-play" type="button" hidden>▶ Play the game</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="fine demo-note">A replay of a real session. The game is the real thing, made with Mirg. Arrow keys or A/D to run, Space to jump; on a phone, use the buttons on screen. <button class="linklike" id="demo-replay" type="button">Replay</button> · <a href="demo/index.html">Open the game full screen</a></p>
         </div>
       </section>
 
@@ -134,6 +169,6 @@
         <span data-version></span>
       </div>
     </footer>
-    <script src="site.js"></script>
+    <script src="site.js?v=4"></script>
   </body>
 </html>

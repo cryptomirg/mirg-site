@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mirg: describe a game, and play it</title>
+    <meta name="description" content="Mirg is a desktop app where an AI agent builds your game, runs it, and plays it to check that it works. Free to try on Mac." />
+    <meta property="og:title" content="Mirg: describe a game, and play it" />
+    <meta property="og:description" content="Mirg is a desktop app where an AI agent builds your game, runs it, and plays it to check that it works. Free to try on Mac." />
+    <meta property="og:image" content="https://mirg.ai/assets/app-platformer.png" />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#0e0f14" />
+    <link rel="icon" href="assets/icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site">
+      <div class="wrap">
+        <a class="logo" href="/"><img src="assets/icon.png" alt="" />Mirg<span>.ai</span></a>
+        <nav>
+          <a class="hide-small" href="/#how">How it works</a>
+          <a class="hide-small" href="/#engines">Engines</a>
+          <a href="/pricing">Pricing</a>
+          <a class="btn primary small" href="/#download">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="wrap">
+          <h1>Describe a game.<br />Play it a minute later.</h1>
+          <p class="lead">Mirg is a desktop app where an AI agent writes your game, runs it, and plays it to check that it works. You say what you want; the game appears next to the chat.</p>
+          <div class="cta">
+            <a class="btn primary" data-download="mac-arm64" href="https://github.com/cryptomirg/mirg-releases/releases/latest">Download for Mac (Apple Silicon)</a>
+            <a class="btn" data-download="mac-x64" href="https://github.com/cryptomirg/mirg-releases/releases/latest">Mac (Intel)</a>
+          </div>
+          <p class="fine">Free to try. macOS 12 or later. Windows and Linux are on the way.</p>
+          <img class="shot" src="assets/app-platformer.png" width="1440" height="900" alt="Mirg with a chat on the left and a fox platformer running in a phone preview on the right" />
+        </div>
+      </section>
+
+      <section id="how">
+        <div class="wrap">
+          <h2>How it works</h2>
+          <p class="sub">No engine to learn and nothing to set up. If you can describe it, you can start.</p>
+          <div class="grid">
+            <div class="card">
+              <div class="step">1 · Describe</div>
+              <h3>Say what you want</h3>
+              <p>Type it or say it out loud. "A platformer where a fox collects coins and avoids spikes." That is enough to begin.</p>
+            </div>
+            <div class="card">
+              <div class="step">2 · Watch it get built</div>
+              <h3>The agent does the work</h3>
+              <p>It writes the code, starts the game, looks at the screen and presses the keys itself to make sure things work before telling you it is done.</p>
+            </div>
+            <div class="card">
+              <div class="step">3 · Play and change</div>
+              <h3>Keep going</h3>
+              <p>Play it right there. Ask for a double jump, a new enemy, real artwork. Every message has a Restore button, so nothing is permanent.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="alt">
+        <div class="wrap">
+          <h2>What makes it different</h2>
+          <p class="sub">Most AI tools hand you code and hope. Mirg runs the game and checks its own work.</p>
+          <div class="grid">
+            <div class="card"><h3>It plays what it builds</h3><p>The agent takes screenshots, presses keys, taps the screen and reads the score, then fixes what is broken. It also tells you what it could not check.</p></div>
+            <div class="card"><h3>The game is always in front of you</h3><p>Game in one tab, code in another, files and art in a third. Look under the hood only if you want to.</p></div>
+            <div class="card"><h3>Phone games included</h3><p>Preview on an iPhone or Android screen with real touch input, then turn the game into an app that runs in the iOS Simulator or Android emulator.</p></div>
+            <div class="card"><h3>Art on request</h3><p>Starts with clean placeholder shapes so you can play straight away. Ask for real artwork when you are ready.</p></div>
+            <div class="card"><h3>Pick your model</h3><p>Claude, GPT and Gemini models, with a simple control for how hard the model thinks. No API keys to manage.</p></div>
+            <div class="card"><h3>Your files, on your computer</h3><p>Projects are ordinary folders on your Mac. Open them in any editor, put them in version control, take them anywhere.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="engines">
+        <div class="wrap">
+          <h2>Works with the engines people use</h2>
+          <p class="sub">Web, phone and Godot games play inside Mirg, where the agent can see and test them. Other engines work if you have them installed, and Mirg tells you what is missing and how to get it. Every one below has been run for real.</p>
+          <ul class="engines">
+            <li>Web games <span class="tag">in the app</span><small>2D and 3D, nothing to install</small></li>
+            <li>iOS and Android <span class="tag">in the app</span><small>Phone preview, Simulator and emulator</small></li>
+            <li>Godot <span class="tag">in the app</span><small>Mirg can install it for you</small></li>
+            <li>Unity<small>Builds and plays in its own window</small></li>
+            <li>Unreal Engine<small>C++ and engine templates</small></li>
+            <li>Roblox<small>Built for you, played in Roblox Studio</small></li>
+            <li>Minecraft mods<small>Java Edition, with a test copy of the game</small></li>
+            <li>Ren'Py<small>Visual novels and story games</small></li>
+            <li>Python (pygame)<small>Mirg can install it for you</small></li>
+            <li>LÖVE<small>Small 2D games in Lua</small></li>
+            <li>GameMaker<small>Mirg edits the code; you run it</small></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="alt">
+        <div class="wrap">
+          <h2>Simple pricing</h2>
+          <p class="sub">Start free. Upgrade when you are making more.</p>
+          <div class="plans">
+            <div class="plan"><h3>Free</h3><div class="price">$0</div><ul><li>Enough for a handful of small games each month</li><li>Every engine</li><li>Voice input</li></ul><a class="btn" href="#download">Download</a></div>
+            <div class="plan featured"><h3>Pro</h3><div class="price">$20 <small>/ month</small></div><ul><li>14 times the free plan's usage</li><li>Claude Opus by default</li><li>For regular game-making</li></ul><a class="btn primary" href="/pricing">See details</a></div>
+            <div class="plan"><h3>Max</h3><div class="price">$100 <small>/ month</small></div><ul><li>Over 5 times Pro's usage</li><li>Option to keep building when it runs out</li><li>For big projects and heavy use</li></ul><a class="btn" href="/pricing">See details</a></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="download" class="center">
+        <div class="wrap">
+          <h2>Make your first game today</h2>
+          <p class="sub" style="margin-left:auto;margin-right:auto">Download Mirg, sign in with your email, and describe a game. There is nothing else to set up.</p>
+          <div class="cta">
+            <a class="btn primary" data-download="mac-arm64" href="https://github.com/cryptomirg/mirg-releases/releases/latest">Download for Mac (Apple Silicon)</a>
+            <a class="btn" data-download="mac-x64" href="https://github.com/cryptomirg/mirg-releases/releases/latest">Mac (Intel)</a>
+          </div>
+          <p class="fine">Free to try. macOS 12 or later. Windows and Linux are on the way.</p>
+        </div>
+      </section>
+    </main>
+    <footer class="site">
+      <div class="wrap">
+        <span>© 2026 Mirg</span>
+        <a href="/pricing">Pricing</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:support@mirg.ai">support@mirg.ai</a>
+        <span class="spacer"></span>
+        <span data-version></span>
+      </div>
+    </footer>
+    <script src="site.js"></script>
+  </body>
+</html>

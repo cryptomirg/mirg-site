@@ -434,94 +434,145 @@ footer.site .spacer {
   }
 }
 
-/* ---------- live demo ---------- */
+/* ---------- demo: the app at work ---------- */
 
-.demo {
+/* The stage is drawn at a fixed size, like the real window, and scaled to fit the page. */
+.demo-wrap {
   margin: 48px auto 0;
   text-align: left;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  overflow: hidden;
-  background: var(--panel);
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1040 / 650;
 }
 
-.demo-bar {
+.demo-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1040px;
+  height: 650px;
+  transform: scale(var(--demo-scale, 1));
+  transform-origin: top left;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+  user-select: none;
+}
+
+.m-top {
+  flex: none;
+  height: 44px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  height: 42px;
+  gap: 10px;
   padding: 0 14px;
   border-bottom: 1px solid var(--border);
-  font-size: 13px;
-  color: var(--muted);
+  background: var(--panel);
 }
 
-.demo-dots {
-  display: flex;
-  gap: 6px;
+.m-home,
+.m-ico {
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid #6a7085;
+  border-radius: 4px;
+  flex: none;
 }
 
-.demo-dots i {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #353a49;
-}
-
-.demo-name {
-  color: var(--text);
+.m-name {
   font-weight: 600;
-  white-space: nowrap;
 }
 
-.demo-tabs {
-  margin: 0 auto;
+.m-badge {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: var(--accent-soft);
+  color: #b9a6ff;
+}
+
+.m-tabs {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  gap: 4px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  gap: 3px;
   padding: 3px;
-}
-
-.demo-tabs b,
-.demo-tabs span {
-  padding: 2px 12px;
-  border-radius: 6px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--muted);
   font-weight: 600;
 }
 
-.demo-tabs b {
+.m-tabs b,
+.m-tabs span {
+  padding: 3px 14px;
+  border-radius: 6px;
+}
+
+.m-tabs b {
   background: var(--panel-2);
   color: var(--text);
 }
 
-.demo-run {
-  color: var(--ok);
-  border: 1px solid rgba(88, 214, 141, 0.4);
+.m-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.m-pill {
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--muted);
   border-radius: 7px;
-  padding: 2px 10px;
+  padding: 3px 9px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.m-run {
+  color: var(--ok);
+  border: 1px solid rgba(88, 214, 141, 0.45);
+  background: rgba(88, 214, 141, 0.08);
+  border-radius: 7px;
+  padding: 3px 12px;
   font-weight: 600;
   white-space: nowrap;
 }
 
-.demo-body {
-  display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
+.m-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
 }
 
-.demo-chat {
+.m-chat {
+  flex: none;
+  width: 300px;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--border);
-  min-width: 0;
-  /* The game sets the height of the row; the chat scrolls inside it. */
-  height: 0;
-  min-height: 100%;
+  background: var(--panel);
 }
 
-.demo-scroll {
+.m-chat-head {
+  flex: none;
+  padding: 10px 14px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
+
+.m-scroll {
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -530,127 +581,258 @@ footer.site .spacer {
   justify-content: flex-end;
   gap: 7px;
   padding: 12px;
-  font-size: 13px;
-  line-height: 1.45;
 }
 
-.demo-scroll > * {
+.m-scroll > * {
   flex: none;
-  transition: opacity 0.35s ease, transform 0.35s ease;
+  animation: m-in 0.25s ease both;
 }
 
-.demo.animating [data-step]:not(.shown) {
-  display: none;
+@keyframes m-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
 }
 
-.d-user {
+.m-user {
   align-self: flex-end;
   max-width: 92%;
   background: var(--accent-soft);
   border: 1px solid rgba(139, 108, 255, 0.35);
   border-radius: 12px 12px 3px 12px;
   padding: 7px 10px;
-  color: var(--text);
 }
 
-.d-tool {
+.m-tool {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   border: 1px solid var(--border);
   background: var(--panel-2);
   border-radius: 8px;
-  padding: 5px 10px 5px 28px;
-  position: relative;
-  color: var(--muted);
-}
-
-.d-tool::before {
-  content: '✓';
-  position: absolute;
-  left: 10px;
-  color: var(--ok);
-}
-
-.d-agent {
+  padding: 6px 10px;
   color: var(--text);
-  padding: 2px 2px;
 }
 
-.demo-composer {
+.m-tool i {
   flex: none;
-  margin: 0 12px 12px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12.5px;
-  color: var(--muted);
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: m-spin 0.8s linear infinite;
 }
 
-.demo-composer em {
-  font-style: normal;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 1px 7px;
-}
-
-.demo-game {
-  position: relative;
-  background: #1b1625;
-  /* The game is drawn at two to one. */
-  aspect-ratio: 2 / 1;
-}
-
-.demo-game iframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+.m-tool.done i {
   border: 0;
+  animation: none;
+  width: 12px;
+  height: 12px;
+}
+
+.m-tool.done i::before {
+  content: '✓';
+  color: var(--ok);
+  font-style: normal;
+  font-size: 12px;
+  line-height: 12px;
   display: block;
 }
 
-.demo-cover {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: rgba(14, 15, 20, 0.72);
-  transition: background 0.4s ease;
+.m-tool small {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 11px;
 }
 
-.demo-cover.ready {
-  background: rgba(14, 15, 20, 0.35);
-}
-
-.demo-cover.gone {
-  display: none;
-}
-
-.demo-building {
+.m-think {
+  color: var(--muted);
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: var(--text);
-  font-size: 14.5px;
-  padding: 0 16px;
-  text-align: center;
+  gap: 8px;
+  padding: 2px;
 }
 
-.demo-spinner {
-  width: 16px;
-  height: 16px;
-  flex: none;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+.m-think i {
+  width: 11px;
+  height: 11px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
   border-top-color: var(--accent);
   border-radius: 50%;
-  animation: demo-spin 0.9s linear infinite;
+  animation: m-spin 0.8s linear infinite;
 }
 
-@keyframes demo-spin {
+.m-agent {
+  padding: 2px;
+}
+
+.m-composer {
+  flex: none;
+  margin: 0 12px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.m-input {
+  min-height: 58px;
+  padding: 10px 12px 4px;
+}
+
+.m-placeholder {
+  color: #5d6376;
+}
+
+.m-caret::after {
+  content: '';
+  display: inline-block;
+  width: 1.5px;
+  height: 14px;
+  margin-left: 1px;
+  vertical-align: -2px;
+  background: var(--text);
+  animation: m-blink 0.9s steps(2) infinite;
+}
+
+@keyframes m-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.m-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 8px;
+}
+
+.m-row .m-pill {
+  font-size: 10.5px;
+  padding: 3px 6px;
+}
+
+.m-spacer {
+  flex: 1;
+}
+
+.m-send {
+  flex: none;
+  white-space: nowrap;
+  background: var(--accent-strong);
+  color: #fff;
+  border-radius: 7px;
+  padding: 4px 11px;
+  font-weight: 600;
+  font-size: 12px;
+  opacity: 0.55;
+  transition: opacity 0.2s, transform 0.12s;
+}
+
+.m-send.ready {
+  opacity: 1;
+}
+
+.m-send.press {
+  transform: scale(0.93);
+}
+
+.m-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.m-game {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  background: #0b0c11;
+  display: grid;
+  place-items: center;
+}
+
+.m-game iframe {
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  border: 0;
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.m-game iframe.on {
+  opacity: 1;
+}
+
+.m-empty,
+.m-cover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  padding: 0 40px;
+  color: var(--muted);
+}
+
+.m-empty strong,
+.m-cover strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+.m-cover {
+  background: rgba(11, 12, 17, 0.9);
+}
+
+.m-spin {
+  width: 22px;
+  height: 22px;
+  margin-bottom: 6px;
+  border: 2.5px solid rgba(255, 255, 255, 0.18);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: m-spin 0.9s linear infinite;
+}
+
+@keyframes m-spin {
   to {
     transform: rotate(360deg);
   }
+}
+
+.m-console {
+  flex: none;
+  height: 92px;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.m-console-tabs {
+  display: flex;
+  gap: 14px;
+  padding: 8px 14px 4px;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.m-console-tabs b {
+  color: var(--text);
+}
+
+.m-log {
+  padding: 2px 14px;
+  font: 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--muted);
 }
 
 .demo-note {
@@ -669,27 +851,45 @@ footer.site .spacer {
   cursor: pointer;
 }
 
-@media (max-width: 820px) {
-  .demo-body {
-    grid-template-columns: minmax(0, 1fr);
+/* On a phone the window is too small to read when shrunk, so its two halves are stacked. */
+@media (max-width: 700px) {
+  .demo-wrap {
+    aspect-ratio: auto;
   }
-  .demo-chat {
-    height: 210px;
-    min-height: 0;
+  .demo-stage {
+    position: static;
+    width: 100%;
+    height: auto;
+    transform: none;
+  }
+  .m-body {
+    flex-direction: column-reverse;
+  }
+  .m-chat {
+    width: 100%;
+    height: 300px;
     border-right: 0;
-    border-bottom: 1px solid var(--border);
+    border-top: 1px solid var(--border);
   }
-  .demo-tabs,
-  .demo-composer {
+  .m-game {
+    aspect-ratio: 2 / 1;
+    flex: none;
+  }
+  .m-tabs,
+  .m-console,
+  .m-right .m-pill,
+  .m-ico,
+  .m-chat-head {
     display: none;
-  }
-  .demo-run {
-    margin-left: auto;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .demo-spinner {
+  .m-spin,
+  .m-tool i,
+  .m-think i,
+  .m-caret::after,
+  .m-scroll > * {
     animation: none;
   }
 }

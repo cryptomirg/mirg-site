@@ -1,3 +1,10 @@
+// Keep addresses clean: someone who arrives at /index.html or /pricing.html sees / or /pricing.
+;(function () {
+  var path = location.pathname
+  var clean = path.replace(/\/index\.html$/, '/').replace(/\.html$/, '')
+  if (clean !== path && window.history && history.replaceState) history.replaceState(null, '', clean + location.search + location.hash)
+})()
+
 // Download buttons. The installers are published on GitHub under names that include the
 // version, so the newest one is looked up when the page opens. The main button offers the
 // download for the computer the visitor is on. If the lookup fails (offline, or GitHub is
@@ -91,7 +98,7 @@
       } else {
         // Nothing to download for this device yet: lead to the list of what exists.
         a.textContent = platform === 'mobile' ? 'See downloads' : 'See all downloads'
-        a.href = 'download.html'
+        a.href = '/download'
       }
     })
     document.querySelectorAll('[data-platform-note]').forEach(function (el) {
@@ -399,7 +406,7 @@
       badge: 'Web game',
       device: 'Desktop ▾',
       caption: 'A demonstration using a real game made with Mirg.',
-      play: 'demo/index.html',
+      play: '/demo/',
       turns: [
         {
           say: 'A side-scrolling platformer where a fox collects coins and avoids spikes. Three short levels.',
@@ -430,7 +437,7 @@
       device: 'iPhone 16 ▾',
       layout: 'phone',
       caption: 'The same game, made into a phone game and then an iPhone app. The Simulator picture is the one the agent took.',
-      play: 'demo/index.html?touch=1',
+      play: '/demo/?touch=1',
       start: function () {
         // This session starts from the finished desktop game.
         load('demo/index.html')

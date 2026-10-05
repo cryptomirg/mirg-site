@@ -1,0 +1,49 @@
+# Mirg
+
+> Mirg is a desktop app for making video games with AI. You describe a game in plain words, typed or spoken, and an AI agent writes it, runs it, and plays it to check that it works. The game appears next to the chat, ready to play and change. Free to try on Mac.
+
+## What it does
+
+- Builds a game from a description, then keeps changing it as you ask: "add a double jump", "add an enemy", "generate real art for the fox".
+- Runs the game and tests its own work: it takes screenshots, presses keys, taps the screen and reads the score, then fixes what is broken. It says what it could not check.
+- Shows the game, the code and the art in three tabs. Projects are ordinary folders on your own computer.
+- Every message has a Restore button, so any change can be undone.
+- Offers Claude, GPT and Gemini models, with a control for how hard the model thinks. No API keys are needed.
+
+## Platforms it builds for
+
+Web, phone and Godot games play inside Mirg, where the agent can see and test them. Other engines work if they are installed, and Mirg shows what is missing and how to get it.
+
+- Web games, 2D and 3D: nothing to install
+- iPhone and Android: phone preview with touch, then a real app in the iOS Simulator or Android emulator
+- Godot: Mirg can install it
+- Unity
+- Unreal Engine (C++ and engine templates)
+- Roblox (built for you, played in Roblox Studio)
+- Minecraft: Java Edition mods
+- Ren'Py visual novels
+- Python (pygame)
+- LÖVE
+- GameMaker (Mirg edits the code; you run it from GameMaker)
+
+## Requirements
+
+- A Mac with Apple Silicon or Intel, macOS 12 or later. Windows and Linux versions are in the works.
+- An email address to sign in. Nothing else to set up.
+
+## Pricing
+
+- Free: $0, enough usage for a handful of small games each month.
+- Pro: $20 a month, 14 times the free plan's usage.
+- Max: $100 a month, over 5 times Pro's usage, with the option to keep building when it runs out.
+
+Plans can be cancelled at any time. Usage means the cost of the AI models running your requests; bigger games and more capable models use it faster.
+
+## Links
+
+- [Home](https://mirg.ai/): overview and a demonstration
+- [Download](https://mirg.ai/download): installers for Mac
+- [Pricing](https://mirg.ai/pricing): plans and common questions
+- [Terms of Service](https://mirg.ai/terms)
+- [Privacy Policy](https://mirg.ai/privacy)
+- Support: support@mirg.ai

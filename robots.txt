@@ -1,0 +1,5 @@
+# Everyone is welcome to read this site, search engines and AI assistants included.
+User-agent: *
+Allow: /
+
+Sitemap: https://mirg.ai/sitemap.xml

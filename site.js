@@ -103,21 +103,50 @@
   })
 })()
 
-// "Request a demo": a short form, saved to Mirg's database. The key below is the public one
-// that the app itself ships with; it can add a request and cannot read any.
+// "Request a demo": a short form, sent to a small function on Mirg's server, which checks the
+// "I am human" answer, limits how often one visitor can send, and saves the request.
 ;(function () {
   var dialog = document.getElementById('demo-form')
   if (!dialog) return
   var form = document.getElementById('demo-request')
   var status = document.getElementById('demo-form-status')
-  var API = 'https://dlnmbeqdtpyjkprkxfvt.supabase.co/rest/v1/demo_requests'
-  var KEY = 'sb_publishable_RTQ8CSTfuHByAw1-_bbqag_NX0-kQhp'
+  var box = document.getElementById('demo-captcha')
+  var API = 'https://dlnmbeqdtpyjkprkxfvt.supabase.co/functions/v1/demo-request'
+  // Cloudflare Turnstile's public site key. While it is empty, no check is shown.
+  var CAPTCHA_KEY = ''
+  var captcha = { token: '', widget: null }
+
+  function showCaptcha() {
+    if (!CAPTCHA_KEY) return
+    var render = function () {
+      if (captcha.widget !== null) return window.turnstile.reset(captcha.widget)
+      captcha.widget = window.turnstile.render(box, {
+        sitekey: CAPTCHA_KEY,
+        theme: 'dark',
+        callback: function (token) {
+          captcha.token = token
+        },
+        'expired-callback': function () {
+          captcha.token = ''
+        }
+      })
+    }
+    captcha.token = ''
+    if (window.turnstile) return render()
+    // Loaded only when the form is opened, so the rest of the site never contacts Cloudflare.
+    var script = document.createElement('script')
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+    script.async = true
+    script.onload = render
+    document.head.appendChild(script)
+  }
 
   document.querySelectorAll('[data-demo-open]').forEach(function (b) {
     b.addEventListener('click', function () {
       status.textContent = ''
       status.className = 'demo-form-status'
       dialog.showModal ? dialog.showModal() : dialog.setAttribute('open', '')
+      showCaptcha()
     })
   })
   document.querySelectorAll('[data-demo-close]').forEach(function (b) {
@@ -133,33 +162,40 @@
     e.preventDefault()
     var data = new FormData(form)
     var send = form.querySelector('[type="submit"]')
-    var done = function () {
-      status.textContent = 'Thank you. We will be in touch by email.'
-      status.className = 'demo-form-status ok'
-      form.reset()
+    var say = function (text, kind) {
+      status.innerHTML = text
+      status.className = 'demo-form-status' + (kind ? ' ' + kind : '')
     }
-    // The hidden field is only ever filled in by automated form-fillers: thank them and send nothing.
-    if (data.get('website')) return done()
+    if (CAPTCHA_KEY && !captcha.token) return say('Please wait for the "I am human" check to finish, then send again.', 'bad')
     send.disabled = true
-    status.textContent = 'Sending…'
-    status.className = 'demo-form-status'
+    say('Sending…')
     fetch(API, {
       method: 'POST',
-      headers: { apikey: KEY, authorization: 'Bearer ' + KEY, 'content-type': 'application/json', prefer: 'return=minimal' },
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        name: String(data.get('name') || '').trim(),
-        email: String(data.get('email') || '').trim(),
-        organisation: String(data.get('organisation') || '').trim() || null,
-        message: String(data.get('message') || '').trim() || null
+        name: data.get('name'),
+        email: data.get('email'),
+        organisation: data.get('organisation'),
+        message: data.get('message'),
+        website: data.get('website'),
+        captcha: captcha.token
       })
     })
       .then(function (r) {
-        if (!r.ok) throw new Error(String(r.status))
-        done()
+        return r.json().then(function (body) {
+          if (r.ok) {
+            say('Thank you. We will be in touch by email.', 'ok')
+            form.reset()
+          } else {
+            // The server's own explanation: a missing name, too many requests, a failed check.
+            say(body.error || 'That did not send.', 'bad')
+          }
+          // An answer to the check can only be used once.
+          showCaptcha()
+        })
       })
       .catch(function () {
-        status.innerHTML = 'That did not send. Please email <a href="mailto:support@mirg.ai">support@mirg.ai</a> instead.'
-        status.className = 'demo-form-status bad'
+        say('That did not send. Please email <a href="mailto:support@mirg.ai">support@mirg.ai</a> instead.', 'bad')
       })
       .then(function () {
         send.disabled = false

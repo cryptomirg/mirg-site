@@ -436,6 +436,40 @@ footer.site .spacer {
 
 /* ---------- demo: the app at work ---------- */
 
+.demo-picker {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 44px auto 0;
+}
+
+.demo-picker + .demo-wrap {
+  margin-top: 16px;
+}
+
+.demo-picker button {
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 7px 16px;
+  cursor: pointer;
+}
+
+.demo-picker button:hover {
+  color: var(--text);
+}
+
+.demo-picker button[aria-selected='true'] {
+  color: #fff;
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
 /* The stage is drawn at a fixed size, like the real window, and scaled to fit the page. */
 .demo-wrap {
   margin: 48px auto 0;
@@ -769,6 +803,51 @@ footer.site .spacer {
   opacity: 1;
 }
 
+/* Phone preview: the game sits in a device frame, as in the app. */
+.m-game.phone iframe {
+  width: 82%;
+  border: 7px solid #23262f;
+  border-radius: 26px;
+  background: #000;
+}
+
+/* Godot games are drawn at three to two. */
+.m-game.wide iframe {
+  width: auto;
+  height: 100%;
+  aspect-ratio: 3 / 2;
+}
+
+/* The preview steps back when another window comes to the front. */
+.m-game.behind iframe {
+  opacity: 0.18;
+}
+
+/* Something that opens outside the app, such as the iOS Simulator: shown as its own window. */
+.m-window {
+  position: absolute;
+  margin: 0;
+  width: 66%;
+  border: 1px solid #3a3f4f;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #1c1e26;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7);
+  animation: m-in 0.35s ease both;
+}
+
+.m-window figcaption {
+  padding: 6px 12px;
+  font-size: 11.5px;
+  color: var(--muted);
+  text-align: center;
+  border-bottom: 1px solid #2c303c;
+}
+
+.m-window img {
+  width: 100%;
+}
+
 .m-empty,
 .m-cover {
   position: absolute;
@@ -874,6 +953,12 @@ footer.site .spacer {
   .m-game {
     aspect-ratio: 2 / 1;
     flex: none;
+  }
+  .m-game.wide {
+    aspect-ratio: 3 / 2;
+  }
+  .demo-picker {
+    margin-top: 32px;
   }
   .m-tabs,
   .m-console,

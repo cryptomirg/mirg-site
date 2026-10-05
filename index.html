@@ -11,7 +11,7 @@
     <meta property="og:type" content="website" />
     <meta name="theme-color" content="#0e0f14" />
     <link rel="icon" href="assets/icon.png" />
-    <link rel="stylesheet" href="styles.css?v=6" />
+    <link rel="stylesheet" href="styles.css?v=8" />
   </head>
   <body>
     <header class="site">
@@ -36,14 +36,15 @@
             <a class="btn" data-download="mac-x64" href="https://github.com/cryptomirg/mirg-releases/releases/latest">Mac (Intel)</a>
           </div>
           <p class="fine">Free to try. macOS 12 or later. Windows and Linux are on the way.</p>
+          <div class="demo-picker" id="demo-picker" role="tablist" aria-label="Choose a platform to see an example"></div>
           <div class="demo-wrap" id="demo" aria-label="A demonstration of Mirg: a game is described in the chat, the agent builds it step by step, and the game appears and is played on the right">
             <div class="demo-stage">
               <div class="m-top">
                 <span class="m-home" aria-hidden="true"></span>
-                <span class="m-name">fox-platformer</span>
-                <span class="m-badge">Web game</span>
+                <span class="m-name" id="m-name">fox-platformer</span>
+                <span class="m-badge" id="m-badge">Web game</span>
                 <span class="m-tabs" aria-hidden="true"><b>Game</b><span>Code</span><span>Assets</span></span>
-                <span class="m-right" aria-hidden="true"><span class="m-pill">Desktop ▾</span><span class="m-run" id="m-run">▶ Run</span><span class="m-ico"></span><span class="m-ico"></span></span>
+                <span class="m-right" aria-hidden="true"><span class="m-pill" id="m-device">Desktop ▾</span><span class="m-run" id="m-run">▶ Run</span><span class="m-ico"></span><span class="m-ico"></span></span>
               </div>
               <div class="m-body">
                 <div class="m-chat">
@@ -58,6 +59,7 @@
                   <div class="m-game">
                     <div class="m-empty" id="m-empty"><strong>Your game will appear here</strong><span>Describe the game in the chat and the agent will build and start it.</span></div>
                     <iframe id="m-frame" title="The game the agent built" data-src="demo/index.html" tabindex="-1" aria-hidden="true"></iframe>
+                    <figure class="m-window" id="m-window" hidden><figcaption id="m-window-title"></figcaption><img id="m-window-img" alt="" /></figure>
                     <div class="m-cover" id="m-cover" hidden><span class="m-spin"></span><strong>The agent is building and testing your game</strong><span>It will appear here, ready to play, when the agent is done.</span></div>
                   </div>
                   <div class="m-console"><div class="m-console-tabs"><b>CONSOLE</b><span>TERMINAL</span></div><div class="m-log" id="m-log">Game output and errors appear here.</div></div>
@@ -65,7 +67,7 @@
               </div>
             </div>
           </div>
-          <p class="fine demo-note">A demonstration using a real game made with Mirg. <button class="linklike" id="demo-replay" type="button">Replay</button> · <a href="demo/index.html">Play this game yourself</a></p>
+          <p class="fine demo-note"><span id="demo-caption">A demonstration using a real game made with Mirg.</span> <button class="linklike" id="demo-replay" type="button">Replay</button><span id="demo-play-link"> · <a href="demo/index.html">Play this game yourself</a></span></p>
         </div>
       </section>
 
@@ -163,6 +165,6 @@
         <span data-version></span>
       </div>
     </footer>
-    <script src="site.js?v=9"></script>
+    <script src="site.js?v=13"></script>
   </body>
 </html>

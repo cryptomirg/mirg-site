@@ -17,7 +17,7 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
 // ---------- touch controls ----------
-const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || new URLSearchParams(location.search).has('touch');
 if (isTouch) document.body.classList.add('touch');
 document.querySelectorAll('.btn').forEach(btn => {
   const code = btn.dataset.key;

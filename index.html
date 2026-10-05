@@ -11,7 +11,7 @@
     <meta property="og:type" content="website" />
     <meta name="theme-color" content="#0e0f14" />
     <link rel="icon" href="assets/icon.png" />
-    <link rel="stylesheet" href="styles.css?v=10" />
+    <link rel="stylesheet" href="styles.css?v=12" />
   </head>
   <body>
     <header class="site">
@@ -21,7 +21,7 @@
           <a class="hide-small" href="index.html#how">How it works</a>
           <a class="hide-small" href="index.html#engines">Engines</a>
           <a href="pricing.html">Pricing</a>
-          <a class="btn primary small" href="index.html#download">Download</a>
+          <a class="btn primary small" href="download.html">Download</a>
         </nav>
       </div>
     </header>
@@ -31,11 +31,11 @@
         <div class="wrap">
           <h1>Describe a game.<br />Play it a minute later.</h1>
           <p class="lead">Mirg is a desktop app where an AI agent writes your game, runs it, and plays it to check that it works. You say what you want; the game appears next to the chat.</p>
-          <div class="cta">
-            <a class="btn primary" data-download="mac-arm64" href="https://github.com/cryptomirg/mirg-releases/releases/latest">Download for Mac (Apple Silicon)</a>
-            <a class="btn" data-download="mac-x64" href="https://github.com/cryptomirg/mirg-releases/releases/latest">Mac (Intel)</a>
+          <div class="cta" data-cta>
+            <a class="btn primary" data-download="auto" href="download.html">Download for Mac</a>
+            <button class="btn" type="button" data-demo-open>Request a demo</button>
           </div>
-          <p class="fine">Free to try. macOS 12 or later. Windows and Linux are on the way.</p>
+          <p class="fine"><span data-platform-note>Free to try. macOS 12 or later.</span> <a href="download.html">All downloads</a></p>
           <div class="demo-wrap" id="demo" aria-label="A demonstration of Mirg: a game is described in the chat, the agent builds it step by step, and the game appears and is played on the right">
             <div class="demo-stage">
               <div class="m-top">
@@ -148,14 +148,33 @@
         <div class="wrap">
           <h2>Make your first game today</h2>
           <p class="sub" style="margin-left:auto;margin-right:auto">Download Mirg, sign in with your email, and describe a game. There is nothing else to set up.</p>
-          <div class="cta">
-            <a class="btn primary" data-download="mac-arm64" href="https://github.com/cryptomirg/mirg-releases/releases/latest">Download for Mac (Apple Silicon)</a>
-            <a class="btn" data-download="mac-x64" href="https://github.com/cryptomirg/mirg-releases/releases/latest">Mac (Intel)</a>
+          <div class="cta" data-cta>
+            <a class="btn primary" data-download="auto" href="download.html">Download for Mac</a>
+            <button class="btn" type="button" data-demo-open>Request a demo</button>
           </div>
-          <p class="fine">Free to try. macOS 12 or later. Windows and Linux are on the way.</p>
+          <p class="fine"><span data-platform-note>Free to try. macOS 12 or later.</span> <a href="download.html">All downloads</a></p>
         </div>
       </section>
     </main>
+
+    <dialog class="demo-form" id="demo-form" aria-labelledby="demo-form-title">
+      <form method="dialog" id="demo-request">
+        <button class="demo-form-close" type="button" data-demo-close aria-label="Close">×</button>
+        <h2 id="demo-form-title">Request a demo</h2>
+        <p class="sub">For teams, studios and schools. Tell us a little about what you have in mind and we will get back to you by email.</p>
+        <label>Your name<input name="name" required maxlength="120" autocomplete="name" /></label>
+        <label>Email<input name="email" type="email" required maxlength="200" autocomplete="email" /></label>
+        <label>Company, studio or school <span>(optional)</span><input name="organisation" maxlength="200" autocomplete="organization" /></label>
+        <label>What would you like to see? <span>(optional)</span><textarea name="message" rows="4" maxlength="2000"></textarea></label>
+        <label class="demo-form-trap" aria-hidden="true">Leave this empty<input name="website" tabindex="-1" autocomplete="off" /></label>
+        <p class="demo-form-status" id="demo-form-status" role="status"></p>
+        <div class="demo-form-actions">
+          <button class="btn" type="button" data-demo-close>Cancel</button>
+          <button class="btn primary" type="submit">Send request</button>
+        </div>
+        <p class="fine">We use what you send only to reply to you. See the <a href="privacy.html">privacy policy</a>.</p>
+      </form>
+    </dialog>
     <footer class="site">
       <div class="wrap">
         <span>© 2026 Mirg</span>
@@ -167,6 +186,6 @@
         <span data-version></span>
       </div>
     </footer>
-    <script src="site.js?v=14"></script>
+    <script src="site.js?v=15"></script>
   </body>
 </html>

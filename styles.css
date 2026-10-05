@@ -985,3 +985,169 @@ footer.site .spacer {
 [hidden] {
   display: none !important;
 }
+
+/* ---------- downloads and the demo request form ---------- */
+
+.muted {
+  color: var(--muted);
+}
+
+.plan p.muted {
+  margin: 6px 0 0;
+  font-size: 15px;
+}
+
+.plan.current {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 1px var(--accent-strong) inset;
+}
+
+.plans.downloads {
+  grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+}
+
+.plans.downloads .plan {
+  padding: 22px;
+}
+
+.plan.current h3::after {
+  content: 'Your computer';
+  display: block;
+  width: fit-content;
+  margin: 6px 0 0;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--accent-soft);
+  color: #b9a6ff;
+}
+
+.plan.soon {
+  opacity: 0.75;
+}
+
+.plan ul.plain li {
+  padding-left: 0;
+  color: var(--muted);
+}
+
+.plan ul.plain li::before {
+  content: none;
+}
+
+.btn.disabled {
+  cursor: default;
+  color: var(--muted);
+  background: transparent;
+  border-style: dashed;
+}
+
+.demo-form {
+  width: min(520px, calc(100vw - 32px));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--panel);
+  color: var(--text);
+  padding: 0;
+}
+
+.demo-form::backdrop {
+  background: rgba(5, 6, 10, 0.7);
+}
+
+.demo-form form {
+  position: relative;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.demo-form h2 {
+  font-size: 24px;
+  margin: 0;
+}
+
+.demo-form .sub {
+  margin: 0 0 4px;
+  font-size: 15.5px;
+}
+
+.demo-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.demo-form label span {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.demo-form input,
+.demo-form textarea {
+  font: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.demo-form input:focus,
+.demo-form textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* A field people never see; automated form-fillers fill it in and give themselves away. */
+.demo-form-trap {
+  position: absolute;
+  left: -9999px;
+  height: 0;
+  overflow: hidden;
+}
+
+.demo-form-status {
+  margin: 0;
+  min-height: 1.5em;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.demo-form-status.ok {
+  color: var(--ok);
+}
+
+.demo-form-status.bad {
+  color: #ff8a96;
+}
+
+.demo-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.demo-form-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.demo-form .fine {
+  margin: 0;
+}

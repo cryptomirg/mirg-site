@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Download · Mirg</title>
+    <meta name="description" content="Download Mirg for Mac. Windows and Linux are on the way." />
+    <meta property="og:title" content="Download · Mirg" />
+    <meta property="og:description" content="Mirg is a desktop app where an AI agent builds your game, runs it, and plays it to check that it works. Free to try on Mac." />
+    <meta property="og:image" content="https://mirg.ai/assets/app-platformer.png" />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#0e0f14" />
+    <link rel="icon" href="assets/icon.png" />
+    <link rel="stylesheet" href="styles.css?v=12" />
+  </head>
+  <body>
+    <header class="site">
+      <div class="wrap">
+        <a class="logo" href="index.html"><img src="assets/icon.png" alt="" />Mirg</a>
+        <nav>
+          <a class="hide-small" href="index.html#how">How it works</a>
+          <a class="hide-small" href="index.html#engines">Engines</a>
+          <a href="pricing.html">Pricing</a>
+          <a class="btn primary small" href="download.html">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" style="padding-bottom:20px">
+        <div class="wrap">
+          <h1>Download Mirg</h1>
+          <p class="lead">Free to try. Sign in with your email and describe a game.</p>
+        </div>
+      </section>
+      <section style="padding-top:20px">
+        <div class="wrap">
+          <div class="plans downloads">
+            <div class="plan" data-platform="mac-arm64">
+              <h3>Mac with Apple Silicon</h3>
+              <p class="muted">M1, M2, M3, M4 and later. Most Macs made since late 2020.</p>
+              <ul><li>macOS 12 or later</li><li>Updates itself</li></ul>
+              <a class="btn primary" data-download="mac-arm64" href="https://github.com/cryptomirg/mirg-releases/releases/latest">Download</a>
+            </div>
+            <div class="plan" data-platform="mac-x64">
+              <h3>Mac with Intel</h3>
+              <p class="muted">Macs made before late 2020.</p>
+              <ul><li>macOS 12 or later</li><li>Updates itself</li></ul>
+              <a class="btn primary" data-download="mac-x64" href="https://github.com/cryptomirg/mirg-releases/releases/latest">Download</a>
+            </div>
+            <div class="plan soon" data-platform="windows">
+              <h3>Windows</h3>
+              <p class="muted">Windows 10 and 11.</p>
+              <ul class="plain"><li>In the works</li></ul>
+              <span class="btn disabled" aria-disabled="true">Coming soon</span>
+            </div>
+            <div class="plan soon" data-platform="linux">
+              <h3>Linux</h3>
+              <p class="muted">AppImage and .deb.</p>
+              <ul class="plain"><li>In the works</li></ul>
+              <span class="btn disabled" aria-disabled="true">Coming soon</span>
+            </div>
+          </div>
+          <p class="fine center" data-version style="margin-top:22px"></p>
+
+          <div class="faq narrow" style="margin-top:40px">
+            <h2>Installing on a Mac</h2>
+            <h3>Not sure which Mac you have?</h3>
+            <p>Click the Apple menu at the top left of your screen and choose About This Mac. If it says "Chip: Apple M…", pick Apple Silicon. If it says "Processor: Intel", pick Intel.</p>
+            <h3>Steps</h3>
+            <p>Open the file you downloaded, drag Mirg into the Applications folder, then open Mirg from Applications. The first time, macOS asks whether you are sure you want to open an app downloaded from the internet; choose Open.</p>
+            <h3>Using other engines</h3>
+            <p>Web and phone games need nothing else. For Godot, Unity, Roblox and the rest, Mirg shows what is installed and how to get what is missing, under "See what's installed" on its home screen.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="site">
+      <div class="wrap">
+        <span>© 2026 Mirg</span>
+        <a href="pricing.html">Pricing</a>
+        <a href="terms.html">Terms</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="mailto:support@mirg.ai">support@mirg.ai</a>
+        <span class="spacer"></span>
+        <span data-version></span>
+      </div>
+    </footer>
+    <script src="site.js?v=15"></script>
+  </body>
+</html>

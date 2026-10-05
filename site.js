@@ -1,27 +1,69 @@
-// Points the download buttons at the newest release. The installers are published on GitHub
-// under names that include the version, so the newest one is looked up when the page opens.
-// If that fails (offline, or GitHub is unreachable), the buttons lead to the releases page.
+// Download buttons. The installers are published on GitHub under names that include the
+// version, so the newest one is looked up when the page opens. The main button offers the
+// download for the computer the visitor is on. If the lookup fails (offline, or GitHub is
+// unreachable), every button leads to the page of releases instead.
 ;(function () {
   var REPO = 'cryptomirg/mirg-releases'
   var fallback = 'https://github.com/' + REPO + '/releases/latest'
-  var links = document.querySelectorAll('[data-download]')
-  if (!links.length) return
-  links.forEach(function (a) {
-    a.href = fallback
-  })
-  fetch('https://api.github.com/repos/' + REPO + '/releases/latest')
+
+  // What kind of computer is this? Returns 'mac-arm64', 'mac-x64', 'windows', 'linux' or 'mobile'.
+  function detect() {
+    var ua = navigator.userAgent || ''
+    var data = navigator.userAgentData
+    var touchMac = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1 // an iPad pretending to be a Mac
+    if (/Android|iPhone|iPad|iPod/.test(ua) || touchMac || (data && data.mobile)) return Promise.resolve('mobile')
+    if (/Windows/.test(ua)) return Promise.resolve('windows')
+    if (/Macintosh|Mac OS X/.test(ua)) {
+      // Browsers on every Mac say "Intel" for compatibility, so the processor is found another way.
+      if (data && data.getHighEntropyValues) {
+        return data
+          .getHighEntropyValues(['architecture'])
+          .then(function (v) {
+            return v.architecture === 'x86' ? 'mac-x64' : 'mac-arm64'
+          })
+          .catch(function () {
+            return 'mac-arm64'
+          })
+      }
+      try {
+        var gl = document.createElement('canvas').getContext('webgl')
+        var info = gl && gl.getExtension('WEBGL_debug_renderer_info')
+        var renderer = info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : ''
+        if (/Intel|AMD|Radeon|NVIDIA/i.test(renderer)) return Promise.resolve('mac-x64')
+      } catch (e) {}
+      // Apple Silicon is the safe guess: it is most Macs in use, and its installer says so if wrong.
+      return Promise.resolve('mac-arm64')
+    }
+    if (/Linux|X11|CrOS/.test(ua)) return Promise.resolve('linux')
+    return Promise.resolve('mac-arm64')
+  }
+
+  var NAMES = { 'mac-arm64': 'Download for Mac', 'mac-x64': 'Download for Mac (Intel)' }
+  var NOTES = {
+    'mac-arm64': 'Free to try. For Macs with Apple Silicon, macOS 12 or later.',
+    'mac-x64': 'Free to try. For Intel Macs, macOS 12 or later.',
+    windows: 'Mirg is on Mac today. The Windows version is in the works.',
+    linux: 'Mirg is on Mac today. The Linux version is in the works.',
+    mobile: 'Mirg is an app for your computer. Open mirg.ai on a Mac to download it.'
+  }
+
+  var releaseUrls = fetch('https://api.github.com/repos/' + REPO + '/releases/latest')
     .then(function (r) {
       return r.ok ? r.json() : null
     })
     .then(function (release) {
-      if (!release) return
+      if (!release) return {}
       var find = function (test) {
         var asset = (release.assets || []).find(function (a) {
           return test(a.name)
         })
         return asset ? asset.browser_download_url : null
       }
-      var urls = {
+      var version = (release.tag_name || '').replace(/^v/, '')
+      document.querySelectorAll('[data-version]').forEach(function (el) {
+        if (version) el.textContent = 'Version ' + version
+      })
+      return {
         'mac-arm64': find(function (n) {
           return /-arm64\.dmg$/.test(n)
         }),
@@ -29,16 +71,100 @@
           return /\.dmg$/.test(n) && !/arm64/.test(n)
         })
       }
-      links.forEach(function (a) {
-        var url = urls[a.getAttribute('data-download')]
-        if (url) a.href = url
-      })
-      var version = (release.tag_name || '').replace(/^v/, '')
-      document.querySelectorAll('[data-version]').forEach(function (el) {
-        if (version) el.textContent = 'Version ' + version
+    })
+    .catch(function () {
+      return {}
+    })
+
+  Promise.all([detect(), releaseUrls]).then(function (found) {
+    var platform = found[0]
+    var urls = found[1]
+    document.querySelectorAll('[data-download]').forEach(function (a) {
+      var want = a.getAttribute('data-download')
+      if (want !== 'auto') {
+        a.href = urls[want] || fallback
+        return
+      }
+      if (NAMES[platform]) {
+        a.textContent = NAMES[platform]
+        a.href = urls[platform] || fallback
+      } else {
+        // Nothing to download for this device yet: lead to the list of what exists.
+        a.textContent = platform === 'mobile' ? 'See downloads' : 'See all downloads'
+        a.href = 'download.html'
+      }
+    })
+    document.querySelectorAll('[data-platform-note]').forEach(function (el) {
+      el.textContent = NOTES[platform] || NOTES['mac-arm64']
+    })
+    document.querySelectorAll('[data-platform="' + platform + '"]').forEach(function (el) {
+      el.classList.add('current')
+    })
+  })
+})()
+
+// "Request a demo": a short form, saved to Mirg's database. The key below is the public one
+// that the app itself ships with; it can add a request and cannot read any.
+;(function () {
+  var dialog = document.getElementById('demo-form')
+  if (!dialog) return
+  var form = document.getElementById('demo-request')
+  var status = document.getElementById('demo-form-status')
+  var API = 'https://dlnmbeqdtpyjkprkxfvt.supabase.co/rest/v1/demo_requests'
+  var KEY = 'sb_publishable_RTQ8CSTfuHByAw1-_bbqag_NX0-kQhp'
+
+  document.querySelectorAll('[data-demo-open]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      status.textContent = ''
+      status.className = 'demo-form-status'
+      dialog.showModal ? dialog.showModal() : dialog.setAttribute('open', '')
+    })
+  })
+  document.querySelectorAll('[data-demo-close]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      dialog.close ? dialog.close() : dialog.removeAttribute('open')
+    })
+  })
+  dialog.addEventListener('click', function (e) {
+    if (e.target === dialog) dialog.close()
+  })
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault()
+    var data = new FormData(form)
+    var send = form.querySelector('[type="submit"]')
+    var done = function () {
+      status.textContent = 'Thank you. We will be in touch by email.'
+      status.className = 'demo-form-status ok'
+      form.reset()
+    }
+    // The hidden field is only ever filled in by automated form-fillers: thank them and send nothing.
+    if (data.get('website')) return done()
+    send.disabled = true
+    status.textContent = 'Sending…'
+    status.className = 'demo-form-status'
+    fetch(API, {
+      method: 'POST',
+      headers: { apikey: KEY, authorization: 'Bearer ' + KEY, 'content-type': 'application/json', prefer: 'return=minimal' },
+      body: JSON.stringify({
+        name: String(data.get('name') || '').trim(),
+        email: String(data.get('email') || '').trim(),
+        organisation: String(data.get('organisation') || '').trim() || null,
+        message: String(data.get('message') || '').trim() || null
       })
     })
-    .catch(function () {})
+      .then(function (r) {
+        if (!r.ok) throw new Error(String(r.status))
+        done()
+      })
+      .catch(function () {
+        status.innerHTML = 'That did not send. Please email <a href="mailto:support@mirg.ai">support@mirg.ai</a> instead.'
+        status.className = 'demo-form-status bad'
+      })
+      .then(function () {
+        send.disabled = false
+      })
+  })
 })()
 
 // The demonstration on the home page: a short film of the app at work, acted out with the real

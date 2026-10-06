@@ -76,6 +76,10 @@
         }),
         'mac-x64': find(function (n) {
           return /\.dmg$/.test(n) && !/arm64/.test(n)
+        }),
+        // Present only once a release includes the Windows installer; the page changes itself when it does.
+        windows: find(function (n) {
+          return /Setup.*\.exe$/.test(n)
         })
       }
     })
@@ -86,6 +90,25 @@
   Promise.all([detect(), releaseUrls]).then(function (found) {
     var platform = found[0]
     var urls = found[1]
+    if (urls.windows) {
+      NAMES.windows = 'Download for Windows'
+      NOTES.windows = 'Free to try. For Windows 10 and 11.'
+      NOTES.mobile = 'Mirg is an app for your computer. Open mirg.ai on a Mac or a Windows PC to download it.'
+      document.querySelectorAll('.plan[data-platform="windows"]').forEach(function (card) {
+        card.classList.remove('soon')
+        var list = card.querySelector('ul')
+        if (list) {
+          list.className = ''
+          list.innerHTML = '<li>Windows 10 or 11</li><li>Updates itself</li>'
+        }
+        var link = document.createElement('a')
+        link.className = 'btn primary'
+        link.href = urls.windows
+        link.textContent = 'Download'
+        var old = card.querySelector('.btn')
+        if (old) old.replaceWith(link)
+      })
+    }
     document.querySelectorAll('[data-download]').forEach(function (a) {
       var want = a.getAttribute('data-download')
       if (want !== 'auto') {

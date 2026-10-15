@@ -99,7 +99,7 @@
         var list = card.querySelector('ul')
         if (list) {
           list.className = ''
-          list.innerHTML = '<li>Windows 10 or 11</li><li>Updates itself</li>'
+          list.innerHTML = '<li>Windows 10 or 11</li><li>Updates itself</li><li>If Windows says it protected your PC, choose More info, then Run anyway</li>'
         }
         var link = document.createElement('a')
         link.className = 'btn primary'

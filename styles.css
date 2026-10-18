@@ -1,13 +1,13 @@
 :root {
-  --bg: #0e0f14;
-  --panel: #14161d;
-  --panel-2: #1a1d26;
-  --border: #262a36;
-  --text: #e7e9ef;
-  --muted: #9aa0b2;
-  --accent: #8b6cff;
-  --accent-strong: #7a58ff;
-  --accent-soft: rgba(139, 108, 255, 0.14);
+  --bg: #0a0a0a;
+  --panel: #181818;
+  --panel-2: #1f1f1f;
+  --border: #2d2d2d;
+  --text: #ededed;
+  --muted: #a4a4a4;
+  --accent: #ffffff;
+  --accent-strong: #ededed;
+  --accent-soft: rgba(255, 255, 255, 0.08);
   --ok: #58d68d;
 }
 
@@ -28,7 +28,7 @@ body {
 }
 
 a {
-  color: #b9a6ff;
+  color: #e5e5e5;
 }
 
 img {
@@ -121,13 +121,13 @@ header.site nav a:hover {
 }
 
 .btn:hover {
-  border-color: #3a4052;
+  border-color: #444444;
 }
 
 .btn.primary {
   background: var(--accent-strong);
   border-color: var(--accent-strong);
-  color: #fff;
+  color: #0a0a0a;
 }
 
 .btn.primary:hover {
@@ -144,7 +144,7 @@ header.site nav a:hover {
 .hero {
   padding: 76px 0 40px;
   text-align: center;
-  background: radial-gradient(900px 420px at 50% -60px, rgba(122, 88, 255, 0.22), transparent 70%);
+  background: none;
 }
 
 .hero h1 {
@@ -281,7 +281,7 @@ section.alt .card {
   padding: 2px 8px;
   border-radius: 99px;
   background: var(--accent-soft);
-  color: #b9a6ff;
+  color: #e5e5e5;
   margin-left: 6px;
   vertical-align: 1px;
 }
@@ -479,7 +479,7 @@ footer.site .spacer {
 }
 
 .demo-picker button[aria-selected='true'] {
-  color: #fff;
+  color: #0a0a0a;
   background: var(--accent-strong);
   border-color: var(--accent-strong);
 }
@@ -529,7 +529,7 @@ footer.site .spacer {
 .m-ico {
   width: 15px;
   height: 15px;
-  border: 1.5px solid #6a7085;
+  border: 1.5px solid #757575;
   border-radius: 4px;
   flex: none;
 }
@@ -543,7 +543,7 @@ footer.site .spacer {
   padding: 1px 8px;
   border-radius: 99px;
   background: var(--accent-soft);
-  color: #b9a6ff;
+  color: #e5e5e5;
 }
 
 .m-tabs {
@@ -647,7 +647,7 @@ footer.site .spacer {
   align-self: flex-end;
   max-width: 92%;
   background: var(--accent-soft);
-  border: 1px solid rgba(139, 108, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.21);
   border-radius: 12px 12px 3px 12px;
   padding: 7px 10px;
 }
@@ -730,7 +730,7 @@ footer.site .spacer {
 }
 
 .m-placeholder {
-  color: #5d6376;
+  color: #676767;
 }
 
 .m-caret::after {
@@ -770,7 +770,7 @@ footer.site .spacer {
   flex: none;
   white-space: nowrap;
   background: var(--accent-strong);
-  color: #fff;
+  color: #0a0a0a;
   border-radius: 7px;
   padding: 4px 11px;
   font-weight: 600;
@@ -798,7 +798,7 @@ footer.site .spacer {
   flex: 1;
   min-height: 0;
   position: relative;
-  background: #0b0c11;
+  background: #0d0d0d;
   display: grid;
   place-items: center;
 }
@@ -820,9 +820,9 @@ footer.site .spacer {
 /* Phone preview: the game sits in a device frame, as in the app. */
 .m-game.phone iframe {
   width: 82%;
-  border: 7px solid #23262f;
+  border: 7px solid #282828;
   border-radius: 26px;
-  background: #000;
+  background: #000000;
 }
 
 /* The preview steps back when another window comes to the front. */
@@ -835,10 +835,10 @@ footer.site .spacer {
   position: absolute;
   margin: 0;
   width: 66%;
-  border: 1px solid #3a3f4f;
+  border: 1px solid #434343;
   border-radius: 12px;
   overflow: hidden;
-  background: #1c1e26;
+  background: #202020;
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7);
   animation: m-in 0.35s ease both;
 }
@@ -848,7 +848,7 @@ footer.site .spacer {
   font-size: 11.5px;
   color: var(--muted);
   text-align: center;
-  border-bottom: 1px solid #2c303c;
+  border-bottom: 1px solid #333333;
 }
 
 .m-window img {
@@ -932,7 +932,7 @@ footer.site .spacer {
   border: 0;
   padding: 0;
   font: inherit;
-  color: #b9a6ff;
+  color: #e5e5e5;
   text-decoration: underline;
   cursor: pointer;
 }
@@ -1021,7 +1021,7 @@ footer.site .spacer {
   padding: 2px 8px;
   border-radius: 99px;
   background: var(--accent-soft);
-  color: #b9a6ff;
+  color: #e5e5e5;
 }
 
 .plan.soon {
@@ -1209,7 +1209,7 @@ footer.site .spacer {
 .prompt {
   margin: 0 0 18px;
   padding: 14px 18px;
-  border: 1px solid rgba(139, 108, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.21);
   border-radius: 14px 14px 4px 14px;
   background: var(--accent-soft);
   color: var(--text);
@@ -1248,7 +1248,7 @@ footer.site .spacer {
 }
 
 .others a:hover {
-  border-color: #3a4052;
+  border-color: #444444;
 }
 
 /* On the home page, a platform's tile is a link to its page. */

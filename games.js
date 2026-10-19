@@ -1,7 +1,7 @@
 // The games page: every shared game whose maker chose to show it here, newest first.
 // The list comes from Mirg's database (a public, read-only list); each game plays on its own page.
 ;(function () {
-  var API = 'https://dlnmbeqdtpyjkprkxfvt.supabase.co/rest/v1/public_games?select=slug,title,updated_at&limit=120'
+  var API = 'https://dlnmbeqdtpyjkprkxfvt.supabase.co/rest/v1/public_games?select=slug,title,updated_at,plays&limit=120'
   var KEY = 'sb_publishable_RTQ8CSTfuHByAw1-_bbqag_NX0-kQhp'
   var PLAY_HOST = 'https://mirg-play.miladmirghahari.workers.dev'
   var grid = document.getElementById('games-grid')
@@ -26,6 +26,11 @@
     var name = document.createElement('div')
     name.className = 'game-name'
     name.textContent = game.title
+    var plays = document.createElement('span')
+    plays.className = 'game-plays'
+    var n = Number(game.plays) || 0
+    plays.textContent = n === 1 ? '1 play' : n.toLocaleString() + ' plays'
+    name.appendChild(plays)
     a.appendChild(pic)
     a.appendChild(name)
     return a

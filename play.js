@@ -11,6 +11,21 @@
     frame.hidden = true
     missing.hidden = false
   }
+  // One play per visitor per game per day, so reloading the page does not add to the count.
+  function countPlay() {
+    var key = 'mirg-played-' + name
+    var today = new Date().toISOString().slice(0, 10)
+    try {
+      if (localStorage.getItem(key) === today) return
+      localStorage.setItem(key, today)
+    } catch (e) {}
+    var KEY = 'sb_publishable_RTQ8CSTfuHByAw1-_bbqag_NX0-kQhp'
+    fetch('https://dlnmbeqdtpyjkprkxfvt.supabase.co/rest/v1/rpc/count_play', {
+      method: 'POST',
+      headers: { apikey: KEY, authorization: 'Bearer ' + KEY, 'content-type': 'application/json' },
+      body: JSON.stringify({ game: name })
+    }).catch(function () {})
+  }
   if (!/^[a-z0-9-]{3,64}$/.test(name)) return gone()
   var base = PLAY_HOST + '/' + name + '/'
   fetch(base + 'mirg-share.json')
@@ -23,6 +38,7 @@
       title.textContent = t
       document.title = t + ' · Made with Mirg'
       frame.src = base
+      countPlay()
     })
     .catch(gone)
   document.getElementById('play-full').addEventListener('click', function () {

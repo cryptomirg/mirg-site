@@ -1301,6 +1301,45 @@ footer.site .spacer {
   border: 0;
   display: block;
 }
+.play-frame.filled {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  max-height: none;
+  aspect-ratio: auto;
+  height: 100dvh;
+  border: 0;
+  border-radius: 0;
+}
+html.play-filled,
+html.play-filled body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+.play-exit {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top));
+  right: calc(10px + env(safe-area-inset-right));
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+@media (max-width: 700px) {
+  .play-head {
+    padding: 24px 0 12px;
+  }
+  .play-frame {
+    aspect-ratio: 3 / 4;
+    max-height: 72svh;
+  }
+}
 .play-missing {
   position: absolute;
   inset: 0;

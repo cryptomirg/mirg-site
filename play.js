@@ -41,9 +41,18 @@
       countPlay()
     })
     .catch(gone)
+  // iPhones have no full screen for a page element, so there the game fills the window instead.
+  var box = document.getElementById('play-frame')
+  var exit = document.getElementById('play-exit')
+  function fill(on) {
+    box.classList.toggle('filled', on)
+    document.documentElement.classList.toggle('play-filled', on)
+    exit.hidden = !on
+  }
   document.getElementById('play-full').addEventListener('click', function () {
-    var el = document.getElementById('play-frame')
-    if (el.requestFullscreen) el.requestFullscreen()
-    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen()
+    if (box.requestFullscreen) box.requestFullscreen().catch(function () { fill(true) })
+    else if (box.webkitRequestFullscreen) box.webkitRequestFullscreen()
+    else fill(true)
   })
+  exit.addEventListener('click', function () { fill(false) })
 })()

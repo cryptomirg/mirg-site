@@ -1264,3 +1264,70 @@ footer.site .spacer {
 .engines li a:hover {
   background: rgba(255, 255, 255, 0.04);
 }
+
+/* ---------- play page: a game someone shared ---------- */
+
+.play-head {
+  padding: 48px 0 18px;
+}
+.play-head h1 {
+  margin: 0;
+  font-size: clamp(30px, 5vw, 48px);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+.play-head .lead {
+  margin: 8px 0 0;
+}
+.play-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 78vh;
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.play-frame:fullscreen {
+  border-radius: 0;
+  max-height: none;
+}
+.play-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+.play-missing {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted);
+  text-align: center;
+  padding: 24px;
+}
+.play-missing strong {
+  color: var(--text);
+  font-size: 20px;
+}
+.play-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 64px;
+  flex-wrap: wrap;
+}
+.play-bar .spacer {
+  flex: 1;
+}
+.play-made {
+  color: var(--muted);
+  font-size: 15px;
+}

@@ -21,6 +21,13 @@
     <link rel="stylesheet" href="styles.css?v=15" />
   </head>
   <body>
+    <script>
+      // A shared game's link written as /play/<name> goes to the play page.
+      ;(function () {
+        var m = /^\/play\/([a-z0-9-]{3,64})\/?$/.exec(location.pathname)
+        if (m) location.replace('/play?g=' + m[1])
+      })()
+    </script>
     <header class="site">
       <div class="wrap">
         <a class="logo" href="/"><img src="assets/icon.png?v=2" alt="" />Mirg</a>

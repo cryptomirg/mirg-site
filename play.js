@@ -26,6 +26,29 @@
       body: JSON.stringify({ game: name })
     }).catch(function () {})
   }
+  // Who made it, if they picked a creator name: "Made with Mirg by @name", linking to their page.
+  function credit() {
+    var KEY = 'sb_publishable_RTQ8CSTfuHByAw1-_bbqag_NX0-kQhp'
+    fetch('https://dlnmbeqdtpyjkprkxfvt.supabase.co/rest/v1/rpc/game_credit', {
+      method: 'POST',
+      headers: { apikey: KEY, authorization: 'Bearer ' + KEY, 'content-type': 'application/json' },
+      body: JSON.stringify({ game: name })
+    })
+      .then(function (r) {
+        return r.ok ? r.json() : []
+      })
+      .then(function (rows) {
+        var who = rows && rows[0]
+        if (!who || !/^[a-z0-9_]{3,20}$/.test(who.handle)) return
+        var sub = document.getElementById('play-sub')
+        sub.textContent = 'Made with Mirg by '
+        var a = document.createElement('a')
+        a.href = '/u/' + who.handle
+        a.textContent = '@' + who.handle
+        sub.appendChild(a)
+      })
+      .catch(function () {})
+  }
   if (!/^[a-z0-9-]{3,64}$/.test(name)) return gone()
   var base = PLAY_HOST + '/' + name + '/'
   fetch(base + 'mirg-share.json')
@@ -39,6 +62,7 @@
       document.title = t + ' · Made with Mirg'
       frame.src = base
       countPlay()
+      credit()
     })
     .catch(gone)
   // iPhones have no full screen for a page element, so there the game fills the window instead.

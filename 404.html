@@ -18,7 +18,7 @@
     <meta name="theme-color" content="#0e0f14" />
     <meta name="robots" content="noindex" />
         <link rel="icon" href="assets/icon.png?v=2" />
-    <link rel="stylesheet" href="styles.css?v=18" />
+    <link rel="stylesheet" href="styles.css?v=19" />
   </head>
   <body>
     <script>
@@ -26,6 +26,9 @@
       ;(function () {
         var m = /^\/play\/([a-z0-9-]{3,64})\/?$/.exec(location.pathname)
         if (m) location.replace('/play?g=' + m[1])
+        // A creator's page, /u/<name>.
+        var u = /^\/u\/([a-zA-Z0-9_]{3,20})\/?$/.exec(location.pathname)
+        if (u) location.replace('/creator?u=' + u[1].toLowerCase())
       })()
     </script>
     <header class="site">

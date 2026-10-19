@@ -1422,6 +1422,24 @@ html.play-filled body {
   font-weight: 600;
   font-size: 15px;
 }
+.game-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.game-by {
+  margin-top: -6px;
+  padding: 0 14px 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.creator-link {
+  margin-top: 16px;
+}
+#play-sub a {
+  color: var(--text);
+}
 .game-plays {
   margin-left: auto;
   flex: none;

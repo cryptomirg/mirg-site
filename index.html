@@ -39,10 +39,10 @@
       <section class="hero">
         <div class="wrap">
           <h1>Describe a game.<br />Play it a minute later.</h1>
-          <p class="lead">Mirg is a desktop app where an AI agent writes your game, runs it, and plays it to check that it works. You say what you want; the game appears next to the chat.</p>
+          <p class="lead">Mirg is a desktop app where an AI agent writes your game, runs it, and plays it to check that it works. When you like it, one click turns it into a link anyone can play, on a computer or a phone.</p>
           <div class="cta" data-cta>
             <a class="btn primary" data-download="auto" href="/download">Download for Mac</a>
-            <button class="btn" type="button" data-demo-open>Request a demo</button>
+            <a class="btn" href="/games">Explore games</a>
           </div>
           <p class="fine"><span data-platform-note>Free to try. macOS 12 or later.</span> <a href="/download">All downloads</a></p>
           <div class="demo-wrap" id="demo" aria-label="A demonstration of Mirg: a game is described in the chat, the agent builds it step by step, and the game appears and is played on the right">
@@ -101,6 +101,11 @@
               <h3>Keep going</h3>
               <p>Play it right there. Ask for a double jump, a new enemy, real artwork. Every message has a Restore button, so nothing is permanent.</p>
             </div>
+            <div class="card">
+              <div class="step">4 · Share</div>
+              <h3>One click, one link</h3>
+              <p>Press Share and get a link anyone can open to play, on a computer or a phone. Nothing for them to install. Put it on <a href="/games">mirg.ai/games</a> too, if you like.</p>
+            </div>
           </div>
         </div>
       </section>
@@ -113,7 +118,7 @@
             <div class="card"><h3>It plays what it builds</h3><p>The agent takes screenshots, presses keys, taps the screen and reads the score, then fixes what is broken. It also tells you what it could not check.</p></div>
             <div class="card"><h3>The game is always in front of you</h3><p>Game in one tab, code in another, files and art in a third. Look under the hood only if you want to.</p></div>
             <div class="card"><h3>Phone games included</h3><p>Preview on an iPhone or Android screen with real touch input, then turn the game into an app that runs in the iOS Simulator or Android emulator.</p></div>
-            <div class="card"><h3>Art on request</h3><p>Starts with clean placeholder shapes so you can play straight away. Ask for real artwork when you are ready.</p></div>
+            <div class="card"><h3>Ship it as a link</h3><p>Other tools stop at code on your computer. Mirg ends with a game people can play: one click gives it a link, its own preview picture when you post it, and a play count.</p></div>
             <div class="card"><h3>Pick your model</h3><p>Claude, GPT and Gemini models, with a simple control for how hard the model thinks. No API keys to manage.</p></div>
             <div class="card"><h3>Your files, on your computer</h3><p>Projects are ordinary folders on your Mac. Open them in any editor, put them in version control, take them anywhere.</p></div>
           </div>
@@ -156,35 +161,15 @@
       <section id="download" class="center">
         <div class="wrap">
           <h2>Make your first game today</h2>
-          <p class="sub" style="margin-left:auto;margin-right:auto">Download Mirg, sign in with your email, and describe a game. There is nothing else to set up.</p>
+          <p class="sub" style="margin-left:auto;margin-right:auto">Download Mirg, sign in with your email, and describe a game. When it is ready, share the link. There is nothing else to set up.</p>
           <div class="cta" data-cta>
             <a class="btn primary" data-download="auto" href="/download">Download for Mac</a>
-            <button class="btn" type="button" data-demo-open>Request a demo</button>
+            <a class="btn" href="/games">Explore games</a>
           </div>
           <p class="fine"><span data-platform-note>Free to try. macOS 12 or later.</span> <a href="/download">All downloads</a></p>
         </div>
       </section>
     </main>
-
-    <dialog class="demo-form" id="demo-form" aria-labelledby="demo-form-title">
-      <form method="dialog" id="demo-request">
-        <button class="demo-form-close" type="button" data-demo-close aria-label="Close">×</button>
-        <h2 id="demo-form-title">Request a demo</h2>
-        <p class="sub">For teams, studios and schools. Tell us a little about what you have in mind and we will get back to you by email.</p>
-        <label>Your name<input name="name" required maxlength="120" autocomplete="name" /></label>
-        <label>Email<input name="email" type="email" required maxlength="200" autocomplete="email" /></label>
-        <label>Company, studio or school <span>(optional)</span><input name="organisation" maxlength="200" autocomplete="organization" /></label>
-        <label>What would you like to see? <span>(optional)</span><textarea name="message" rows="4" maxlength="2000"></textarea></label>
-        <label class="demo-form-trap" aria-hidden="true">Leave this empty<input name="website" tabindex="-1" autocomplete="off" /></label>
-        <div id="demo-captcha"></div>
-        <p class="demo-form-status" id="demo-form-status" role="status"></p>
-        <div class="demo-form-actions">
-          <button class="btn" type="button" data-demo-close>Cancel</button>
-          <button class="btn primary" type="submit">Send request</button>
-        </div>
-        <p class="fine">We use what you send only to reply to you. See the <a href="/privacy">privacy policy</a>.</p>
-      </form>
-    </dialog>
     <footer class="site">
       <div class="wrap">
         <span>© 2026 Mirg</span>

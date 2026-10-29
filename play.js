@@ -65,7 +65,7 @@
       credit()
     })
     .catch(gone)
-  // iPhones have no full screen for a page element, so there the game fills the window instead.
+  // Full screen: real full screen on computers; on phones the game fills the window instead.
   var box = document.getElementById('play-frame')
   var exit = document.getElementById('play-exit')
   function fill(on) {
@@ -74,9 +74,19 @@
     exit.hidden = !on
   }
   document.getElementById('play-full').addEventListener('click', function () {
-    if (box.requestFullscreen) box.requestFullscreen().catch(function () { fill(true) })
-    else if (box.webkitRequestFullscreen) box.webkitRequestFullscreen()
-    else fill(true)
+    // Phones and tablets: fill the screen with the page itself. iPhones report a full screen
+    // command but it only works for videos, so it would silently do nothing.
+    if (matchMedia('(pointer: coarse)').matches || !(box.requestFullscreen || box.webkitRequestFullscreen)) return fill(true)
+    try {
+      var started = box.requestFullscreen ? box.requestFullscreen() : box.webkitRequestFullscreen()
+      if (started && started.catch) started.catch(function () { fill(true) })
+    } catch (e) {
+      return fill(true)
+    }
+    // If the browser accepted the command but did not go full screen, fill the window instead.
+    setTimeout(function () {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) fill(true)
+    }, 600)
   })
   exit.addEventListener('click', function () { fill(false) })
 })()

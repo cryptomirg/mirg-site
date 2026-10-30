@@ -1371,6 +1371,84 @@ html.play-filled body {
   font-size: 15px;
 }
 
+/* ---------- comments under a game ---------- */
+
+.comments {
+  max-width: 720px;
+  margin: 8px 0 72px;
+}
+.comments h2 {
+  margin: 0 0 14px;
+  font-size: 22px;
+}
+.comment-form {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 26px;
+}
+.comment-form input,
+.comment-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+}
+.comment-form textarea {
+  resize: vertical;
+  min-height: 76px;
+}
+.comment-form-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.comment-status {
+  flex: 1;
+  color: var(--muted);
+  font-size: 14px;
+}
+.comment-status.error {
+  color: #ff8a80;
+}
+.comment-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.comment {
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+}
+.comment-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 14px;
+}
+.comment-when {
+  color: var(--muted);
+  font-size: 13px;
+}
+.comment-report {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+.comment p {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.comment-empty {
+  color: var(--muted);
+}
+
 /* ---------- games page ---------- */
 
 .games-grid {

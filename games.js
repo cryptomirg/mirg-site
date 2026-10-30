@@ -4,7 +4,7 @@
 ;(function () {
   var REST = 'https://dlnmbeqdtpyjkprkxfvt.supabase.co/rest/v1/'
   var KEY = 'sb_publishable_RTQ8CSTfuHByAw1-_bbqag_NX0-kQhp'
-  var PLAY_HOST = 'https://mirg-play.miladmirghahari.workers.dev'
+  var PLAY_HOST = 'https://play.mirg.ai'
   var grid = document.getElementById('games-grid')
   var empty = document.getElementById('games-empty')
   var creatorHead = document.getElementById('creator-name')

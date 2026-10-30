@@ -1,7 +1,7 @@
 // The play page: shows a game someone shared from Mirg, by the name in ?g=<name>.
 // The game itself is served from a separate domain, so it never runs on mirg.ai.
 ;(function () {
-  var PLAY_HOST = 'https://mirg-play.miladmirghahari.workers.dev'
+  var PLAY_HOST = 'https://play.mirg.ai'
   var name = new URLSearchParams(location.search).get('g') || ''
   var frame = document.getElementById('play-game')
   var title = document.getElementById('play-title')

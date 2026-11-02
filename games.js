@@ -1,5 +1,5 @@
-// The games page (every shared game whose maker chose to show it, to search and sort, with the
-// most played one on top) and a creator's page at /u/<name> (that creator's shown games, most
+// The games page (every shared game whose maker chose to show it, to search, filter and sort, with
+// the three most played of the last 24 hours on top) and a creator's page at /u/<name> (that creator's shown games, most
 // played first). The lists come from Mirg's database as public, read-only lists; each game plays
 // on its own page.
 ;(function () {
@@ -32,7 +32,7 @@
     img.onerror = function () {
       img.remove()
       pic.classList.add('none')
-      pic.textContent = game.title
+      pic.insertBefore(document.createTextNode(game.title), pic.firstChild)
     }
     pic.appendChild(img)
     return pic
@@ -44,7 +44,13 @@
     by.textContent = 'by @' + game.handle
     return by
   }
-  function card(game, showBy) {
+  function badge(className, text) {
+    var tag = document.createElement('span')
+    tag.className = className
+    tag.textContent = text
+    return tag
+  }
+  function card(game, showBy, rank) {
     var box = document.createElement('div')
     box.className = 'game-card'
     var a = document.createElement('a')
@@ -57,45 +63,16 @@
     title.textContent = game.title
     var plays = document.createElement('span')
     plays.className = 'game-plays'
-    plays.textContent = plural(Number(game.plays) || 0, 'play', 'plays')
+    plays.textContent = rank && game.plays_today ? game.plays_today + ' today' : plural(Number(game.plays) || 0, 'play', 'plays')
     name.appendChild(title)
     name.appendChild(plays)
-    a.appendChild(picture(game))
+    var pic = picture(game)
+    if (rank) pic.appendChild(badge('game-rank', '#' + rank))
+    if (game.category && game.category !== 'Other') pic.appendChild(badge('game-type', game.category))
+    a.appendChild(pic)
     a.appendChild(name)
     box.appendChild(a)
     if (showBy && game.handle) box.appendChild(byline(game))
-    return box
-  }
-  /** The most played game, shown large at the top of the games page. */
-  function spotlightOf(game) {
-    var box = document.createElement('div')
-    box.className = 'game-spotlight'
-    var pic = document.createElement('a')
-    pic.className = 'game-spotlight-pic'
-    pic.href = playPath(game)
-    pic.setAttribute('aria-label', 'Play ' + game.title)
-    pic.appendChild(picture(game))
-    var info = document.createElement('div')
-    info.className = 'game-spotlight-info'
-    var label = document.createElement('span')
-    label.className = 'game-spotlight-label'
-    label.textContent = 'Most played'
-    var title = document.createElement('h2')
-    title.textContent = game.title
-    var plays = document.createElement('span')
-    plays.className = 'game-plays'
-    plays.textContent = plural(Number(game.plays) || 0, 'play', 'plays')
-    var play = document.createElement('a')
-    play.className = 'btn primary'
-    play.href = playPath(game)
-    play.textContent = 'Play now'
-    info.appendChild(label)
-    info.appendChild(title)
-    if (game.handle) info.appendChild(byline(game))
-    info.appendChild(plays)
-    info.appendChild(play)
-    box.appendChild(pic)
-    box.appendChild(info)
     return box
   }
   function show(games, showBy) {
@@ -121,6 +98,34 @@
       .toLowerCase()
   }
 
+  var FIELDS = 'slug,title,created_at,updated_at,plays,plays_today,handle,category'
+  function date(text) {
+    return Date.parse(text) || 0
+  }
+  var SORTS = {
+    new: function (a, b) {
+      return date(b.created_at) - date(a.created_at)
+    },
+    updated: function (a, b) {
+      return date(b.updated_at) - date(a.updated_at)
+    },
+    old: function (a, b) {
+      return date(a.created_at) - date(b.created_at)
+    },
+    plays: function (a, b) {
+      return b.plays - a.plays
+    },
+    today: function (a, b) {
+      return b.plays_today - a.plays_today || b.plays - a.plays
+    },
+    az: function (a, b) {
+      return a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
+    },
+    za: function (a, b) {
+      return b.title.localeCompare(a.title, undefined, { sensitivity: 'base' })
+    }
+  }
+
   placeholders()
 
   if (!creatorHead) {
@@ -128,19 +133,22 @@
     var count = document.getElementById('games-count')
     var none = document.getElementById('games-none')
     var noneText = document.getElementById('games-none-text')
-    var spotlight = document.getElementById('games-spotlight')
-    var sorts = [].slice.call(document.querySelectorAll('[data-sort]'))
+    var topBox = document.getElementById('games-top')
+    var topList = document.getElementById('games-top-list')
+    var sortBox = document.getElementById('games-sort')
+    var typeBox = document.getElementById('games-types')
     var params = new URLSearchParams(location.search)
-    var sort = params.get('sort') === 'plays' ? 'plays' : 'new'
     var games = []
-    var top = null
+    var type = params.get('type') || ''
+    if (SORTS[params.get('sort')]) sortBox.value = params.get('sort')
     search.value = params.get('q') || ''
 
     // The search and sort stay in the address, so a filtered list can be shared or reloaded.
     function remember() {
       var next = new URLSearchParams()
       if (search.value.trim()) next.set('q', search.value.trim())
-      if (sort === 'plays') next.set('sort', 'plays')
+      if (sortBox.value !== 'new') next.set('sort', sortBox.value)
+      if (type) next.set('type', type)
       var query = next.toString()
       try {
         history.replaceState(null, '', location.pathname + (query ? '?' + query : ''))
@@ -150,52 +158,47 @@
       var words = plain(search.value).split(/\s+/).filter(Boolean)
       var found = games.filter(function (g) {
         var text = plain(g.title + ' ' + (g.handle || ''))
-        return words.every(function (w) {
-          return text.indexOf(w) !== -1
-        })
+        return (
+          (!type || g.category === type) &&
+          words.every(function (w) {
+            return text.indexOf(w) !== -1
+          })
+        )
       })
-      found.sort(function (a, b) {
-        return sort === 'plays' ? b.plays - a.plays : b.updated_at.localeCompare(a.updated_at)
-      })
-      var featured = words.length ? null : top
-      spotlight.hidden = !featured
+      found.sort(SORTS[sortBox.value])
+      var filtered = words.length > 0 || Boolean(type)
+      topBox.hidden = filtered || !topList.children.length
       grid.textContent = ''
       found.forEach(function (g) {
-        if (g === featured) return
         g.card = g.card || card(g, true)
         grid.appendChild(g.card)
       })
-      count.textContent = words.length ? found.length + ' of ' + plural(games.length, 'game', 'games') : plural(games.length, 'game', 'games')
+      count.textContent = filtered ? found.length + ' of ' + plural(games.length, 'game', 'games') : plural(games.length, 'game', 'games')
       none.hidden = found.length > 0
-      noneText.textContent = 'No games match "' + search.value.trim() + '".'
-      sorts.forEach(function (b) {
-        b.setAttribute('aria-pressed', String(b.dataset.sort === sort))
+      noneText.textContent = 'No ' + (type ? type + ' ' : '') + 'games' + (words.length ? ' match "' + search.value.trim() + '".' : ' yet.')
+      ;[].forEach.call(typeBox.children, function (b) {
+        b.setAttribute('aria-pressed', String(b.dataset.type === type))
       })
     }
-    search.addEventListener('input', function () {
+    function changed() {
       render()
       remember()
-    })
-    sorts.forEach(function (b) {
-      b.addEventListener('click', function () {
-        sort = b.dataset.sort
-        render()
-        remember()
-      })
-    })
+    }
+    search.addEventListener('input', changed)
+    sortBox.addEventListener('change', changed)
     document.getElementById('games-clear').addEventListener('click', function () {
       search.value = ''
-      render()
-      remember()
+      type = ''
+      changed()
       search.focus()
     })
 
-    get('public_games?select=slug,title,updated_at,plays,handle&limit=1000')
+    get('public_games?select=' + FIELDS + '&limit=1000')
       .then(function (list) {
         games = list
         games.forEach(function (g) {
           g.plays = Number(g.plays) || 0
-          if (g.plays && (!top || g.plays > top.plays)) top = g
+          g.plays_today = Number(g.plays_today) || 0
         })
         if (!games.length) {
           grid.textContent = ''
@@ -203,7 +206,38 @@
           return
         }
         document.getElementById('games-tools').hidden = false
-        if (top) spotlight.appendChild(spotlightOf(top))
+        // Only the types that have games, plus a way back to all of them.
+        var types = games
+          .map(function (g) {
+            return g.category
+          })
+          .filter(function (c, i, all) {
+            return c && c !== 'Other' && all.indexOf(c) === i
+          })
+          .sort()
+        if (types.length) {
+          ;[''].concat(types).forEach(function (t) {
+            var chip = document.createElement('button')
+            chip.type = 'button'
+            chip.textContent = t || 'All'
+            chip.dataset.type = t
+            chip.addEventListener('click', function () {
+              type = t
+              changed()
+            })
+            typeBox.appendChild(chip)
+          })
+          typeBox.hidden = false
+        }
+        // Early on, or on a quiet day, the most played of all time fill any empty places.
+        var top = games.filter(function (g) {
+          return g.plays > 0
+        })
+        top.sort(SORTS.today)
+        top.slice(0, 3).forEach(function (g, i) {
+          topList.appendChild(card(g, true, i + 1))
+        })
+        document.getElementById('games-top-title').textContent = top.length && top[0].plays_today ? 'Top games today' : 'Most played'
         render()
       })
       .catch(function () {
@@ -228,7 +262,7 @@
   try {
     history.replaceState(null, '', '/u/' + handle)
   } catch (e) {}
-  Promise.all([get('public_creators?select=handle,link&handle=eq.' + handle), get('public_games?select=slug,title,updated_at,plays,handle&handle=eq.' + handle + '&order=plays.desc&limit=120')])
+  Promise.all([get('public_creators?select=handle,link&handle=eq.' + handle), get('public_games?select=' + FIELDS + '&handle=eq.' + handle + '&order=plays.desc&limit=120')])
     .then(function (both) {
       var creator = both[0][0]
       var games = both[1]

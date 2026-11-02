@@ -1589,90 +1589,79 @@ html.play-filled body {
   border-color: #6a6a6a;
 }
 .games-sort {
-  display: flex;
+  padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  overflow: hidden;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
 }
-.games-sort button {
-  padding: 10px 14px;
-  border: 0;
+.games-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.games-types[hidden] {
+  display: none;
+}
+.games-types button {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
   background: none;
   color: var(--muted);
   font: inherit;
   font-size: 14px;
   cursor: pointer;
 }
-.games-sort button:hover {
+.games-types button:hover {
   color: var(--text);
 }
-.games-sort button[aria-pressed='true'] {
-  background: var(--accent-soft);
-  color: var(--text);
+.games-types button[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
 }
 .games-count {
   margin-left: auto;
   color: var(--muted);
   font-size: 14px;
 }
-.game-spotlight {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  margin-bottom: 18px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--panel);
-}
-.game-spotlight-pic {
-  display: block;
-  min-width: 0;
-}
-.game-spotlight-pic .game-thumb {
-  height: 100%;
-}
-.game-spotlight-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 10px;
-  padding: 28px;
-  min-width: 0;
-}
-.game-spotlight-info h2 {
-  margin: 0;
-  font-size: 28px;
-  line-height: 1.15;
+.games-top h2 {
+  margin: 8px 0 14px;
+  font-size: 20px;
   letter-spacing: -0.02em;
-  overflow-wrap: anywhere;
 }
-.game-spotlight-label {
-  color: var(--muted);
-  font-size: 13px;
+.games-top .games-grid + h2 {
+  margin-top: 30px;
+}
+.game-thumb {
+  position: relative;
+}
+.game-rank,
+.game-type {
+  position: absolute;
+  padding: 3px 8px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 12px;
   font-weight: 600;
+  letter-spacing: 0;
 }
-.game-spotlight-info .game-by {
-  margin: 0;
-  padding: 0;
-  font-size: 14px;
+.game-rank {
+  top: 8px;
+  left: 8px;
+  font-size: 13px;
 }
-.game-spotlight-info .game-plays {
-  margin: 0;
-}
-.game-spotlight-info .btn {
-  margin-top: 8px;
+.game-type {
+  right: 8px;
+  bottom: 8px;
 }
 @media (max-width: 760px) {
-  .game-spotlight {
-    grid-template-columns: 1fr;
-  }
-  .game-spotlight-info {
-    padding: 18px;
-  }
-  .game-spotlight-info h2 {
-    font-size: 22px;
-  }
   .games-search {
     flex-basis: 100%;
     max-width: none;

@@ -17,7 +17,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#0e0f14" />
             <link rel="icon" href="assets/icon.png?v=2" />
-    <link rel="stylesheet" href="styles.css?v=21" />
+    <link rel="stylesheet" href="styles.css?v=22" />
   </head>
   <body>
     <header class="site">
@@ -46,18 +46,28 @@
             <div class="games-search" role="search">
               <input id="games-search" type="search" placeholder="Search games or creators" aria-label="Search games or creators" autocomplete="off" />
             </div>
-            <div class="games-sort" role="group" aria-label="Sort games">
-              <button type="button" data-sort="new">Newest</button>
-              <button type="button" data-sort="plays">Most played</button>
-            </div>
+            <select class="games-sort" id="games-sort" aria-label="Sort games">
+              <option value="new">Newest</option>
+              <option value="updated">Recently updated</option>
+              <option value="old">Oldest</option>
+              <option value="plays">Most played</option>
+              <option value="today">Most played today</option>
+              <option value="az">A to Z</option>
+              <option value="za">Z to A</option>
+            </select>
             <span class="games-count" id="games-count" role="status"></span>
           </div>
-          <div id="games-spotlight" hidden></div>
+          <div class="games-types" id="games-types" role="group" aria-label="Type of game" hidden></div>
+          <div class="games-top" id="games-top" hidden>
+            <h2 id="games-top-title">Top games today</h2>
+            <div class="games-grid" id="games-top-list"></div>
+            <h2>All games</h2>
+          </div>
           <div class="games-grid" id="games-grid"></div>
           <div class="games-empty" id="games-none" hidden>
             <p id="games-none-text"></p>
             <p>Make it yourself: describe it in Mirg and it could be the first one here.</p>
-            <button type="button" class="btn" id="games-clear">Clear search</button>
+            <button type="button" class="btn" id="games-clear">Clear filters</button>
           </div>
           <p class="games-empty" id="games-empty" hidden>No games here yet. Make one in Mirg, press Share, and tick "Also show it on mirg.ai/games".</p>
           <div class="games-cta">
@@ -79,6 +89,6 @@
       </div>
     </footer>
     <script src="site.js?v=20"></script>
-    <script src="games.js?v=5"></script>
+    <script src="games.js?v=6"></script>
   </body>
 </html>

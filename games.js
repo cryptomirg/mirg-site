@@ -1,6 +1,7 @@
-// The games page (every shared game whose maker chose to show it, newest first) and a creator's
-// page at /u/<name> (that creator's shown games, most played first). The lists come from Mirg's
-// database as public, read-only lists; each game plays on its own page.
+// The games page (every shared game whose maker chose to show it, to search and sort, with the
+// most played one on top) and a creator's page at /u/<name> (that creator's shown games, most
+// played first). The lists come from Mirg's database as public, read-only lists; each game plays
+// on its own page.
 ;(function () {
   var REST = 'https://dlnmbeqdtpyjkprkxfvt.supabase.co/rest/v1/'
   var KEY = 'sb_publishable_RTQ8CSTfuHByAw1-_bbqag_NX0-kQhp'
@@ -10,16 +11,17 @@
   var creatorHead = document.getElementById('creator-name')
   function get(path) {
     return fetch(REST + path, { headers: { apikey: KEY, authorization: 'Bearer ' + KEY } }).then(function (r) {
-      return r.ok ? r.json() : []
+      if (!r.ok) throw new Error('list failed')
+      return r.json()
     })
   }
   function plural(n, one, many) {
     return n === 1 ? '1 ' + one : n.toLocaleString() + ' ' + many
   }
-  function card(game, showBy) {
-    var a = document.createElement('a')
-    a.className = 'game-card'
-    a.href = '/play?g=' + encodeURIComponent(game.slug)
+  function playPath(game) {
+    return '/play?g=' + encodeURIComponent(game.slug)
+  }
+  function picture(game) {
     var pic = document.createElement('div')
     pic.className = 'game-thumb'
     var img = document.createElement('img')
@@ -33,6 +35,21 @@
       pic.textContent = game.title
     }
     pic.appendChild(img)
+    return pic
+  }
+  function byline(game) {
+    var by = document.createElement('a')
+    by.className = 'game-by'
+    by.href = '/u/' + game.handle
+    by.textContent = 'by @' + game.handle
+    return by
+  }
+  function card(game, showBy) {
+    var box = document.createElement('div')
+    box.className = 'game-card'
+    var a = document.createElement('a')
+    a.className = 'game-open'
+    a.href = playPath(game)
     var name = document.createElement('div')
     name.className = 'game-name'
     var title = document.createElement('span')
@@ -43,32 +60,157 @@
     plays.textContent = plural(Number(game.plays) || 0, 'play', 'plays')
     name.appendChild(title)
     name.appendChild(plays)
-    a.appendChild(pic)
+    a.appendChild(picture(game))
     a.appendChild(name)
-    if (showBy && game.handle) {
-      var by = document.createElement('div')
-      by.className = 'game-by'
-      by.textContent = 'by @' + game.handle
-      a.appendChild(by)
-    }
-    return a
+    box.appendChild(a)
+    if (showBy && game.handle) box.appendChild(byline(game))
+    return box
+  }
+  /** The most played game, shown large at the top of the games page. */
+  function spotlightOf(game) {
+    var box = document.createElement('div')
+    box.className = 'game-spotlight'
+    var pic = document.createElement('a')
+    pic.className = 'game-spotlight-pic'
+    pic.href = playPath(game)
+    pic.setAttribute('aria-label', 'Play ' + game.title)
+    pic.appendChild(picture(game))
+    var info = document.createElement('div')
+    info.className = 'game-spotlight-info'
+    var label = document.createElement('span')
+    label.className = 'game-spotlight-label'
+    label.textContent = 'Most played'
+    var title = document.createElement('h2')
+    title.textContent = game.title
+    var plays = document.createElement('span')
+    plays.className = 'game-plays'
+    plays.textContent = plural(Number(game.plays) || 0, 'play', 'plays')
+    var play = document.createElement('a')
+    play.className = 'btn primary'
+    play.href = playPath(game)
+    play.textContent = 'Play now'
+    info.appendChild(label)
+    info.appendChild(title)
+    if (game.handle) info.appendChild(byline(game))
+    info.appendChild(plays)
+    info.appendChild(play)
+    box.appendChild(pic)
+    box.appendChild(info)
+    return box
   }
   function show(games, showBy) {
+    grid.textContent = ''
     if (!games.length) return (empty.hidden = false)
     games.forEach(function (g) {
       grid.appendChild(card(g, showBy))
     })
   }
-  function failed() {
-    empty.hidden = false
+  function placeholders() {
+    for (var i = 0; i < 8; i++) {
+      var box = document.createElement('div')
+      box.className = 'game-card loading'
+      grid.appendChild(box)
+    }
+  }
+  /** Lower case with accents and punctuation gone, so "dont" finds "Don't Fall Off". */
+  function plain(text) {
+    return String(text || '')
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^\p{L}\p{N}\s]/gu, '')
+      .toLowerCase()
   }
 
+  placeholders()
+
   if (!creatorHead) {
-    get('public_games?select=slug,title,updated_at,plays,handle&limit=120')
-      .then(function (games) {
-        show(games, true)
+    var search = document.getElementById('games-search')
+    var count = document.getElementById('games-count')
+    var none = document.getElementById('games-none')
+    var noneText = document.getElementById('games-none-text')
+    var spotlight = document.getElementById('games-spotlight')
+    var sorts = [].slice.call(document.querySelectorAll('[data-sort]'))
+    var params = new URLSearchParams(location.search)
+    var sort = params.get('sort') === 'plays' ? 'plays' : 'new'
+    var games = []
+    var top = null
+    search.value = params.get('q') || ''
+
+    // The search and sort stay in the address, so a filtered list can be shared or reloaded.
+    function remember() {
+      var next = new URLSearchParams()
+      if (search.value.trim()) next.set('q', search.value.trim())
+      if (sort === 'plays') next.set('sort', 'plays')
+      var query = next.toString()
+      try {
+        history.replaceState(null, '', location.pathname + (query ? '?' + query : ''))
+      } catch (e) {}
+    }
+    function render() {
+      var words = plain(search.value).split(/\s+/).filter(Boolean)
+      var found = games.filter(function (g) {
+        var text = plain(g.title + ' ' + (g.handle || ''))
+        return words.every(function (w) {
+          return text.indexOf(w) !== -1
+        })
       })
-      .catch(failed)
+      found.sort(function (a, b) {
+        return sort === 'plays' ? b.plays - a.plays : b.updated_at.localeCompare(a.updated_at)
+      })
+      var featured = words.length ? null : top
+      spotlight.hidden = !featured
+      grid.textContent = ''
+      found.forEach(function (g) {
+        if (g === featured) return
+        g.card = g.card || card(g, true)
+        grid.appendChild(g.card)
+      })
+      count.textContent = words.length ? found.length + ' of ' + plural(games.length, 'game', 'games') : plural(games.length, 'game', 'games')
+      none.hidden = found.length > 0
+      noneText.textContent = 'No games match "' + search.value.trim() + '".'
+      sorts.forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b.dataset.sort === sort))
+      })
+    }
+    search.addEventListener('input', function () {
+      render()
+      remember()
+    })
+    sorts.forEach(function (b) {
+      b.addEventListener('click', function () {
+        sort = b.dataset.sort
+        render()
+        remember()
+      })
+    })
+    document.getElementById('games-clear').addEventListener('click', function () {
+      search.value = ''
+      render()
+      remember()
+      search.focus()
+    })
+
+    get('public_games?select=slug,title,updated_at,plays,handle&limit=1000')
+      .then(function (list) {
+        games = list
+        games.forEach(function (g) {
+          g.plays = Number(g.plays) || 0
+          if (g.plays && (!top || g.plays > top.plays)) top = g
+        })
+        if (!games.length) {
+          grid.textContent = ''
+          empty.hidden = false
+          return
+        }
+        document.getElementById('games-tools').hidden = false
+        if (top) spotlight.appendChild(spotlightOf(top))
+        render()
+      })
+      .catch(function () {
+        grid.textContent = ''
+        empty.textContent = 'The games could not load. Refresh the page to try again.'
+        empty.hidden = false
+      })
     return
   }
 

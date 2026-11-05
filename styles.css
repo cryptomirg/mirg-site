@@ -102,6 +102,10 @@ header.site nav a:hover {
   color: var(--text);
 }
 
+header.site nav .btn {
+  white-space: nowrap;
+}
+
 /* ---------- buttons ---------- */
 
 .btn {
@@ -430,6 +434,15 @@ footer.site .spacer {
 
 @media (max-width: 640px) {
   header.site nav a.hide-small {
+    display: none;
+  }
+  header.site nav {
+    gap: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  header.site nav a.hide-tiny {
     display: none;
   }
   section {

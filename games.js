@@ -259,7 +259,7 @@
   var link = document.getElementById('creator-link')
   function missing() {
     creatorHead.textContent = 'Creator not found'
-    sub.textContent = 'There is no creator by that name, or they have no games on mirg.ai/games yet.'
+    sub.textContent = 'There is no creator by that name, or they have no games on mirg.ai yet.'
     document.getElementById('creator-grid-wrap').hidden = true
   }
   if (!/^[a-z0-9_]{3,20}$/.test(handle)) return missing()

@@ -57,7 +57,8 @@ Each has a real example: the request, what the agent did, how long it took, and 
 
 ## Links
 
-- [Home](https://mirg.ai/): overview and a demonstration
+- [Home](https://mirg.ai/): games people made with Mirg, to play in a browser
+- [About](https://mirg.ai/about): how Mirg works, with a demonstration
 - [Download](https://mirg.ai/download): installers for Mac
 - [Pricing](https://mirg.ai/pricing): plans and common questions
 - [Terms of Service](https://mirg.ai/terms)

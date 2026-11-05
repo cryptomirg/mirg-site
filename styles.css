@@ -193,6 +193,19 @@ section {
   padding: 68px 0;
 }
 
+section.games-home {
+  padding-top: 32px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 section.alt {
   background: var(--panel);
   border-top: 1px solid var(--border);

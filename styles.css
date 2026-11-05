@@ -1544,6 +1544,9 @@ html.play-filled body {
 .game-plays {
   margin-left: auto;
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   color: var(--muted);
   font-weight: 500;
   font-size: 13px;

@@ -61,9 +61,14 @@
     var title = document.createElement('span')
     title.className = 'game-title'
     title.textContent = game.title
+    // A play icon and the count: "▶ 120", or "▶ 12 today" in the top three.
     var plays = document.createElement('span')
     plays.className = 'game-plays'
-    plays.textContent = rank && game.plays_today ? game.plays_today + ' today' : plural(Number(game.plays) || 0, 'play', 'plays')
+    var today = rank && game.plays_today
+    var n = today ? game.plays_today : Number(game.plays) || 0
+    plays.setAttribute('aria-label', plural(n, 'play', 'plays') + (today ? ' today' : ''))
+    plays.innerHTML = '<svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M3 1.8v8.4a.6.6 0 0 0 .9.5l6.6-4.2a.6.6 0 0 0 0-1L3.9 1.3a.6.6 0 0 0-.9.5Z" fill="currentColor"/></svg>'
+    plays.appendChild(document.createTextNode(n.toLocaleString() + (today ? ' today' : '')))
     name.appendChild(title)
     name.appendChild(plays)
     var pic = picture(game)

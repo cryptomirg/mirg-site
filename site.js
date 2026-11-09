@@ -5,6 +5,107 @@
   if (clean !== path && window.history && history.replaceState) history.replaceState(null, '', clean + location.search + location.hash)
 })()
 
+// Where visitors come from. The page notes the link that brought this visitor (an ad, a TikTok,
+// a post), remembers it in this browser for 30 days, and reports each visit and each press of a
+// Download button to Mirg's server. When the visitor later signs in to the app, the account is
+// matched to it, so we can tell which ads and posts bring people who make games. No cookies,
+// nothing from other websites, and no ad network's code on the page.
+;(function () {
+  if (!/(^|\.)mirg\.ai$/.test(location.hostname)) return
+  var API = 'https://dlnmbeqdtpyjkprkxfvt.supabase.co/functions/v1/visit'
+  var DAY = 86400000
+  var get = function (k) {
+    try {
+      return localStorage.getItem(k)
+    } catch (e) {
+      return null
+    }
+  }
+  var put = function (k, v) {
+    try {
+      localStorage.setItem(k, v)
+    } catch (e) {}
+  }
+  var clip = function (v, n) {
+    return v ? String(v).slice(0, n) : null
+  }
+
+  var visitor = get('mirg-visitor')
+  if (!/^[a-z0-9]{8,40}$/.test(visitor || '')) {
+    visitor = (Math.random().toString(36).slice(2) + Date.now().toString(36)).replace(/[^a-z0-9]/g, '').slice(0, 24)
+    put('mirg-visitor', visitor)
+  }
+
+  // The source of this arrival: a tagged link first, then an ad network's click id, then the referring site.
+  var q = new URLSearchParams(location.search)
+  var clicks = { gclid: 'google-ads', gbraid: 'google-ads', wbraid: 'google-ads', ttclid: 'tiktok-ads', msclkid: 'bing-ads', fbclid: 'facebook' }
+  var clickId = null
+  var clickSource = null
+  Object.keys(clicks).forEach(function (k) {
+    if (!clickId && q.get(k)) {
+      clickId = q.get(k)
+      clickSource = clicks[k]
+    }
+  })
+  var source = q.get('utm_source') || q.get('ref') || clickSource
+  if (!source && document.referrer) {
+    try {
+      var host = new URL(document.referrer).hostname.replace(/^www\./, '')
+      var known = { 't.co': 'x', 'x.com': 'x', 'twitter.com': 'x', 'news.ycombinator.com': 'hackernews', 'youtu.be': 'youtube' }
+      if (!/(^|\.)mirg\.ai$/.test(host)) source = known[host] || (host.match(/(google|bing|duckduckgo|yahoo|tiktok|reddit|youtube|facebook|instagram|producthunt|discord|itch)\./) || [])[1] || host
+    } catch (e) {}
+  }
+  var touch = null
+  try {
+    touch = JSON.parse(get('mirg-source') || 'null')
+  } catch (e) {}
+  if (touch && !(Date.now() - touch.at < 30 * DAY)) touch = null
+  var arrived = false
+  if (source) {
+    // A new link always wins: the latest way in is the one that brought them back.
+    touch = { source: clip(String(source).toLowerCase().replace(/[^a-z0-9._-]/g, '-'), 40), campaign: clip(q.get('utm_campaign'), 80), clickId: clip(clickId, 200), at: Date.now() }
+    put('mirg-source', JSON.stringify(touch))
+    arrived = true
+  }
+  // Tracking details are taken out of the address bar, so a copied link does not carry them.
+  ;['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'ref'].concat(Object.keys(clicks)).forEach(function (k) {
+    q.delete(k)
+  })
+  if (window.history && history.replaceState && (arrived || location.search)) {
+    var rest = q.toString()
+    history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash)
+  }
+
+  var platform = /Windows/.test(navigator.userAgent) ? 'windows' : /iPhone|iPad|Android/.test(navigator.userAgent) ? 'mobile' : /Mac/.test(navigator.userAgent) ? 'mac' : 'other'
+  function send(kind) {
+    var t = touch || { source: 'direct' }
+    var body = JSON.stringify({ visitor: visitor, kind: kind, source: t.source, campaign: t.campaign || null, clickId: t.clickId || null, page: location.pathname, platform: platform })
+    try {
+      if (navigator.sendBeacon && navigator.sendBeacon(API, new Blob([body], { type: 'text/plain' }))) return
+    } catch (e) {}
+    try {
+      fetch(API, { method: 'POST', body: body, keepalive: true, mode: 'cors', headers: { 'content-type': 'text/plain' } }).catch(function () {})
+    } catch (e) {}
+  }
+
+  // One visit per browsing session, or whenever someone arrives from a new link.
+  var seen = null
+  try {
+    seen = sessionStorage.getItem('mirg-visit')
+    sessionStorage.setItem('mirg-visit', '1')
+  } catch (e) {}
+  if (!seen || arrived) send('visit')
+
+  document.addEventListener(
+    'click',
+    function (e) {
+      var a = e.target && e.target.closest ? e.target.closest('a[href]') : null
+      if (a && /github\.com\/cryptomirg\/mirg-releases\//.test(a.href)) send('download')
+    },
+    true
+  )
+})()
+
 // Download buttons. The installers are published on GitHub under names that include the
 // version, so the newest one is looked up when the page opens. The main button offers the
 // download for the computer the visitor is on. If the lookup fails (offline, or GitHub is

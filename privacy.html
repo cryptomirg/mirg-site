@@ -65,6 +65,7 @@
 <li><strong>Stripe:</strong> processes payments. Stripe receives your payment details and email.</li>
 <li><strong>Supabase:</strong> hosts our account database and sign-in service.</li>
 <li><strong>Resend:</strong> delivers our emails: sign-in codes, and news and offers about Mirg.</li>
+<li><strong>Google Ads:</strong> if you arrived from a Google ad, the ad's click ID and the time you first made a game, as described under "How you found Mirg".</li>
 <li><strong>Cloudflare:</strong> provides the "I am human" check on the demo request form.</li>
 <li><strong>GitHub:</strong> hosts this website, app downloads and updates. Visiting the site, and the app checking for new versions, reveals your IP address to GitHub.</li>
 <li><strong>Analytics and error-monitoring providers,</strong> if we use them, as described under "Crash and error reports" and "Cookies and analytics" below.</li>
@@ -97,6 +98,15 @@
 </ul>
 <p>Reports do not contain your prompts, the agent's replies, your code, your game's files, screenshots, or audio. Paths to files and folders on your computer are removed, so that reports do not reveal your user name or the names of your projects; email addresses and anything that looks like a key or password are removed too. Reports are stored in our own database. To limit how many reports one computer can send, we keep a scrambled form of the sender's IP address, which cannot be turned back into the address.</p>
 <p>You can turn reports off at any time in the app, under Settings &gt; Crash reports.</p>
+
+<h2>How you found Mirg</h2>
+<p>To learn which ads and posts bring people who go on to make games, this website keeps a note of how each visitor arrived, and the app links it to your account when you first sign in:</p>
+<ul>
+<li><strong>On the website:</strong> a random ID kept in your browser's local storage (not a cookie), the link that brought you (for example an ad, a TikTok or another website, and the click ID an ad network adds to its links), the page, whether you pressed Download, the kind of computer (Mac, Windows or phone), the time, and a scrambled form of your internet address, which cannot be turned back into the address.</li>
+<li><strong>When you sign in to the app the first time:</strong> the same scrambled form of your internet address is used to find the latest visit from your connection, and how you arrived is saved with your account. Nothing else about your browsing is used, and nothing from other websites.</li>
+<li><strong>Google Ads:</strong> if you arrived from a Google ad, we may tell Google that the ad led to someone making a game, using only the click ID from Google's own link and the time. We do not send your email address or anything else about you.</li>
+</ul>
+<p>Visit notes are deleted after 90 days. The website loads no advertising or analytics code from other companies. To opt out, block local storage for mirg.ai in your browser, or write to us and we will delete how you arrived from your account.</p>
 
 <h2>Cookies and analytics</h2>
 <p><strong>The app</strong> contains no advertising and no advertising trackers. It may record basic product analytics: counts of actions such as "a project was created" or "a game was run", with the app version and your account ID. These never include your prompts, code, or files. We use them to understand which features are used and where people get stuck.</p>
@@ -140,6 +150,6 @@
         <span data-version></span>
       </div>
     </footer>
-    <script src="site.js?v=20"></script>
+    <script src="site.js?v=21"></script>
   </body>
 </html>

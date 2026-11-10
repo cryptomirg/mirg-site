@@ -157,7 +157,7 @@ function signIn() {
   let email = ''
   $('email-row').hidden = false
   $('code-row').hidden = true
-  $('code').required = false
+  $('signin-code').required = false
   $('signin-go').textContent = 'Email me a code'
   err.hidden = true
   box.showModal()
@@ -184,12 +184,12 @@ function signIn() {
           stage = 'code'
           $('email-row').hidden = true
           $('code-row').hidden = false
-          $('code').required = true
+          $('signin-code').required = true
           $('signin-go').textContent = 'Sign in'
           $('signin-note').textContent = 'We sent a code to ' + email + '. It can take a minute; check spam too.'
-          $('code').focus()
+          $('signin-code').focus()
         } else {
-          keep(await auth('verify', { type: 'email', email, token: $('code').value.trim() }), email)
+          keep(await auth('verify', { type: 'email', email, token: $('signin-code').value.trim() }), email)
           await refreshMe()
           done(true)
         }

@@ -751,9 +751,22 @@ function renderPickers() {
   fill($('pick-model'), MODELS, model, (m) => m.label)
   fill($('pick-effort'), EFFORTS, settings.effort, (e) => 'Think: ' + e.label)
   $('pick-effort').hidden = !hasEffort(model)
+  fill($('start-model'), MODELS, model, (m) => m.label)
+  fill($('start-effort'), EFFORTS, settings.effort, (e) => 'Think: ' + e.label)
+  $('start-effort').hidden = !hasEffort(model)
   $('device').value = settings.device
 }
 
+$('start-model').onchange = (e) => {
+  settings.model = e.target.value
+  keepSettings()
+  renderPickers()
+}
+$('start-effort').onchange = (e) => {
+  settings.effort = e.target.value
+  keepSettings()
+  renderPickers()
+}
 $('pick-model').onchange = (e) => {
   settings.model = e.target.value
   keepSettings()
@@ -837,7 +850,108 @@ const SUMMARY_REQUEST =
 /** Past this many tokens of conversation, it is summarized before the next message, so each step stays cheap. */
 const COMPACT_AT = 150_000
 
-const IDEAS = ['A platformer where a fox collects coins and dodges spikes', 'A space shooter with waves of aliens and a boss', 'Snake, but the snake is a train', 'A 3D maze where you escape a ghost', 'Flappy-style game with a paper plane', 'A two-player tank battle on one keyboard']
+const IDEAS = [
+  "A platformer where a fox collects coins and dodges spikes",
+  "A space shooter with waves of aliens and a boss",
+  "Snake, but the snake is a train picking up passengers",
+  "A 3D maze where you escape a ghost",
+  "A flappy-style game with a paper plane in a windy city",
+  "A two-player tank battle on one keyboard",
+  "A cozy fishing game on a lake at sunset",
+  "A runner where a cat jumps across rooftops at night",
+  "Breakout, but the bricks fight back",
+  "A tower defense game where snowmen protect a cookie",
+  "A racing game with bumper cars on ice",
+  "A puzzle game where you guide water to thirsty plants",
+  "A dungeon crawler where you play as a tiny knight",
+  "A game where you stack wobbly animals as high as you can",
+  "Whack-a-mole with robots popping out of pipes",
+  "A rhythm game where you tap to the beat to make a dragon dance",
+  "A soccer game with two players and a giant bouncy ball",
+  "An endless jumper where a frog climbs lily pads into the sky",
+  "A memory card game with space creatures",
+  "A pirate ship battle where you aim cannons with the mouse",
+  "A 3D marble rolling down a twisty sky track",
+  "A zombie survival game where you build walls before night",
+  "A game where you're a bee pollinating flowers before winter",
+  "Asteroids, but you're a vacuum cleaner in space",
+  "A golf game on tiny floating islands",
+  "A typing game where words fall like meteors",
+  "A cooking game where orders pile up faster and faster",
+  "A stealth game where a raccoon sneaks snacks from a campsite",
+  "A pinball table themed like a haunted house",
+  "A sliding block puzzle where you free a trapped penguin",
+  "A volcano escape where lava rises as you climb",
+  "A 3D snowboarding game down a mountain with jumps",
+  "A game where you draw lines to bounce a ball into a cup",
+  "A farming game where you grow giant vegetables for a fair",
+  "A boxing game between two kangaroos",
+  "An underwater game where a submarine explores glowing caves",
+  "A hide-and-seek game against a sneaky AI owl",
+  "A one-button game where a rocket dodges satellites",
+  "A Tetris-like game with falling cats that have to fit together",
+  "A wizard duel where you cast spells by drawing shapes",
+  "A minigolf course built inside a kitchen",
+  "A dodgeball game against a team of robots",
+  "A sky island builder where you connect islands with bridges",
+  "A firefighter game where you spray water on a burning city",
+  "A slingshot game where you launch a hamster at towers",
+  "A 3D driving game delivering pizzas before they get cold",
+  "A space station where you keep the oxygen from running out",
+  "A ghost that has to scare everyone in a house before sunrise",
+  "A balloon pop game with tricky moving targets",
+  "A jungle swing game where a monkey swings vine to vine",
+  "A card battler with elemental monsters",
+  "A game where you herd sheep with a sheepdog",
+  "Pong, but the paddles shrink every time you score",
+  "A treasure hunt on a pirate island with a map and clues",
+  "A 2D mining game where you dig deeper for rare gems",
+  "A bullet-hell game with colorful patterns and a giant jellyfish boss",
+  "A parking game where you squeeze cars into tight spots",
+  "A ninja game where you slice fruit thrown in the air",
+  "An air hockey game against the computer",
+  "A game where you guide a lost robot home through traffic",
+  "A 3D bowling alley in outer space",
+  "A survival game on a raft in the ocean",
+  "A connect-the-pipes puzzle to light up a city",
+  "A game where you're a shark eating smaller fish to grow",
+  "A knight jousting tournament with timing-based hits",
+  "A chicken crossing busy roads and rivers",
+  "A trivia game show with a silly robot host",
+  "A snowball fight in a winter village",
+  "A 3D paper airplane flying through a forest",
+  "A space trading game between planets with prices that change",
+  "A game where you defend a castle by drawing walls",
+  "A bubble shooter where you match colors to clear the board",
+  "A skateboarding game with tricks and combos",
+  "A detective game where you find the hidden clues in a room",
+  "A haunted mansion escape room with puzzles",
+  "A game where a dragon protects its eggs from knights",
+  "A lemonade stand business game with weather and prices",
+  "A horse race where you time your boosts",
+  "A game where you bounce between planets using gravity",
+  "A beat-'em-up where a grandma fights off robots with a broom",
+  "A 3D cube that rolls across a puzzle grid",
+  "An ant colony game where you gather food and dig tunnels",
+  "A word puzzle where you unscramble words before time runs out",
+  "A rescue helicopter saving people from a flood",
+  "A battle royale with blobs that grow by eating dots",
+  "A night sky game where you connect stars into constellations",
+  "A game where you sort recycling as it speeds down a belt",
+  "A basketball free throw challenge with wind",
+  "A train conductor game where you switch tracks to avoid crashes",
+  "A tiny planet you walk around to plant trees",
+  "A sword fighting game with blocking and parrying",
+  "A game where you guide a jellyfish through a coral reef",
+  "A cake stacking game where layers slide side to side",
+  "A laser puzzle where you rotate mirrors to hit targets",
+  "A dinosaur running from a meteor shower",
+  "A two-player racing game on a split screen",
+  "A garden defense game against hungry snails",
+  "A 3D obstacle course where you jump between spinning platforms",
+  "A magic potion game where you mix ingredients to match orders",
+  "A space rescue where you tow broken ships back to base"
+]
 
 let running = null
 let startedAt = 0
@@ -2018,16 +2132,28 @@ $('start-text').addEventListener('keydown', (e) => {
     startGame($('start-text').value)
   }
 })
-for (const idea of IDEAS) {
-  const b = document.createElement('button')
-  b.type = 'button'
-  b.textContent = idea
-  b.onclick = () => {
-    $('start-text').value = idea
-    $('start-text').focus()
+/** Three ideas picked at random from the list, so the start page is different each visit. */
+function showIdeas() {
+  const pool = IDEAS.slice()
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[pool[i], pool[j]] = [pool[j], pool[i]]
   }
-  $('ideas').appendChild(b)
+  $('ideas').innerHTML = ''
+  for (const idea of pool.slice(0, 3)) {
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.textContent = idea
+    b.onclick = () => {
+      $('start-text').value = idea
+      $('start-text').focus()
+    }
+    $('ideas').appendChild(b)
+  }
+  $('start-text').placeholder = pool[3]
 }
+showIdeas()
+$('more-ideas').onclick = showIdeas
 
 $('composer').onsubmit = async (e) => {
   e.preventDefault()

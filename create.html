@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Make a game in your browser · Mirg</title>
-    <meta name="description" content="Describe a game and Mirg's AI builds it right in your browser, then gives you a link anyone can play. No coding, nothing to install. Works on Chromebooks." />
+    <meta name="description" content="Describe a game and Mirg's AI builds it right in your browser, then gives you a link anyone can play. No coding, nothing to install." />
     <meta property="og:title" content="Make a game in your browser · Mirg" />
     <meta property="og:description" content="Describe a game. Mirg builds it in your browser and gives you a link to share. No coding, nothing to install." />
     <meta property="og:image" content="https://mirg.ai/assets/og.png" />
@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#0e0f14" />
     <link rel="canonical" href="https://mirg.ai/create" />
     <link rel="icon" href="assets/icon.png?v=2" />
-    <link rel="stylesheet" href="create.css?v=4" />
+    <link rel="stylesheet" href="create.css?v=5" />
   </head>
   <body>
     <!-- Start: describe a game, or open one made before. -->
@@ -28,10 +28,16 @@
         <p class="lead">Mirg's AI writes the game, runs it, and fixes what's broken, right here in your browser. Then share a link anyone can play.</p>
         <form id="start-form" class="prompt">
           <textarea id="start-text" rows="3" maxlength="4000" placeholder="A platformer where a fox collects coins and dodges spikes" required></textarea>
-          <button class="btn primary" type="submit">Build it</button>
+          <div class="prompt-row">
+            <select id="start-model" aria-label="Model"></select>
+            <select id="start-effort" aria-label="Thinking level"></select>
+            <span class="grow"></span>
+            <button class="btn primary" type="submit">Build it</button>
+          </div>
         </form>
         <div class="ideas" id="ideas"></div>
-        <p class="fine">Free to try. Nothing to install. Works on Chromebooks. Want Godot, Unity or Roblox? <a data-download="auto" href="/download">Get the desktop app</a>.</p>
+        <button type="button" class="linklike more-ideas" id="more-ideas">Show me other ideas</button>
+        <p class="fine">Free to try. Nothing to install. Want Godot, Unity or Roblox? <a data-download="auto" href="/download">Get the desktop app</a>.</p>
       </section>
       <section class="mine" id="mine" hidden>
         <h2>Your games</h2>
@@ -178,6 +184,6 @@
     </dialog>
 
     <script src="site.js?v=24"></script>
-    <script type="module" src="create.js?v=5"></script>
+    <script type="module" src="create.js?v=6"></script>
   </body>
 </html>

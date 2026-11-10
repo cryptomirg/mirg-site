@@ -215,9 +215,7 @@ a {
   outline: none;
 }
 
-.prompt .btn {
-  align-self: flex-end;
-}
+
 
 .ideas {
   display: flex;
@@ -1254,4 +1252,25 @@ a {
 
 .account-open {
   text-decoration: none;
+}
+
+.prompt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.prompt-row select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 8px;
+}
+
+.more-ideas {
+  margin: -6px 0 14px;
 }

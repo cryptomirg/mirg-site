@@ -76,7 +76,8 @@
     history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash)
   }
 
-  var platform = /Windows/.test(navigator.userAgent) ? 'windows' : /iPhone|iPad|Android/.test(navigator.userAgent) ? 'mobile' : /Mac/.test(navigator.userAgent) ? 'mac' : 'other'
+  var ua = navigator.userAgent
+  var platform = /Windows/.test(ua) ? 'windows' : /iPhone|iPad|Android/.test(ua) ? 'mobile' : /CrOS/.test(ua) ? 'chromeos' : /Mac/.test(ua) ? 'mac' : /Linux|X11/.test(ua) ? 'linux' : 'other'
   function send(kind) {
     var t = touch || { source: 'direct' }
     var body = JSON.stringify({ visitor: visitor, kind: kind, source: t.source, campaign: t.campaign || null, clickId: t.clickId || null, page: location.pathname, platform: platform })
@@ -114,7 +115,7 @@
   var REPO = 'cryptomirg/mirg-releases'
   var fallback = 'https://github.com/' + REPO + '/releases/latest'
 
-  // What kind of computer is this? Returns 'mac-arm64', 'mac-x64', 'windows', 'linux' or 'mobile'.
+  // What kind of computer is this? Returns 'mac-arm64', 'mac-x64', 'windows', 'chromeos', 'linux' or 'mobile'.
   function detect() {
     var ua = navigator.userAgent || ''
     var data = navigator.userAgentData
@@ -142,7 +143,9 @@
       // Apple Silicon is the safe guess: it is most Macs in use, and its installer says so if wrong.
       return Promise.resolve('mac-arm64')
     }
-    if (/Linux|X11|CrOS/.test(ua)) return Promise.resolve('linux')
+    // Chromebooks (often school ones) cannot install apps from outside the Play Store.
+    if (/CrOS/.test(ua)) return Promise.resolve('chromeos')
+    if (/Linux|X11/.test(ua)) return Promise.resolve('linux')
     return Promise.resolve('mac-arm64')
   }
 
@@ -152,7 +155,8 @@
     'mac-x64': 'Free to try. For Intel Macs, macOS 12 or later.',
     windows: 'Mirg is on Mac today. The Windows version is in the works.',
     linux: 'Mirg is on Mac today. The Linux version is in the works.',
-    mobile: 'Mirg is an app for your computer. Open mirg.ai on a Mac to download it.'
+    mobile: 'Mirg is an app for your computer. Open mirg.ai on a Mac to download it.',
+    chromeos: "Mirg can't be installed on a Chromebook. Making games needs a Mac; on this Chromebook you can play games made with Mirg."
   }
 
   var releaseUrls = fetch('https://api.github.com/repos/' + REPO + '/releases/latest')
@@ -195,6 +199,8 @@
       NAMES.windows = 'Download for Windows'
       NOTES.windows = 'Free to try. For Windows 10 and 11.'
       NOTES.mobile = 'Mirg is an app for your computer. Open mirg.ai on a Mac or a Windows PC to download it.'
+      NOTES.linux = 'Mirg is on Mac and Windows today. The Linux version is in the works.'
+      NOTES.chromeos = "Mirg can't be installed on a Chromebook. Making games needs a Mac or a Windows PC; on this Chromebook you can play games made with Mirg."
       document.querySelectorAll('.plan[data-platform="windows"]').forEach(function (card) {
         card.classList.remove('soon')
         var list = card.querySelector('ul')
@@ -216,7 +222,14 @@
         a.href = urls[want] || fallback
         return
       }
-      if (NAMES[platform]) {
+      if (platform === 'chromeos') {
+        // Nothing to download here, so offer what does work in the browser: the games.
+        a.textContent = 'Play games made with Mirg'
+        a.href = '/'
+        // The button beside it usually says the same thing now.
+        var cta = a.closest('[data-cta]')
+        if (cta) cta.querySelectorAll('a.btn:not([data-download])').forEach(function (b) { b.style.display = 'none' })
+      } else if (NAMES[platform]) {
         a.textContent = NAMES[platform]
         a.href = urls[platform] || fallback
       } else {

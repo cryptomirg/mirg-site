@@ -136,16 +136,18 @@ function renderAccount() {
       const pct = Math.min(100, Math.round((me.usedMicros / me.allowanceMicros) * 100))
       inside = '<span class="plan-text">' + (PLAN_NAMES[me.plan] || 'Free') + ' · ' + pct + '% used</span><span class="meter"><span style="width:' + pct + '%"></span></span>'
     }
-    el.innerHTML = '<button type="button" class="account-open" data-account-open title="Your account, plan and usage (' + escapeHtml(s.email) + ')">' + inside + '<span class="avatar">' + escapeHtml((s.email[0] || '?').toUpperCase()) + '</span></button>'
+    el.innerHTML = '<a class="account-open" href="#settings" title="Settings: your account, plan and usage (' + escapeHtml(s.email) + ')">' + inside + '<span class="avatar">' + escapeHtml((s.email[0] || '?').toUpperCase()) + '</span></a>'
   })
 }
 
-/** Your account: plan, this period's usage, upgrading and billing, like Settings in the app. */
-async function openAccount() {
-  const box = $('accountbox')
+/** The account part of Settings: plan, this period's usage, upgrading and billing, like the app. */
+async function renderAccountSettings() {
   const body = $('account-body')
   const s = session()
-  if (!s) return signIn().catch(() => undefined)
+  if (!s) {
+    body.innerHTML = '<p class="fine">You are not signed in.</p><button type="button" class="btn small primary" data-signin>Sign in</button>'
+    return
+  }
   const draw = (note) => {
     body.innerHTML = ''
     const add = (html, cls) => {
@@ -241,21 +243,18 @@ async function openAccount() {
     }
   }
   draw()
-  box.showModal()
   await refreshMe()
-  if (box.open) draw(me ? '' : 'Could not reach Mirg to load your usage.')
+  if (!$('settings').hidden) draw(me ? '' : 'Could not reach Mirg to load your usage.')
 }
 
 window.addEventListener('focus', () => {
   // Back from paying in another tab: show the new plan.
-  if (session()) refreshMe().then(() => $('accountbox').open && openAccount())
+  if (session() && !$('settings').hidden) renderAccountSettings()
 })
 
 document.addEventListener('click', (e) => {
   if (e.target.closest('[data-signin]')) signIn().catch(() => undefined)
-  if (e.target.closest('[data-account-open]')) openAccount()
   if (e.target.closest('[data-signout]')) {
-    $('accountbox').close()
     const s = session()
     store.set(SESSION_KEY, null)
     me = null
@@ -1844,6 +1843,7 @@ function migrate(p) {
 }
 
 async function showStart() {
+  $('settings').hidden = true
   project = null
   if (frame) frame.remove()
   frame = null
@@ -1884,6 +1884,7 @@ async function showStart() {
 }
 
 function openProject(p) {
+  $('settings').hidden = true
   project = migrate(p)
   $('start').hidden = true
   $('studio').hidden = false
@@ -1905,9 +1906,18 @@ function openProject(p) {
 }
 
 async function route() {
+  if (location.hash === '#settings') return showSettings()
+  $('settings').hidden = true
   const id = /^#g=(.+)$/.exec(location.hash)
   if (!id) return showStart()
-  if (project && project.id === id[1]) return
+  if (project && project.id === id[1]) {
+    $('start').hidden = true
+    $('studio').hidden = false
+    document.title = project.name + ' · Mirg'
+    renderPickers()
+    fitDevice()
+    return
+  }
   const p = (await db.all().catch(() => [])).find((x) => x.id === id[1])
   if (!p) {
     history.replaceState(null, '', '/create')
@@ -1917,10 +1927,63 @@ async function route() {
 }
 
 window.addEventListener('hashchange', () => {
-  if (running) return
-  if (dirty && !confirm('Discard your unsaved code changes?')) return
+  // Settings can be opened while the agent works; it carries on in the background.
+  const toSettings = location.hash === '#settings'
+  const backToGame = project && location.hash === '#g=' + project.id
+  if (running && !toSettings && !backToGame) {
+    history.replaceState(null, '', project ? '#g=' + project.id : '/create')
+    return
+  }
+  if (dirty && !toSettings && !backToGame && !confirm('Discard your unsaved code changes?')) return
   route()
 })
+
+function showSettings() {
+  $('start').hidden = true
+  $('studio').hidden = true
+  $('settings').hidden = false
+  document.title = 'Settings · Mirg'
+  $('settings-back').href = project ? '#g=' + project.id : '/create'
+  $('settings-back').textContent = project ? 'Back to ' + project.name : 'Back'
+  const fill = (el, list, value, label) => {
+    el.innerHTML = ''
+    for (const x of list) {
+      const o = document.createElement('option')
+      o.value = x.id
+      o.textContent = label(x)
+      el.appendChild(o)
+    }
+    el.value = value
+  }
+  const model = currentModel()
+  fill($('pref-model'), MODELS, model, (m) => m.label + ' · ' + m.hint)
+  fill($('pref-effort'), EFFORTS, settings.effort, (e) => e.label + ' · ' + e.hint)
+  $('pref-effort').disabled = !hasEffort(model)
+  $('pref-device').value = settings.device
+  db.all()
+    .then((all) => {
+      const shared = all.filter((p) => p.share).length
+      $('settings-games').textContent = all.length
+        ? all.length + (all.length === 1 ? ' game' : ' games') + ' saved in this browser' + (shared ? ', ' + shared + ' shared' : '') + '. Clearing your browser\'s data for mirg.ai deletes them; shared games stay online.'
+        : 'No games saved in this browser yet.'
+    })
+    .catch(() => undefined)
+  renderAccountSettings()
+}
+
+$('pref-model').onchange = (e) => {
+  settings.model = e.target.value
+  keepSettings()
+  showSettings()
+}
+$('pref-effort').onchange = (e) => {
+  settings.effort = e.target.value
+  keepSettings()
+}
+$('pref-device').onchange = (e) => {
+  settings.device = e.target.value
+  keepSettings()
+}
 
 function blankProject(name) {
   const chatId = newId()

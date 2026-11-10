@@ -229,7 +229,8 @@
         var note = more && more.parentNode.querySelector('[data-web-option]')
         if (note) note.hidden = true
       } else if (NAMES[platform]) {
-        a.textContent = NAMES[platform]
+        // data-keep-text: the button's own words stay ("Download, then upgrade"); only where it leads changes.
+        if (!a.hasAttribute('data-keep-text')) a.textContent = NAMES[platform]
         a.href = urls[platform] || fallback
       } else {
         // Nothing to download for this device yet: lead to the list of what exists.

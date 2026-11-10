@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#0e0f14" />
     <link rel="canonical" href="https://mirg.ai/create" />
     <link rel="icon" href="assets/icon.png?v=2" />
-    <link rel="stylesheet" href="create.css?v=3" />
+    <link rel="stylesheet" href="create.css?v=4" />
   </head>
   <body>
     <!-- Start: describe a game, or open one made before. -->
@@ -31,7 +31,7 @@
           <button class="btn primary" type="submit">Build it</button>
         </form>
         <div class="ideas" id="ideas"></div>
-        <p class="fine">Free to try. Nothing to install. Works on Chromebooks. Want Godot, Unity or Roblox? <a href="/download">Get the desktop app</a>.</p>
+        <p class="fine">Free to try. Nothing to install. Works on Chromebooks. Want Godot, Unity or Roblox? <a data-download="auto" href="/download">Get the desktop app</a>.</p>
       </section>
       <section class="mine" id="mine" hidden>
         <h2>Your games</h2>
@@ -129,15 +129,32 @@
       </form>
     </dialog>
 
-    <dialog id="accountbox" class="modal wide">
-      <h2>Your account</h2>
-      <div id="account-body"></div>
-      <div class="actions">
-        <button class="linklike" type="button" data-signout>Sign out</button>
+    <!-- Settings, for whoever is signed in: account, plan and billing, and building defaults. -->
+    <main id="settings" class="settings-page" hidden>
+      <header class="bar">
+        <a class="logo" href="/create"><img src="assets/icon.png?v=2" alt="" />Mirg</a>
         <span class="grow"></span>
-        <button class="btn" type="button" onclick="this.closest('dialog').close()">Close</button>
-      </div>
-    </dialog>
+        <a class="btn small" id="settings-back" href="/create">Back</a>
+      </header>
+      <section class="settings-wrap">
+        <h1>Settings</h1>
+        <h2>Account</h2>
+        <div id="account-body"></div>
+        <h2>Building</h2>
+        <div class="prefs">
+          <label>Model <select id="pref-model"></select></label>
+          <label>Thinking level <select id="pref-effort"></select></label>
+          <label>Game preview <select id="pref-device"><option value="desktop">Computer</option><option value="portrait">Phone</option><option value="landscape">Phone, sideways</option></select></label>
+          <p class="fine">These are the defaults for every game in this browser. You can also change the model and thinking level under the chat box.</p>
+        </div>
+        <h2>Your games</h2>
+        <p class="fine" id="settings-games"></p>
+        <h2>Desktop app</h2>
+        <p class="fine">For Godot, Unity, Unreal, Roblox and more, generated art and sound, and an agent that playtests your game itself. Same account and plan. <a data-download="auto" href="/download">Download the desktop app</a></p>
+        <div class="settings-foot"><button class="btn small" type="button" data-signout>Sign out</button></div>
+      </section>
+    </main>
+
 
     <dialog id="sharebox" class="modal">
       <form method="dialog" id="share-form">
@@ -160,6 +177,7 @@
       </form>
     </dialog>
 
-    <script type="module" src="create.js?v=4"></script>
+    <script src="site.js?v=24"></script>
+    <script type="module" src="create.js?v=5"></script>
   </body>
 </html>

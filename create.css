@@ -1191,3 +1191,67 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- settings page ---------- */
+
+.settings-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+
+.settings-wrap h1 {
+  font-size: 30px;
+  margin: 0 0 8px;
+}
+
+.settings-wrap h2 {
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 32px 0 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.prefs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.prefs label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.prefs select,
+.settings-wrap select {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+  max-width: 100%;
+}
+
+.settings-wrap .check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-foot {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.account-open {
+  text-decoration: none;
+}

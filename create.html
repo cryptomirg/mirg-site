@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Make a game in your browser · Mirg</title>
+    <meta name="description" content="Describe a game and Mirg's AI builds it right in your browser, then gives you a link anyone can play. No coding, nothing to install. Works on Chromebooks." />
+    <meta property="og:title" content="Make a game in your browser · Mirg" />
+    <meta property="og:description" content="Describe a game. Mirg builds it in your browser and gives you a link to share. No coding, nothing to install." />
+    <meta property="og:image" content="https://mirg.ai/assets/og.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mirg.ai/create" />
+    <meta name="theme-color" content="#0e0f14" />
+    <link rel="canonical" href="https://mirg.ai/create" />
+    <link rel="icon" href="assets/icon.png?v=2" />
+    <link rel="stylesheet" href="create.css?v=1" />
+  </head>
+  <body>
+    <!-- Start: describe a game, or open one made before. -->
+    <main id="start" class="start" hidden>
+      <header class="bar">
+        <a class="logo" href="/"><img src="assets/icon.png?v=2" alt="" />Mirg</a>
+        <span class="grow"></span>
+        <span class="account" data-account></span>
+      </header>
+      <section class="hero">
+        <h1>Make a game.<br />Just describe it.</h1>
+        <p class="lead">Mirg's AI writes the game, runs it, and fixes what's broken, right here in your browser. Then share a link anyone can play.</p>
+        <form id="start-form" class="prompt">
+          <textarea id="start-text" rows="3" maxlength="4000" placeholder="A platformer where a fox collects coins and dodges spikes" required></textarea>
+          <button class="btn primary" type="submit">Build it</button>
+        </form>
+        <div class="ideas" id="ideas"></div>
+        <p class="fine">Free to try. Nothing to install. Works on Chromebooks. Want Godot, Unity or Roblox? <a href="/download">Get the desktop app</a>.</p>
+      </section>
+      <section class="mine" id="mine" hidden>
+        <h2>Your games</h2>
+        <p class="fine">Saved in this browser. Share a game to keep a copy online.</p>
+        <div class="cards" id="cards"></div>
+      </section>
+    </main>
+
+    <!-- The studio: chat on the left, the game on the right. -->
+    <main id="studio" class="studio" hidden>
+      <header class="bar">
+        <a class="logo" href="/create" id="home"><img src="assets/icon.png?v=2" alt="" />Mirg</a>
+        <span class="title" id="title"></span>
+        <span class="grow"></span>
+        <nav class="switch" id="switch">
+          <button type="button" data-show="chat" class="on">Chat</button>
+          <button type="button" data-show="game">Game</button>
+        </nav>
+        <button class="btn small" type="button" id="new-chat" title="Start a new chat about this game. The game stays as it is.">New chat</button>
+        <button class="btn small primary" type="button" id="share">Share</button>
+        <span class="account" data-account></span>
+      </header>
+      <div class="panes" id="panes">
+        <section class="chat" id="chat">
+          <div class="log" id="log" aria-live="polite"></div>
+          <form class="composer" id="composer">
+            <textarea id="input" rows="2" maxlength="4000" placeholder="Ask for a change: a double jump, a boss, more enemies…"></textarea>
+            <button class="btn primary" type="submit" id="send">Send</button>
+            <button class="btn" type="button" id="stop" hidden>Stop</button>
+          </form>
+        </section>
+        <section class="view" id="view">
+          <div class="tabs">
+            <button type="button" data-tab="game" class="on">Game</button>
+            <button type="button" data-tab="code">Code</button>
+            <span class="grow"></span>
+            <span class="errors" id="errors" hidden></span>
+            <button type="button" class="linklike" id="restart">Restart game</button>
+          </div>
+          <div class="game" id="game-wrap">
+            <div class="empty" id="game-empty">Your game will appear here.</div>
+          </div>
+          <div class="code" id="code" hidden>
+            <ul class="files" id="files"></ul>
+            <pre id="source"></pre>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Sign in by emailed code, the same account as the desktop app. -->
+    <dialog id="signin" class="modal">
+      <form method="dialog" id="signin-form">
+        <h2>Sign in to start building</h2>
+        <p class="fine" id="signin-note">Free to try. We'll email you a code. Same account as the Mirg app.</p>
+        <label id="email-row">Email <input type="email" id="email" autocomplete="email" required /></label>
+        <label id="code-row" hidden>Code from the email <input type="text" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" /></label>
+        <p class="error" id="signin-error" hidden></p>
+        <div class="actions">
+          <button class="btn" type="button" id="signin-cancel">Cancel</button>
+          <button class="btn primary" type="submit" id="signin-go">Email me a code</button>
+        </div>
+        <p class="fine">By signing in you agree to the <a href="/terms" target="_blank">terms</a> and <a href="/privacy" target="_blank">privacy policy</a>.</p>
+      </form>
+    </dialog>
+
+    <dialog id="sharebox" class="modal">
+      <form method="dialog" id="share-form">
+        <h2>Share your game</h2>
+        <p class="fine">Anyone with the link can play it, on a computer or a phone.</p>
+        <label>Type of game <select id="share-category"></select></label>
+        <label class="check"><input type="checkbox" id="share-listed" checked /> Show it on mirg.ai's games page</label>
+        <label class="check"><input type="checkbox" id="share-phone" /> It works on phones</label>
+        <p class="fine" id="share-progress"></p>
+        <p class="error" id="share-error" hidden></p>
+        <div class="link" id="share-link" hidden>
+          <input type="text" id="share-url" readonly />
+          <button class="btn small" type="button" id="share-copy">Copy</button>
+          <a class="btn small" id="share-open" target="_blank" rel="noopener">Open</a>
+        </div>
+        <div class="actions">
+          <button class="btn" type="button" id="share-close">Close</button>
+          <button class="btn primary" type="submit" id="share-go">Share</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="create.js?v=1"></script>
+  </body>
+</html>

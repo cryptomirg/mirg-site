@@ -156,7 +156,7 @@
     windows: 'Mirg is on Mac today. The Windows version is in the works.',
     linux: 'Mirg is on Mac today. The Linux version is in the works.',
     mobile: 'Mirg is an app for your computer. Open mirg.ai on a Mac to download it.',
-    chromeos: "Mirg can't be installed on a Chromebook. Making games needs a Mac; on this Chromebook you can play games made with Mirg."
+    chromeos: "The Mirg app can't be installed on a Chromebook, so make your game in your browser instead. Nothing to install."
   }
 
   var releaseUrls = fetch('https://api.github.com/repos/' + REPO + '/releases/latest')
@@ -200,7 +200,6 @@
       NOTES.windows = 'Free to try. For Windows 10 and 11.'
       NOTES.mobile = 'Mirg is an app for your computer. Open mirg.ai on a Mac or a Windows PC to download it.'
       NOTES.linux = 'Mirg is on Mac and Windows today. The Linux version is in the works.'
-      NOTES.chromeos = "Mirg can't be installed on a Chromebook. Making games needs a Mac or a Windows PC; on this Chromebook you can play games made with Mirg."
       document.querySelectorAll('.plan[data-platform="windows"]').forEach(function (card) {
         card.classList.remove('soon')
         var list = card.querySelector('ul')
@@ -223,12 +222,12 @@
         return
       }
       if (platform === 'chromeos') {
-        // Nothing to download here, so offer what does work in the browser: the games.
-        a.textContent = 'Play games made with Mirg'
-        a.href = '/'
-        // The button beside it usually says the same thing now.
-        var cta = a.closest('[data-cta]')
-        if (cta) cta.querySelectorAll('a.btn:not([data-download])').forEach(function (b) { b.style.display = 'none' })
+        // Nothing to install here: Mirg on the web works in the browser.
+        a.textContent = 'Make a game in your browser'
+        a.href = '/create'
+        var more = a.closest('[data-cta]')
+        var note = more && more.parentNode.querySelector('[data-web-option]')
+        if (note) note.hidden = true
       } else if (NAMES[platform]) {
         a.textContent = NAMES[platform]
         a.href = urls[platform] || fallback

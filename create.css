@@ -610,7 +610,8 @@ a {
     gap: 2px;
   }
 
-  .bar .title {
+  .bar .title,
+  .play-link {
     display: none;
   }
 

@@ -737,10 +737,16 @@ function fileChanged(path) {
 // Choices: model, thinking level, preview size. Remembered in this browser.
 
 const MODELS = [
-  { id: 'claude-opus-5-5', label: 'Opus 5.5', hint: 'Best for building games. The default on Pro and Max.' },
-  { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5', hint: 'Faster and half the cost. The default on the free plan.' },
-  { id: 'claude-haiku-4-5', label: 'Haiku 4.5', hint: 'Fastest and cheapest. Good for small tweaks.', effort: false },
-  { id: 'claude-fable-5-1', label: 'Fable 5.1', hint: 'Most capable, most expensive.' }
+  { id: 'claude-opus-5-5', label: 'Opus 5.5', group: 'Claude', hint: 'Best for building games. The default on Pro and Max.' },
+  { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5', group: 'Claude', hint: 'Faster and half the cost. The default on the free plan.' },
+  { id: 'claude-haiku-4-5', label: 'Haiku 4.5', group: 'Claude', hint: 'Fastest and cheapest. Good for small tweaks.', effort: false },
+  { id: 'claude-fable-5-1', label: 'Fable 5.1', group: 'Claude', hint: 'Most capable, most expensive.' },
+  { id: 'gpt-6-astra', label: 'GPT-6 Astra', group: 'OpenAI', hint: "OpenAI's most capable model." },
+  { id: 'gpt-6.1-sol', label: 'GPT-6.1 Sol', group: 'OpenAI', hint: 'Near-Astra quality at lower cost.' },
+  { id: 'gpt-6-luna', label: 'GPT-6 Luna', group: 'OpenAI', hint: "OpenAI's fastest, cheapest model." },
+  { id: 'gemini-4-argon', label: 'Gemini 4 Argon', group: 'Google', hint: "Google's flagship." },
+  { id: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro (preview)', group: 'Google', hint: "Google's previous flagship." },
+  { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash', group: 'Google', hint: 'Fast and inexpensive.' }
 ]
 const EFFORTS = [
   { id: 'low', label: 'Low', hint: 'Fastest and uses the fewest tokens. Good for small changes.' },
@@ -764,12 +770,18 @@ function renderPickers() {
   const model = currentModel()
   const fill = (el, list, value, label) => {
     el.innerHTML = ''
+    let group = null
     for (const x of list) {
+      if (x.group && (!group || group.label !== x.group)) {
+        group = document.createElement('optgroup')
+        group.label = x.group
+        el.appendChild(group)
+      }
       const o = document.createElement('option')
       o.value = x.id
       o.textContent = label(x)
       o.title = x.hint
-      el.appendChild(o)
+      ;(x.group ? group : el).appendChild(o)
     }
     el.value = value
     el.title = (list.find((x) => x.id === value) || {}).hint || ''
@@ -988,6 +1000,347 @@ function chat() {
   return project.chats.find((c) => c.id === project.chatId) || project.chats[0]
 }
 
+// Each model vendor has its own conversation format. A chat keeps its history in the format of the
+// vendor it was started with (chat.provider); switching to another vendor's model starts that
+// vendor afresh with a recap of the chat, as the desktop app does.
+
+const providerOf = (model) => (/^gpt-/.test(model) ? 'openai' : /^gemini-/.test(model) ? 'gemini' : 'anthropic')
+const PROVIDER_NAMES = { anthropic: 'Claude', openai: 'GPT', gemini: 'Gemini' }
+
+/** The model's reply when it was cut off for being too long; it is told this so it writes less. */
+const CUT_NOTE = 'Your last reply was cut off because it was too long, and nothing in it was run. Write less per reply: split big files into modules of a few hundred lines and write one or two per reply.'
+
+async function postModel(path, body, signal) {
+  const t = await token()
+  if (!t) throw Object.assign(new Error('Your session ended. Sign in again.'), { signin: true })
+  const response = await fetch(API + '/proxy/' + path, {
+    method: 'POST',
+    signal,
+    headers: { authorization: 'Bearer ' + t, 'x-mirg-device': device(), 'content-type': 'application/json', 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify(body)
+  })
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    const err = (Array.isArray(data) ? data[0] && data[0].error : data && data.error) || {}
+    const message = err.message || 'The model request failed (' + response.status + ').'
+    throw Object.assign(new Error(message), { code: err.type || err.code, status: response.status, param: err.param })
+  }
+  return response
+}
+
+/** Server-sent events, one parsed JSON object at a time. */
+async function* events(response) {
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  for (;;) {
+    const { value, done } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n')
+    let cut
+    while ((cut = buffer.indexOf('\n\n')) >= 0) {
+      const chunk = buffer.slice(0, cut)
+      buffer = buffer.slice(cut + 2)
+      const data = chunk
+        .split('\n')
+        .filter((l) => l.startsWith('data:'))
+        .map((l) => l.slice(5).trim())
+        .join('\n')
+      if (!data || data === '[DONE]') continue
+      try {
+        yield JSON.parse(data)
+      } catch (e) {}
+    }
+  }
+}
+
+/** Text files attached to a message travel inside it, so any model can read them. */
+function withFiles(text, files) {
+  const docs = files.filter((f) => f.kind === 'text')
+  if (!docs.length) return text
+  return text + docs.map((f) => '\n\n<attached_file name="' + f.name.replace(/"/g, '') + '">\n' + f.text + '\n</attached_file>').join('')
+}
+
+const ADAPTERS = {
+  anthropic: {
+    addUser(messages, text, files) {
+      const content = files
+        .filter((f) => f.kind === 'image')
+        .map((i) => ({ type: 'image', source: { type: 'base64', media_type: i.mediaType, data: i.data } }))
+        .concat([{ type: 'text', text: withFiles(text, files) }])
+      const prev = messages[messages.length - 1]
+      // After an error or Stop the history can end on the user's side: carry on in the same turn.
+      if (prev && prev.role === 'user') {
+        messages[messages.length - 1] = { role: 'user', content: (typeof prev.content === 'string' ? [{ type: 'text', text: prev.content }] : prev.content).concat(content) }
+        return messages.length - 1
+      }
+      messages.push({ role: 'user', content })
+      return messages.length - 1
+    },
+    addResults(messages, results) {
+      messages.push({ role: 'user', content: results.map((r) => ({ type: 'tool_result', tool_use_id: r.call.id, content: r.content, is_error: r.isError || undefined })) })
+    },
+    async turn(model, messages, signal, ui, opts) {
+      const body = {
+        model,
+        max_tokens: 12000,
+        stream: true,
+        system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }],
+        tools: TOOLS,
+        messages: withCache(messages)
+      }
+      if (hasEffort(model)) {
+        body.thinking = { type: 'adaptive', display: 'summarized' }
+        body.output_config = { effort: settings.effort }
+      }
+      if (opts.noTools) body.tool_choice = { type: 'none' }
+      const response = await postModel('anthropic/v1/messages?beta=true', body, signal)
+      const blocks = []
+      let stop = null
+      const usage = { input: 0, cacheWrite: 0, cacheRead: 0, output: 0 }
+      for await (const ev of events(response)) {
+        if (ev.type === 'message_start' && ev.message && ev.message.usage) {
+          const u = ev.message.usage
+          Object.assign(usage, { input: u.input_tokens || 0, cacheWrite: u.cache_creation_input_tokens || 0, cacheRead: u.cache_read_input_tokens || 0, output: u.output_tokens || 0 })
+        } else if (ev.type === 'content_block_start') {
+          const b = Object.assign({}, ev.content_block)
+          if (b.type === 'tool_use') b.json = ''
+          if (b.type === 'text') b.text = b.text || ''
+          if (b.type === 'thinking') b.thinking = b.thinking || ''
+          blocks[ev.index] = b
+          ui.start(b)
+        } else if (ev.type === 'content_block_delta') {
+          const b = blocks[ev.index]
+          const d = ev.delta
+          if (!b) continue
+          if (d.type === 'text_delta') b.text += d.text
+          else if (d.type === 'thinking_delta') b.thinking += d.thinking
+          else if (d.type === 'signature_delta') b.signature = (b.signature || '') + d.signature
+          else if (d.type === 'input_json_delta') b.json += d.partial_json
+          ui.delta(b)
+        } else if (ev.type === 'content_block_stop') {
+          const b = blocks[ev.index]
+          if (!b) continue
+          if (b.type === 'tool_use') {
+            try {
+              b.input = b.json ? JSON.parse(b.json) : {}
+            } catch (e) {
+              b.input = {}
+            }
+            delete b.json
+          }
+          ui.stop(b)
+        } else if (ev.type === 'message_delta') {
+          if (ev.delta && ev.delta.stop_reason) stop = ev.delta.stop_reason
+          if (ev.usage && ev.usage.output_tokens) usage.output = ev.usage.output_tokens
+        } else if (ev.type === 'error') {
+          throw new Error((ev.error && ev.error.message) || 'The model stopped with an error.')
+        }
+      }
+      const all = blocks.filter(Boolean)
+      const text = all
+        .filter((b) => b.type === 'text')
+        .map((b) => b.text)
+        .join('\n')
+      const result = { billed: usage.input + usage.cacheWrite + usage.output, context: usage.input + usage.cacheWrite + usage.cacheRead, text, calls: [] }
+      if (stop === 'max_tokens') return Object.assign(result, { stop: 'cut', cutIds: all.filter((b) => b.type === 'tool_use').map((b) => b.id) })
+      const content = []
+      for (const b of all) {
+        if (b.type === 'text') {
+          if (b.text && b.text.trim()) content.push({ type: 'text', text: b.text })
+        } else if (b.type === 'thinking') content.push({ type: 'thinking', thinking: b.thinking || '', signature: b.signature || '' })
+        else if (b.type === 'redacted_thinking') content.push({ type: 'redacted_thinking', data: b.data })
+        else if (b.type === 'tool_use') content.push({ type: 'tool_use', id: b.id, name: b.name, input: b.input || {} })
+      }
+      if (!content.length) content.push({ type: 'text', text: '(no reply)' })
+      if (!opts.dryRun) messages.push({ role: 'assistant', content })
+      result.calls = content.filter((b) => b.type === 'tool_use').map((b) => ({ id: b.id, name: b.name, input: b.input }))
+      result.stop = stop === 'refusal' ? 'refusal' : stop === 'tool_use' && result.calls.length ? 'tools' : 'end'
+      return result
+    }
+  },
+
+  openai: {
+    addUser(messages, text, files) {
+      const images = files.filter((f) => f.kind === 'image')
+      const words = withFiles(text, files)
+      messages.push({
+        role: 'user',
+        content: images.length ? images.map((i) => ({ type: 'input_image', image_url: 'data:' + i.mediaType + ';base64,' + i.data, detail: 'auto' })).concat([{ type: 'input_text', text: words }]) : words
+      })
+      return messages.length - 1
+    },
+    addResults(messages, results) {
+      for (const r of results) messages.push({ type: 'function_call_output', call_id: r.call.id, output: r.isError ? 'ERROR: ' + r.content : r.content })
+    },
+    summaries: true,
+    async turn(model, messages, signal, ui, opts) {
+      const body = {
+        model,
+        instructions: SYSTEM,
+        input: messages,
+        tools: TOOLS.map((t) => ({ type: 'function', name: t.name, description: t.description, parameters: t.input_schema, strict: false })),
+        reasoning: Object.assign({ effort: settings.effort }, this.summaries ? { summary: 'auto' } : {}),
+        store: false,
+        include: ['reasoning.encrypted_content'],
+        stream: true
+      }
+      if (opts.noTools) body.tool_choice = 'none'
+      let response
+      try {
+        response = await postModel('openai/v1/responses', body, signal)
+      } catch (e) {
+        // Some accounts may not ask for reasoning summaries: try once more without them.
+        if (this.summaries && e.status === 400 && /reasoning|summary/i.test(String(e.param || '') + e.message)) {
+          this.summaries = false
+          return this.turn(model, messages, signal, ui, opts)
+        }
+        throw e
+      }
+      const live = new Map()
+      const blockFor = (key, type) => {
+        if (!live.has(key)) {
+          const b = type === 'text' ? { type: 'text', text: '' } : { type: 'thinking', thinking: '' }
+          live.set(key, b)
+          ui.start(b)
+        }
+        return live.get(key)
+      }
+      let final = null
+      for await (const ev of events(response)) {
+        if (ev.type === 'response.output_text.delta') {
+          const b = blockFor('t' + ev.item_id, 'text')
+          b.text += ev.delta || ''
+          ui.delta(b)
+        } else if (ev.type === 'response.reasoning_summary_text.delta') {
+          const b = blockFor('r' + ev.item_id, 'thinking')
+          b.thinking += ev.delta || ''
+          ui.delta(b)
+        } else if (ev.type === 'response.output_item.added' && ev.item && ev.item.type === 'function_call') {
+          ui.start({ type: 'tool_use', id: ev.item.call_id, name: ev.item.name })
+        } else if (ev.type === 'response.output_item.done' && ev.item && ev.item.type === 'reasoning') {
+          const b = live.get('r' + ev.item.id)
+          if (b) ui.stop(b)
+        } else if (ev.type === 'response.completed' || ev.type === 'response.incomplete' || ev.type === 'response.failed') {
+          final = ev.response
+        } else if (ev.type === 'error') {
+          throw new Error(ev.message || (ev.error && ev.error.message) || 'The model stopped with an error.')
+        }
+      }
+      for (const b of live.values()) if (b.type === 'thinking') ui.stop(b)
+      if (!final) throw new Error('The reply from GPT ended early. Send again.')
+      if (final.status === 'failed') throw new Error('GPT could not complete the response: ' + ((final.error && final.error.message) || 'unknown error'))
+      const u = final.usage || {}
+      const cached = (u.input_tokens_details && u.input_tokens_details.cached_tokens) || 0
+      const output = final.output || []
+      const text = output
+        .filter((o) => o.type === 'message')
+        .flatMap((o) => (o.content || []).filter((p) => p.type === 'output_text').map((p) => p.text))
+        .join('\n')
+      const calls = output.filter((o) => o.type === 'function_call').map((o) => {
+        let input = {}
+        try {
+          input = JSON.parse(o.arguments || '{}')
+        } catch (e) {}
+        return { id: o.call_id, name: o.name, input }
+      })
+      const result = { billed: (u.total_tokens || 0) - cached, context: u.input_tokens || 0, text, calls }
+      if (final.status === 'incomplete') {
+        const reason = final.incomplete_details && final.incomplete_details.reason
+        return Object.assign(result, { calls: [], stop: reason === 'content_filter' ? 'refusal' : 'cut', cutIds: calls.map((c) => c.id) })
+      }
+      // Everything the model produced (reasoning, text, calls) goes back unchanged next turn.
+      if (!opts.dryRun) messages.push(...output)
+      result.stop = calls.length ? 'tools' : 'end'
+      return result
+    }
+  },
+
+  gemini: {
+    addUser(messages, text, files) {
+      const parts = files
+        .filter((f) => f.kind === 'image')
+        .map((i) => ({ inlineData: { mimeType: i.mediaType, data: i.data } }))
+        .concat([{ text: withFiles(text, files) }])
+      const prev = messages[messages.length - 1]
+      if (prev && prev.role === 'user') {
+        prev.parts = prev.parts.concat(parts)
+        return messages.length - 1
+      }
+      messages.push({ role: 'user', parts })
+      return messages.length - 1
+    },
+    addResults(messages, results) {
+      messages.push({
+        role: 'user',
+        parts: results.map((r) => ({ functionResponse: Object.assign(r.call.gid ? { id: r.call.gid } : {}, { name: r.call.name, response: r.isError ? { error: r.content } : { output: r.content } }) }))
+      })
+    },
+    async turn(model, messages, signal, ui, opts) {
+      const body = {
+        contents: messages,
+        systemInstruction: { parts: [{ text: SYSTEM }] },
+        tools: [{ functionDeclarations: TOOLS.map((t) => ({ name: t.name, description: t.description, parametersJsonSchema: t.input_schema })) }],
+        generationConfig: { thinkingConfig: Object.assign({ includeThoughts: true }, hasEffort(model) ? { thinkingLevel: settings.effort.toUpperCase() } : {}) }
+      }
+      if (opts.noTools) body.toolConfig = { functionCallingConfig: { mode: 'NONE' } }
+      const path = 'gemini/v1beta/models/' + model + ':streamGenerateContent?alt=sse'
+      for (let attempt = 0; ; attempt++) {
+        const parts = []
+        const calls = []
+        let finish = null
+        let usage = {}
+        let textBlock = null
+        let thought = null
+        try {
+          const response = await postModel(path, body, signal)
+          for await (const chunk of events(response)) {
+            const candidate = chunk.candidates && chunk.candidates[0]
+            for (const part of (candidate && candidate.content && candidate.content.parts) || []) {
+              parts.push(part)
+              if (part.functionCall && part.functionCall.name) {
+                const call = { id: 'call_' + newId(), gid: part.functionCall.id, name: part.functionCall.name, input: part.functionCall.args || {} }
+                calls.push(call)
+                ui.start({ type: 'tool_use', id: call.id, name: call.name })
+              } else if (part.text) {
+                if (part.thought) {
+                  if (!thought) ui.start((thought = { type: 'thinking', thinking: '' }))
+                  thought.thinking += part.text
+                  ui.delta(thought)
+                } else {
+                  if (thought) ui.stop(thought)
+                  if (!textBlock) ui.start((textBlock = { type: 'text', text: '' }))
+                  textBlock.text += part.text
+                  ui.delta(textBlock)
+                }
+              }
+            }
+            if (candidate && candidate.finishReason) finish = candidate.finishReason
+            if (chunk.usageMetadata) usage = chunk.usageMetadata
+            if (chunk.error) throw new Error(chunk.error.message || 'Gemini stopped with an error.')
+          }
+        } catch (e) {
+          // Google's "busy" and rate-limit answers are worth a couple of quiet retries, if nothing was shown yet.
+          if (!signal.aborted && !parts.length && [429, 500, 502, 503, 504].includes(e.status) && attempt < 2) {
+            await sleep(e.status === 429 ? 15000 : 3000)
+            continue
+          }
+          if ([500, 502, 503, 504].includes(e.status)) throw new Error("Google's Gemini is overloaded right now. Wait a minute and send again, or pick another model.")
+          throw e
+        }
+        if (thought) ui.stop(thought)
+        const result = { billed: (usage.totalTokenCount || 0) - (usage.cachedContentTokenCount || 0), context: usage.promptTokenCount || 0, text: textBlock ? textBlock.text : '', calls }
+        if (finish === 'MAX_TOKENS') return Object.assign(result, { calls: [], stop: 'cut', cutIds: calls.map((c) => c.id) })
+        if (!parts.length) throw new Error('Gemini returned nothing' + (finish && finish !== 'STOP' ? ' (' + finish + ')' : '') + '. Try rephrasing, or pick another model.')
+        // Parts go back exactly as received: thought signatures ride on them.
+        if (!opts.dryRun) messages.push({ role: 'model', parts })
+        result.stop = /SAFETY|PROHIBITED|BLOCKLIST|RECITATION/.test(finish || '') ? 'refusal' : calls.length ? 'tools' : 'end'
+        return result
+      }
+    }
+  }
+}
+
 /** Copies messages and marks the last block, so the conversation so far is re-read from cache. */
 function withCache(messages) {
   const out = messages.slice()
@@ -999,134 +1352,17 @@ function withCache(messages) {
   return out
 }
 
-/** One model response, streamed. Returns { blocks, stop, billed, context }. */
-async function respond(signal, ui, opts) {
-  opts = opts || {}
-  const t = await token()
-  if (!t) throw Object.assign(new Error('Your session ended. Sign in again.'), { signin: true })
-  const model = currentModel()
-  const body = {
-    model,
-    max_tokens: 12000,
-    stream: true,
-    system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }],
-    tools: TOOLS,
-    messages: withCache(opts.messages || chat().messages)
-  }
-  if (hasEffort(model)) {
-    body.thinking = { type: 'adaptive', display: 'summarized' }
-    body.output_config = { effort: settings.effort }
-  }
-  if (opts.noTools) body.tool_choice = { type: 'none' }
-  const response = await fetch(API + '/proxy/anthropic/v1/messages?beta=true', {
-    method: 'POST',
-    signal,
-    headers: { authorization: 'Bearer ' + t, 'x-mirg-device': device(), 'content-type': 'application/json', 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify(body)
-  })
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    const err = (data && data.error) || {}
-    throw Object.assign(new Error(err.message || 'The model request failed (' + response.status + ').'), { code: err.type || err.code, status: response.status })
-  }
-  const blocks = []
-  let stop = null
-  const usage = { input: 0, cacheWrite: 0, cacheRead: 0, output: 0 }
-  const reader = response.body.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
-  for (;;) {
-    const { value, done } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
-    let cut
-    while ((cut = buffer.indexOf('\n\n')) >= 0) {
-      const chunk = buffer.slice(0, cut)
-      buffer = buffer.slice(cut + 2)
-      const line = chunk.split('\n').find((l) => l.startsWith('data:'))
-      if (!line) continue
-      let ev
-      try {
-        ev = JSON.parse(line.slice(5).trim())
-      } catch (e) {
-        continue
-      }
-      if (ev.type === 'message_start' && ev.message && ev.message.usage) {
-        const u = ev.message.usage
-        usage.input = u.input_tokens || 0
-        usage.cacheWrite = u.cache_creation_input_tokens || 0
-        usage.cacheRead = u.cache_read_input_tokens || 0
-        usage.output = u.output_tokens || 0
-      } else if (ev.type === 'content_block_start') {
-        const b = Object.assign({}, ev.content_block)
-        if (b.type === 'tool_use') b.json = ''
-        if (b.type === 'text') b.text = b.text || ''
-        if (b.type === 'thinking') b.thinking = b.thinking || ''
-        blocks[ev.index] = b
-        ui.start(b)
-      } else if (ev.type === 'content_block_delta') {
-        const b = blocks[ev.index]
-        const d = ev.delta
-        if (!b) continue
-        if (d.type === 'text_delta') b.text += d.text
-        else if (d.type === 'thinking_delta') b.thinking += d.thinking
-        else if (d.type === 'signature_delta') b.signature = (b.signature || '') + d.signature
-        else if (d.type === 'input_json_delta') b.json += d.partial_json
-        ui.delta(b)
-      } else if (ev.type === 'content_block_stop') {
-        const b = blocks[ev.index]
-        if (!b) continue
-        if (b.type === 'tool_use') {
-          try {
-            b.input = b.json ? JSON.parse(b.json) : {}
-          } catch (e) {
-            b.input = {}
-          }
-          delete b.json
-        }
-        ui.stop(b)
-      } else if (ev.type === 'message_delta') {
-        if (ev.delta && ev.delta.stop_reason) stop = ev.delta.stop_reason
-        if (ev.usage && ev.usage.output_tokens) usage.output = ev.usage.output_tokens
-      } else if (ev.type === 'error') {
-        throw new Error((ev.error && ev.error.message) || 'The model stopped with an error.')
-      }
-    }
-  }
-  return { blocks: blocks.filter(Boolean), stop, billed: usage.input + usage.cacheWrite + usage.output, context: usage.input + usage.cacheWrite + usage.cacheRead }
-}
-
-function clean(blocks) {
-  const out = []
-  for (const b of blocks) {
-    if (b.type === 'text') {
-      if (b.text && b.text.trim()) out.push({ type: 'text', text: b.text })
-    } else if (b.type === 'thinking') out.push({ type: 'thinking', thinking: b.thinking || '', signature: b.signature || '' })
-    else if (b.type === 'redacted_thinking') out.push({ type: 'redacted_thinking', data: b.data })
-    else if (b.type === 'tool_use') out.push({ type: 'tool_use', id: b.id, name: b.name, input: b.input || {} })
-  }
-  return out
-}
-
 const quietUi = { start() {}, delta() {}, stop() {} }
 
 /** When the conversation has grown long, replace it with a summary written by the model. */
 async function compact(c, signal) {
   if ((c.contextTokens || 0) < COMPACT_AT || !c.messages.length) return ''
   const notice = addItem({ kind: 'notice', text: 'Summarizing earlier messages to keep the conversation fast…' })
-  const messages = c.messages.slice()
-  const last = messages[messages.length - 1]
-  if (last.role === 'user') {
-    const content = typeof last.content === 'string' ? [{ type: 'text', text: last.content }] : last.content.slice()
-    content.push({ type: 'text', text: SUMMARY_REQUEST })
-    messages[messages.length - 1] = { role: 'user', content }
-  } else messages.push({ role: 'user', content: SUMMARY_REQUEST })
-  const { blocks } = await respond(signal, quietUi, { messages, noTools: true })
-  const summary = blocks
-    .filter((b) => b.type === 'text')
-    .map((b) => b.text)
-    .join('\n')
-    .trim()
+  const adapter = ADAPTERS[c.provider]
+  const messages = JSON.parse(JSON.stringify(c.messages))
+  adapter.addUser(messages, SUMMARY_REQUEST, [])
+  const { text } = await adapter.turn(currentModel(), messages, signal, quietUi, { noTools: true, dryRun: true })
+  const summary = (text || '').trim()
   if (!summary) {
     notice.text = 'Could not summarize the earlier messages; carrying on.'
     refresh(notice)
@@ -1141,9 +1377,27 @@ async function compact(c, signal) {
   return 'This conversation grew long, so everything before this point was replaced by the summary below.\n\n<summary>\n' + summary + "\n</summary>\n\nCarry on from where the summary leaves off. The user's most recent message is:\n\n"
 }
 
-async function agent(text, images) {
+/** A chat continued with another vendor's model: it starts afresh with the gist of what was said. */
+function recapOf(c) {
+  const lines = []
+  for (const item of c.items) {
+    if (item.kind === 'user') lines.push('User: ' + item.text.slice(0, 600))
+    else if (item.kind === 'agent') lines.push('You: ' + item.text.slice(0, 600))
+  }
+  let body = lines.join('\n\n')
+  if (body.length > 8000) body = '…' + body.slice(-8000)
+  return (
+    'This chat was carried on from a different AI model, so here is a recap of it instead of the full conversation.\n\n<recap>\n' +
+    body +
+    '\n</recap>\n\nThe game already has these files: ' +
+    (Object.keys(project.files).sort().join(', ') || 'none') +
+    ". Read them before changing them. The user's new message is:\n\n"
+  )
+}
+
+async function agent(text, files) {
   if (running || !project) return
-  images = images || []
+  files = files || []
   const c = chat()
   const controller = new AbortController()
   running = controller
@@ -1153,27 +1407,47 @@ async function agent(text, images) {
   setRunning(true)
   let changed = false
   let userItem = null
+  let pendingMark = null
   const toolItems = new Map()
   try {
-    const recap = await compact(c, controller.signal)
+    const model = currentModel()
+    const provider = providerOf(model)
+    let recap = ''
+    if (!c.provider) c.provider = provider
+    if (c.provider !== provider) {
+      if (c.messages.length) {
+        recap = recapOf(c)
+        c.messages = []
+        c.contextTokens = 0
+        for (const item of c.items) if (item.kind === 'user') delete item.mark
+        addItem({ kind: 'notice', text: 'Carrying on with ' + PROVIDER_NAMES[provider] + ': it gets a recap of this chat.' })
+      }
+      c.provider = provider
+    }
+    const adapter = ADAPTERS[provider]
+    if (!recap) recap = await compact(c, controller.signal)
     let note = ''
     if (!c.messages.length && !recap && Object.keys(project.files).length) note = '\n\n(The project already has these files: ' + Object.keys(project.files).sort().join(', ') + '.)'
     // Older snapshots are dropped so a long session does not fill the browser's storage.
     const turns = c.items.filter((i) => i.kind === 'user' && i.before)
     for (const old of turns.slice(0, Math.max(0, turns.length - 24))) delete old.before
-    userItem = addItem({ kind: 'user', text, pics: images.map((i) => i.thumb), before: JSON.parse(JSON.stringify(project.files)), mark: c.messages.length, tokens: 0, ms: 0 })
+    userItem = addItem({
+      kind: 'user',
+      text,
+      pics: files.filter((f) => f.kind === 'image').map((i) => i.thumb),
+      docs: files.filter((f) => f.kind === 'text').map((f) => f.name),
+      before: JSON.parse(JSON.stringify(project.files)),
+      mark: c.messages.length,
+      tokens: 0,
+      ms: 0
+    })
     if (!c.title || c.title === 'New chat') {
       c.title = text.replace(/\s+/g, ' ').slice(0, 60) || 'Chat'
       renderChatName()
     }
-    const words = recap + text + note + deviceNote()
-    const content = images.map((i) => ({ type: 'image', source: { type: 'base64', media_type: i.mediaType, data: i.data } })).concat([{ type: 'text', text: words }])
-    const prev = c.messages[c.messages.length - 1]
-    // After an error or Stop the history can end on the user's side: carry on in the same turn.
-    if (prev && prev.role === 'user') {
-      c.messages[c.messages.length - 1] = { role: 'user', content: (typeof prev.content === 'string' ? [{ type: 'text', text: prev.content }] : prev.content).concat(content) }
-      userItem.mark = c.messages.length - 1
-    } else c.messages.push({ role: 'user', content })
+    const at = adapter.addUser(c.messages, recap + text + note + deviceNote(), files)
+    // Restore cuts the history back to just before this message.
+    userItem.mark = Math.min(userItem.mark, at)
     save()
     for (let round = 0; round < MAX_ROUNDS; round++) {
       const live = new Map()
@@ -1200,44 +1474,39 @@ async function agent(text, images) {
         },
         stop(b) {
           const item = live.get(b)
-          if (item && b.type === 'thinking') {
+          if (item && b.type === 'thinking' && item.live) {
             item.live = false
             item.ms = Date.now() - item.t0
             refresh(item)
           }
         }
       }
+      const before = c.messages.length
       let result
       try {
-        result = await respond(controller.signal, ui, null)
+        result = await adapter.turn(model, c.messages, controller.signal, ui, {})
       } finally {
         working.remove()
       }
-      const { blocks, stop } = result
       userItem.tokens += result.billed
       c.contextTokens = result.context
       // Text that came to nothing leaves no empty bubble behind.
       for (const [b, item] of live) if (b.type === 'text' && !b.text.trim()) removeItem(item)
-      let content = clean(blocks)
-      if (stop === 'max_tokens') {
-        for (const b of content) if (b.type === 'tool_use' && toolItems.get(b.id)) Object.assign(toolItems.get(b.id), { running: false, bad: true, title: 'Cut off: the reply was too long' })
+      if (result.stop === 'cut') {
+        for (const id of result.cutIds || []) if (toolItems.get(id)) Object.assign(toolItems.get(id), { running: false, bad: true, title: 'Cut off: the reply was too long' })
         toolItems.forEach(refresh)
-        content = content.filter((b) => b.type !== 'tool_use')
-        if (!content.some((b) => b.type === 'text')) content.push({ type: 'text', text: '(My reply was cut off because it was too long.)' })
-        c.messages.push({ role: 'assistant', content })
-        c.messages.push({ role: 'user', content: 'Your last reply was cut off because it was too long, and nothing in it was run. Write less per reply: split big files into modules of a few hundred lines and write one or two per reply.' })
+        adapter.addUser(c.messages, CUT_NOTE, [])
         continue
       }
-      if (!content.length) content.push({ type: 'text', text: '(no reply)' })
-      c.messages.push({ role: 'assistant', content })
       save()
-      const calls = content.filter((b) => b.type === 'tool_use')
-      if (stop !== 'tool_use' || !calls.length) {
-        if (stop === 'refusal') addItem({ kind: 'error', text: 'The model declined this request. Try describing the game differently.' })
+      if (result.stop !== 'tools') {
+        if (result.stop === 'refusal') addItem({ kind: 'error', text: 'The model declined this request. Try describing the game differently.' })
         break
       }
+      // The model's tool calls are now in the history; they need answers before anything else is sent.
+      pendingMark = before
       const results = []
-      for (const call of calls) {
+      for (const call of result.calls) {
         if (controller.signal.aborted) break
         const item = toolItems.get(call.id) || addItem({ kind: 'tool', title: toolLabel(call.name) + '…', running: true, t0: Date.now() })
         const t0 = Date.now()
@@ -1257,11 +1526,12 @@ async function agent(text, images) {
         item.running = false
         item.ms = Date.now() - t0
         refresh(item)
-        results.push({ type: 'tool_result', tool_use_id: call.id, content: String(out).slice(0, 30000), is_error: isError || undefined })
+        results.push({ call, content: String(out).slice(0, 30000), isError })
       }
       // Every tool call needs an answer, even when the user pressed Stop part way through.
-      for (const call of calls) if (!results.some((r) => r.tool_use_id === call.id)) results.push({ type: 'tool_result', tool_use_id: call.id, content: 'Stopped by the user.', is_error: true })
-      c.messages.push({ role: 'user', content: results })
+      for (const call of result.calls) if (!results.some((r) => r.call === call)) results.push({ call, content: 'Stopped by the user.', isError: true })
+      adapter.addResults(c.messages, results)
+      pendingMark = null
       save()
       if (controller.signal.aborted) break
       if (round === MAX_ROUNDS - 1) addItem({ kind: 'notice', text: 'Paused after many steps. Send "keep going" to continue.' })
@@ -1273,9 +1543,8 @@ async function agent(text, images) {
       if (e.signin) signIn().catch(() => undefined)
       queuePaused = queue.length > 0
     }
-    // A failed request leaves the user's message last; that is a valid place to carry on from.
-    const last = c.messages[c.messages.length - 1]
-    if (last && last.role === 'assistant' && last.content.some((b) => b.type === 'tool_use')) c.messages.pop()
+    // Tool calls that never got answers are dropped; the user's message stays last, a valid place to carry on from.
+    if (pendingMark !== null) c.messages.length = pendingMark
   } finally {
     for (const item of toolItems.values())
       if (item.running) {
@@ -1302,7 +1571,7 @@ function nextQueued() {
   if (running || queuePaused || !queue.length) return
   const next = queue.shift()
   renderQueue()
-  agent(next.text, next.images)
+  agent(next.text, next.files)
 }
 
 let ticker = null
@@ -1437,6 +1706,17 @@ function draw(item) {
         pics.appendChild(img)
       }
       bubble.appendChild(pics)
+    }
+    if (item.docs && item.docs.length) {
+      const docs = document.createElement('div')
+      docs.className = 'pics'
+      for (const name of item.docs) {
+        const d = document.createElement('span')
+        d.className = 'doc'
+        d.textContent = name
+        docs.appendChild(d)
+      }
+      bubble.appendChild(docs)
     }
     bubble.appendChild(document.createTextNode(item.text))
     el.appendChild(bubble)
@@ -1670,10 +1950,14 @@ $('undo-restore').onclick = () => {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Pictures attached to a message: a sketch of a level, a screenshot of a game to match.
+// Files attached to a message: pictures (a sketch of a level, a game to match) go to the model as
+// images; text and code files go inside the message for it to read. Other files cannot be used
+// by a browser game made of text files, so they are turned away with a reason.
 
-let pendingPics = []
-const MAX_PICS = 4
+let pendingFiles = []
+const MAX_FILES_PER_MESSAGE = 6
+const MAX_TEXT_FILE = 200_000
+const TEXT_FILE = /\.(txt|md|markdown|js|mjs|cjs|ts|jsx|tsx|json|html|htm|css|csv|tsv|xml|svg|yaml|yml|toml|ini|glsl|frag|vert|lua|py|gd|cs|java|c|cpp|h|rb|go|rs|log)$/i
 
 async function readPicture(file) {
   const url = URL.createObjectURL(file)
@@ -1692,45 +1976,57 @@ async function readPicture(file) {
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
       return canvas.toDataURL('image/jpeg', quality)
     }
-    return { mediaType: 'image/jpeg', data: draw(1568, 0.85).split(',')[1], thumb: draw(160, 0.7) }
+    return { kind: 'image', name: file.name, mediaType: 'image/jpeg', data: draw(1568, 0.85).split(',')[1], thumb: draw(160, 0.7) }
   } finally {
     URL.revokeObjectURL(url)
   }
 }
 
-async function attach(files) {
-  const pictures = [...files].filter((f) => /^image\/(png|jpeg|webp|gif)$/.test(f.type))
-  if (files.length && !pictures.length) return alert('Only pictures (PNG, JPEG, WebP or GIF) can be attached here.')
-  for (const f of pictures) {
-    if (pendingPics.length >= MAX_PICS) {
-      alert('Up to ' + MAX_PICS + ' pictures per message.')
+async function attach(list) {
+  const refused = []
+  for (const f of [...list]) {
+    if (pendingFiles.length >= MAX_FILES_PER_MESSAGE) {
+      refused.push('Up to ' + MAX_FILES_PER_MESSAGE + ' files per message.')
       break
     }
     try {
-      pendingPics.push(await readPicture(f))
+      if (/^image\/(png|jpeg|webp|gif)$/.test(f.type)) pendingFiles.push(await readPicture(f))
+      else if (TEXT_FILE.test(f.name) || /^text\//.test(f.type) || f.type === 'application/json') {
+        if (f.size > MAX_TEXT_FILE) refused.push(f.name + ' is too big (over 200 KB) to attach.')
+        else pendingFiles.push({ kind: 'text', name: f.name, text: await f.text() })
+      } else refused.push(f.name + " can't be attached: the web version takes pictures and text or code files. For sounds, 3D models and other files, use the Mirg desktop app.")
     } catch (e) {
-      alert('Could not read ' + f.name + '.')
+      refused.push('Could not read ' + f.name + '.')
     }
   }
   renderPending()
+  if (refused.length) toast(refused.join(' '))
 }
 
 function renderPending() {
   const box = $('pending')
   box.innerHTML = ''
-  box.hidden = !pendingPics.length
-  pendingPics.forEach((p, i) => {
+  box.hidden = !pendingFiles.length
+  pendingFiles.forEach((p, i) => {
     const wrap = document.createElement('div')
     wrap.className = 'pic'
-    const img = document.createElement('img')
-    img.src = p.thumb
-    img.alt = 'Attached picture'
+    let img
+    if (p.kind === 'image') {
+      img = document.createElement('img')
+      img.src = p.thumb
+      img.alt = 'Attached picture'
+    } else {
+      img = document.createElement('span')
+      img.className = 'doc'
+      img.textContent = p.name
+      img.title = p.name
+    }
     const x = document.createElement('button')
     x.type = 'button'
     x.textContent = '×'
     x.title = 'Remove'
     x.onclick = () => {
-      pendingPics.splice(i, 1)
+      pendingFiles.splice(i, 1)
       renderPending()
     }
     wrap.append(img, x)
@@ -1792,7 +2088,7 @@ function renderQueue() {
     const row = document.createElement('div')
     row.className = 'item'
     const span = document.createElement('span')
-    span.textContent = q.text || q.images.length + ' picture(s)'
+    span.textContent = q.text || q.files.length + ' file(s)'
     const x = document.createElement('button')
     x.type = 'button'
     x.className = 'icon-btn'
@@ -1806,6 +2102,156 @@ function renderQueue() {
     box.appendChild(row)
   })
 }
+
+// ---------------------------------------------------------------------------------------------
+// Voice input, like the app: the microphone streams to a live speech-to-text service and words
+// appear in the box as they are recognized. Mirg's server hands out a one-use pass, and the
+// seconds spoken are charged to the plan.
+
+const VOICE_RATE = 16_000
+const VOICE_MAX_MS = 110_000
+let voice = null
+
+const joinWords = (...parts) => parts.map((p) => p.trim()).filter(Boolean).join(' ')
+
+function micState(button, state) {
+  button.classList.toggle('recording', state === 'recording')
+  button.disabled = state === 'starting' || state === 'working'
+  const label = state === 'recording' ? 'Stop listening' : state === 'starting' ? 'Starting…' : state === 'working' ? 'Finishing…' : 'Speak your message'
+  button.title = label
+  button.setAttribute('aria-label', label)
+  button.setAttribute('aria-pressed', String(state === 'recording'))
+}
+
+function voiceEnd(v) {
+  if (voice === v) voice = null
+  clearTimeout(v.limit)
+  v.stream.getTracks().forEach((t) => t.stop())
+  v.context.close().catch(() => undefined)
+  const ws = v.socket
+  if (ws) {
+    ws.onmessage = ws.onclose = ws.onerror = null
+    if (ws.readyState <= 1) ws.close()
+  }
+  const seconds = v.samples / VOICE_RATE
+  if (seconds > 0) call('POST', '/voice/usage', { seconds }).catch(() => undefined)
+  v.samples = 0
+  micState(v.button, 'idle')
+}
+
+async function voiceStop(v) {
+  if (!v || v.stopping) return
+  v.stopping = true
+  micState(v.button, 'working')
+  v.stream.getTracks().forEach((t) => t.stop())
+  const ws = v.socket
+  if (ws && ws.readyState === 1) {
+    const done = new Promise((resolve) => (v.onFinal = resolve))
+    ws.send(JSON.stringify({ message_type: 'input_audio_chunk', audio_base_64: '', commit: true, sample_rate: VOICE_RATE }))
+    await Promise.race([done, sleep(2500)])
+    // If the service never confirmed the last phrase, what it had heard so far still counts.
+    if (v.partial.trim()) v.box.value = v.kept = joinWords(v.kept, v.partial)
+  }
+  voiceEnd(v)
+}
+
+async function voiceStart(button) {
+  if (voice) return voiceStop(voice)
+  if (!session()) {
+    try {
+      await signIn()
+    } catch (e) {
+      return
+    }
+  }
+  const box = $(button.dataset.mic)
+  micState(button, 'starting')
+  let stream
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+  } catch (e) {
+    micState(button, 'idle')
+    toast('Mirg could not use the microphone. Allow it for mirg.ai in your browser (the icon left of the address), then try again.')
+    return
+  }
+  const context = new AudioContext({ sampleRate: VOICE_RATE })
+  const v = { button, box, stream, context, socket: null, samples: 0, kept: box.value, partial: '', onFinal: null, stopping: false }
+  voice = v
+  v.limit = setTimeout(() => voiceStop(v), VOICE_MAX_MS)
+  try {
+    const { token: pass } = await call('POST', '/voice/token', {})
+    const query = new URLSearchParams({ model_id: 'scribe_v2_realtime', audio_format: 'pcm_' + VOICE_RATE, commit_strategy: 'vad', vad_silence_threshold_secs: '0.6', token: pass })
+    const ws = new WebSocket('wss://api.elevenlabs.io/v1/speech-to-text/realtime?' + query)
+    v.socket = ws
+    await new Promise((resolve, reject) => {
+      const giveUp = setTimeout(() => reject(new Error('Voice input took too long to start. Try again.')), 10_000)
+      ws.onerror = () => reject(new Error('Could not reach the voice service. Check your connection and try again.'))
+      ws.onclose = () => reject(new Error('The voice service closed the connection. Try again.'))
+      ws.onmessage = (e) => {
+        let m = {}
+        try {
+          m = JSON.parse(String(e.data))
+        } catch (err) {}
+        switch (m.message_type) {
+          case 'session_started':
+            clearTimeout(giveUp)
+            resolve()
+            break
+          case 'partial_transcript':
+            v.partial = m.text || ''
+            box.value = joinWords(v.kept, v.partial)
+            break
+          case 'committed_transcript':
+          case 'committed_transcript_with_timestamps':
+            v.partial = ''
+            if (m.text && m.text.trim()) box.value = v.kept = joinWords(v.kept, m.text)
+            if (v.onFinal) v.onFinal()
+            break
+          case 'insufficient_audio_activity':
+          case 'commit_throttled':
+          case 'warning':
+            if (v.onFinal) v.onFinal()
+            break
+          default:
+            if (m.error) {
+              clearTimeout(giveUp)
+              reject(new Error(m.message_type === 'quota_exceeded' ? 'Voice input is at capacity right now. Try again later.' : 'Voice input stopped unexpectedly. Try again.'))
+              if (voice === v) {
+                toast('Voice input stopped unexpectedly. Try again.')
+                voiceEnd(v)
+              }
+            }
+        }
+      }
+    })
+    ws.onclose = () => voice === v && voiceEnd(v)
+  } catch (e) {
+    voiceEnd(v)
+    toast(e.message)
+    return
+  }
+  if (voice !== v) return
+  // Raw samples straight from the microphone, sent on as 16-bit audio every few milliseconds.
+  const tap = context.createScriptProcessor(2048, 1, 1)
+  tap.onaudioprocess = (e) => {
+    if (voice !== v || v.stopping || !v.socket || v.socket.readyState !== 1) return
+    const samples = e.inputBuffer.getChannelData(0)
+    const pcm = new Int16Array(samples.length)
+    for (let i = 0; i < samples.length; i++) pcm[i] = Math.max(-1, Math.min(1, samples[i])) * 0x7fff
+    const bytes = new Uint8Array(pcm.buffer)
+    let bin = ''
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000))
+    v.samples += pcm.length
+    v.socket.send(JSON.stringify({ message_type: 'input_audio_chunk', audio_base_64: btoa(bin), commit: false, sample_rate: VOICE_RATE }))
+  }
+  context.createMediaStreamSource(stream).connect(tap)
+  tap.connect(context.destination)
+  micState(button, 'recording')
+  box.focus()
+}
+
+document.querySelectorAll('[data-mic]').forEach((b) => (b.onclick = () => voiceStart(b)))
+window.addEventListener('pagehide', () => voice && voiceEnd(voice))
 
 // ---------------------------------------------------------------------------------------------
 // Code view: read and edit the files by hand.
@@ -1978,7 +2424,10 @@ function migrate(p) {
     delete p.messages
     delete p.items
   }
-  for (const c of p.chats) for (const item of c.items) if (item.kind === 'step') Object.assign(item, { kind: 'tool', title: item.text })
+  for (const c of p.chats) {
+    for (const item of c.items) if (item.kind === 'step') Object.assign(item, { kind: 'tool', title: item.text })
+    if (!c.provider && c.messages.length) c.provider = 'anthropic'
+  }
   return p
 }
 
@@ -2034,7 +2483,7 @@ function openProject(p) {
   $('restored').hidden = true
   queue = []
   renderQueue()
-  pendingPics = []
+  pendingFiles = []
   renderPending()
   shownFile = null
   setDirty(false)
@@ -2087,11 +2536,17 @@ function showSettings() {
   $('settings-back').textContent = project ? 'Back to ' + project.name : 'Back'
   const fill = (el, list, value, label) => {
     el.innerHTML = ''
+    let group = null
     for (const x of list) {
+      if (x.group && (!group || group.label !== x.group)) {
+        group = document.createElement('optgroup')
+        group.label = x.group
+        el.appendChild(group)
+      }
       const o = document.createElement('option')
       o.value = x.id
       o.textContent = label(x)
-      el.appendChild(o)
+      ;(x.group ? group : el).appendChild(o)
     }
     el.value = value
   }
@@ -2203,7 +2658,7 @@ $('more-ideas').onclick = showIdeas
 $('composer').onsubmit = async (e) => {
   e.preventDefault()
   let text = $('input').value.trim()
-  if ((!text && !pendingPics.length) || !project) return
+  if ((!text && !pendingFiles.length) || !project) return
   if (!session()) {
     try {
       await signIn()
@@ -2216,16 +2671,16 @@ $('composer').onsubmit = async (e) => {
     text += '\n\n[The user edited ' + [...new Set(c.pendingNote)].join(', ') + ' by hand since your last turn. Read it before changing it.]'
     c.pendingNote = []
   }
-  const images = pendingPics
-  pendingPics = []
+  const files = pendingFiles
+  pendingFiles = []
   renderPending()
   $('input').value = ''
   if (running) {
-    queue.push({ text, images })
+    queue.push({ text, files })
     renderQueue()
     return
   }
-  agent(text || 'Here is a picture.', images)
+  agent(text || (files.some((f) => f.kind === 'image') ? 'Here is a picture.' : 'Here is a file.'), files)
 }
 $('input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {

@@ -1019,7 +1019,7 @@ a {
 }
 
 .chat.dropping::after {
-  content: 'Drop pictures to attach them';
+  content: 'Drop pictures or text files to attach them';
   position: absolute;
   inset: 0;
   display: grid;
@@ -1298,4 +1298,43 @@ a {
 .toast.show {
   opacity: 1;
   transform: translate(-50%, 0);
+}
+
+.doc {
+  display: inline-flex;
+  align-items: center;
+  max-width: 160px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  font-size: 12px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doc::before {
+  content: '';
+  width: 10px;
+  height: 12px;
+  margin-right: 6px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+  flex: none;
+  opacity: 0.6;
+}
+
+.mic.recording {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.12);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    background: rgba(255, 107, 107, 0.28);
+  }
 }

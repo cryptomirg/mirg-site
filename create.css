@@ -1044,3 +1044,150 @@ a {
   box-shadow: 0 0 0 8px #222, 0 10px 40px rgba(0, 0, 0, 0.6);
   transform-origin: center;
 }
+
+/* ---------- account ---------- */
+
+.account-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 3px 4px 3px 10px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.account-open:hover {
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.modal.wide {
+  width: min(520px, calc(100vw - 32px));
+}
+
+#account-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.account-row .email {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+}
+
+.usage-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--panel-2);
+  overflow: hidden;
+}
+
+.usage-bar span {
+  display: block;
+  height: 100%;
+  background: var(--text);
+}
+
+.usage-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.plans {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.plan {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.plan:hover {
+  border-color: #555;
+}
+
+.plan-name {
+  font-weight: 700;
+}
+
+.plan-price {
+  font-size: 14px;
+}
+
+.extra {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.extra .check,
+.extra .inline {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin: 0;
+}
+
+.extra p {
+  margin: 6px 0;
+}
+
+.modal .actions .grow {
+  flex: 1;
+}
+
+@media (max-width: 520px) {
+  .plans {
+    grid-template-columns: 1fr;
+  }
+}

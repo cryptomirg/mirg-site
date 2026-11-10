@@ -121,6 +121,9 @@ async function refreshMe() {
   renderAccount()
 }
 
+const PLAN_NAMES = { free: 'Free', pro: 'Pro', max: 'Max' }
+const usd = (micros) => '$' + (micros / 1_000_000).toFixed(micros % 1_000_000 ? 2 : 0)
+
 function renderAccount() {
   document.querySelectorAll('[data-account]').forEach((el) => {
     const s = session()
@@ -128,19 +131,131 @@ function renderAccount() {
       el.innerHTML = '<button type="button" class="linklike" data-signin>Sign in</button>'
       return
     }
-    let usage = ''
+    let inside = '<span class="plan-text">Account</span>'
     if (me && me.allowanceMicros > 0) {
       const pct = Math.min(100, Math.round((me.usedMicros / me.allowanceMicros) * 100))
-      const plan = me.plan === 'free' ? 'Free' : me.plan === 'pro' ? 'Pro' : 'Max'
-      usage = '<span class="plan-text">' + plan + ' · ' + pct + '% used</span><span class="meter" title="' + pct + '% of this month\'s usage"><span style="width:' + pct + '%"></span></span>'
+      inside = '<span class="plan-text">' + (PLAN_NAMES[me.plan] || 'Free') + ' · ' + pct + '% used</span><span class="meter"><span style="width:' + pct + '%"></span></span>'
     }
-    el.innerHTML = usage + '<button type="button" class="linklike" data-signout title="' + escapeHtml(s.email) + '">Sign out</button>'
+    el.innerHTML = '<button type="button" class="account-open" data-account-open title="Your account, plan and usage (' + escapeHtml(s.email) + ')">' + inside + '<span class="avatar">' + escapeHtml((s.email[0] || '?').toUpperCase()) + '</span></button>'
   })
 }
 
+/** Your account: plan, this period's usage, upgrading and billing, like Settings in the app. */
+async function openAccount() {
+  const box = $('accountbox')
+  const body = $('account-body')
+  const s = session()
+  if (!s) return signIn().catch(() => undefined)
+  const draw = (note) => {
+    body.innerHTML = ''
+    const add = (html, cls) => {
+      const el = document.createElement('div')
+      if (cls) el.className = cls
+      el.innerHTML = html
+      body.appendChild(el)
+      return el
+    }
+    add('<span class="email">' + escapeHtml(s.email) + '</span>' + (me ? '<span class="badge">' + (PLAN_NAMES[me.plan] || 'Free') + '</span>' : ''), 'account-row')
+    if (!me) {
+      add(note || 'Loading your plan…', 'fine')
+      return
+    }
+    if (me.suspended) add('Your account is suspended because a payment failed or was disputed. Contact <strong>support@mirg.ai</strong> to restore it.', 'error')
+    const pct = me.allowanceMicros > 0 ? Math.min(100, Math.round((me.usedMicros / me.allowanceMicros) * 100)) : 0
+    const resets = me.periodEnd ? ' · resets ' + new Date(me.periodEnd).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''
+    add('<div class="usage-bar"><span style="width:' + pct + '%"></span></div><div class="fine usage-line"><span>' + tokens(me.usedTokens || 0) + ' tokens used this ' + (me.plan === 'free' ? 'month' : 'period') + '</span><span>' + (pct >= 100 ? 'All' : pct + '%') + ' of your plan' + resets + '</span></div>', 'usage')
+    if (me.bonus && me.bonus.leftMicros > 0) add('Includes ' + usd(me.bonus.micros) + ' of free credit' + (me.bonus.until ? ', until ' + new Date(me.bonus.until).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '') + '.', 'fine')
+    if (me.plan === 'free') {
+      const plans = add('', 'plans')
+      for (const [kind, name, price, what] of [
+        ['pro', 'Pro', '$20 / month', "For regular game-making: 14 times the free plan's usage, and Claude Opus by default"],
+        ['max', 'Max', '$100 / month', "For big projects and heavy use: over 5 times Pro's usage"]
+      ]) {
+        const b = document.createElement('button')
+        b.type = 'button'
+        b.className = 'plan'
+        b.innerHTML = '<span class="plan-name">' + name + '</span><span class="plan-price">' + price + '</span><span class="fine">' + what + '</span>'
+        b.onclick = () => billing('/billing/checkout?plan=' + kind)
+        plans.appendChild(b)
+      }
+      add('Payment opens in a new tab. After paying, come back here; your plan updates within a minute.', 'fine')
+    } else {
+      const row = add('', 'account-row')
+      const b = document.createElement('button')
+      b.type = 'button'
+      b.className = 'btn small'
+      b.textContent = 'Manage billing'
+      b.onclick = () => billing('/billing/portal')
+      const t = document.createElement('span')
+      t.className = 'fine'
+      t.textContent = (me.plan === 'pro' ? 'Switch to Max, update your card or cancel.' : 'Change plan, update your card or cancel.') + ' Opens in a new tab.'
+      row.append(b, t)
+    }
+    if (me.extra && !me.suspended) {
+      const x = me.extra
+      const cap = Math.round(x.capMicros / 1_000_000)
+      const limits = [...new Set([40, 100, 200, 500, 1000, cap])].sort((a, b) => a - b)
+      const box2 = add(
+        '<label class="check"><input type="checkbox" id="extra-on"' + (x.enabled ? ' checked' : '') + ' /> Keep building when my plan runs out</label>' +
+          '<p class="fine">When your Max usage is used up, Mirg charges your card ' + usd(x.blockMicros) + ' at a time for more, straight away, at the same rate as your plan. Anything you do not use carries over. If a charge fails, your account is paused until support sorts it out.</p>' +
+          '<label class="inline">Most to charge per billing period <select id="extra-cap">' + limits.map((d) => '<option value="' + d + '"' + (d === cap ? ' selected' : '') + '>$' + d + '</option>').join('') + '</select></label>' +
+          (x.boughtMicros > 0 || x.balanceMicros > 0 ? '<p class="fine">Charged this period: ' + usd(x.boughtMicros) + ' of ' + usd(x.capMicros) + ' · ' + usd(x.balanceMicros) + ' of extra usage left</p>' : ''),
+        'extra'
+      )
+      const saveExtra = async () => {
+        const on = box2.querySelector('#extra-on')
+        const sel = box2.querySelector('#extra-cap')
+        on.disabled = sel.disabled = true
+        try {
+          await call('POST', '/billing/extra?enabled=' + (on.checked ? 'true' : 'false') + '&cap=' + Number(sel.value))
+          await refreshMe()
+          draw()
+        } catch (e) {
+          draw(e.message)
+          showAccountError(e.message)
+        }
+      }
+      box2.querySelector('#extra-on').onchange = saveExtra
+      box2.querySelector('#extra-cap').onchange = saveExtra
+    }
+    if (note) showAccountError(note)
+  }
+  const showAccountError = (message) => {
+    const err = document.createElement('p')
+    err.className = 'error'
+    err.textContent = message
+    body.appendChild(err)
+  }
+  const billing = async (path) => {
+    // Opened now, while the click still counts, so the browser does not block it as a pop-up.
+    const tab = window.open('', '_blank')
+    try {
+      const { url } = await call('POST', path)
+      if (!/^https:\/\//.test(url)) throw new Error('The billing page address was not valid.')
+      if (tab) tab.location.href = url
+      else location.href = url
+    } catch (e) {
+      if (tab) tab.close()
+      draw()
+      showAccountError(e.message)
+    }
+  }
+  draw()
+  box.showModal()
+  await refreshMe()
+  if (box.open) draw(me ? '' : 'Could not reach Mirg to load your usage.')
+}
+
+window.addEventListener('focus', () => {
+  // Back from paying in another tab: show the new plan.
+  if (session()) refreshMe().then(() => $('accountbox').open && openAccount())
+})
+
 document.addEventListener('click', (e) => {
   if (e.target.closest('[data-signin]')) signIn().catch(() => undefined)
+  if (e.target.closest('[data-account-open]')) openAccount()
   if (e.target.closest('[data-signout]')) {
+    $('accountbox').close()
     const s = session()
     store.set(SESSION_KEY, null)
     me = null
@@ -484,30 +599,6 @@ const TOOLS = [
     description: 'Restart the game in the Game tab from the current files and report what it printed: errors, warnings and logs from loading and its first two seconds.',
     input_schema: { type: 'object', properties: {} }
   },
-  {
-    name: 'game_eval',
-    description:
-      'Run JavaScript inside the running game and get the result as JSON. Give an expression (e.g. "window.__game.player.x") or statements ending in return (await is allowed). Use it to read exact state.',
-    input_schema: { type: 'object', properties: { code: { type: 'string' } }, required: ['code'] }
-  },
-  {
-    name: 'game_input',
-    description:
-      'Play the running game. Actions run in order: {"key": "ArrowRight", "ms": 500} holds a key (key names as in KeyboardEvent.key, e.g. "a", " ", "Enter", "ArrowUp"); {"tap": [x, y], "ms": 60} clicks or taps at a point in CSS pixels of the game view; {"wait": 300} waits. Returns any new errors. Read the effect with game_eval afterwards.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        actions: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: { key: { type: 'string' }, ms: { type: 'number' }, tap: { type: 'array', items: { type: 'number' } }, wait: { type: 'number' } }
-          }
-        }
-      },
-      required: ['actions']
-    }
-  },
   { name: 'game_logs', description: 'The console output of the running game since it last started.', input_schema: { type: 'object', properties: {} } }
 ]
 
@@ -583,22 +674,6 @@ async function runTool(name, input) {
       const text = (ok ? 'The game loaded.' : 'The page did not finish loading within 8 seconds.') + '\n' + logText(logs, 60)
       return { text, title: 'Ran the game: ' + (errors ? errors + (errors === 1 ? ' error' : ' errors') : 'no errors'), detail: logText(logs, 60), bad: errors > 0, ran: true }
     }
-    case 'game_eval': {
-      const code = String(input.code || '')
-      const reply = await ask({ type: 'eval', code }, 8000)
-      if (!reply.ok) throw Object.assign(new Error(reply.value), { detail: code + '\n\n' + reply.value })
-      return { text: reply.value, title: 'Checked the game', detail: code + '\n\n→ ' + clip(reply.value, 4000) }
-    }
-    case 'game_input': {
-      const actions = Array.isArray(input.actions) ? input.actions.slice(0, 50) : []
-      const before = logs.length
-      const total = actions.reduce((n, a) => n + (Number(a.ms) || 80) + (Number(a.wait) || 0), 0)
-      const reply = await ask({ type: 'input', actions }, Math.min(60000, total + 5000))
-      if (!reply.ok) throw new Error(reply.value)
-      const fresh = logs.slice(before)
-      const said = actions.map((a) => (a.key ? 'press ' + (a.key === ' ' ? 'Space' : a.key) + (a.ms ? ' ' + a.ms + 'ms' : '') : a.tap ? 'tap ' + a.tap.join(', ') : a.wait ? 'wait ' + a.wait + 'ms' : '?')).join(', ')
-      return { text: 'Done.' + (fresh.length ? '\n' + logText(fresh, 30) : ' Nothing new in the console.'), title: 'Played the game', detail: said + (fresh.length ? '\n\n' + logText(fresh, 30) : ''), bad: fresh.some((l) => l.level === 'error') }
-    }
     case 'game_logs': {
       const text = logText(logs, 120)
       return { text, title: 'Read the console', detail: text }
@@ -617,8 +692,6 @@ function toolLabel(name) {
       delete_file: 'Deleting a file',
       list_files: 'Looking at the files',
       run_game: 'Running the game',
-      game_eval: 'Checking the game',
-      game_input: 'Playing the game',
       game_logs: 'Reading the console'
     }[name] || 'Working'
   )
@@ -636,7 +709,7 @@ function fileChanged(path) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Choices: model, thinking level, testing, preview size. Remembered in this browser.
+// Choices: model, thinking level, preview size. Remembered in this browser.
 
 const MODELS = [
   { id: 'claude-opus-5-5', label: 'Opus 5.5', hint: 'Best for building games. The default on Pro and Max.' },
@@ -649,11 +722,6 @@ const EFFORTS = [
   { id: 'medium', label: 'Medium', hint: 'Balanced. Right for most games.' },
   { id: 'high', label: 'High', hint: 'Most careful, slower, and uses the most tokens. For big or tricky games.' }
 ]
-const TESTING = [
-  { id: 'thorough', label: 'Full', hint: 'Runs the game and plays it to check it works. The best results; uses the most of your plan.' },
-  { id: 'quick', label: 'Quick', hint: 'Runs the game and fixes errors. Plays it only if something looks wrong.' },
-  { id: 'off', label: 'Off', hint: 'Runs the game and fixes errors only. Fastest and cheapest; you do the playtesting.' }
-]
 const DEVICES = { portrait: [390, 844], landscape: [844, 390] }
 
 const settings = (() => {
@@ -661,7 +729,7 @@ const settings = (() => {
   try {
     saved = JSON.parse(store.get('mirg-web-settings') || '{}') || {}
   } catch (e) {}
-  return Object.assign({ model: null, effort: 'medium', testing: 'thorough', device: 'desktop' }, saved)
+  return Object.assign({ model: null, effort: 'medium', device: 'desktop' }, saved)
 })()
 const keepSettings = () => store.set('mirg-web-settings', JSON.stringify(settings))
 const currentModel = () => (MODELS.some((m) => m.id === settings.model) ? settings.model : me && me.plan !== 'free' ? 'claude-opus-5-5' : 'claude-sonnet-5-5')
@@ -683,7 +751,6 @@ function renderPickers() {
   }
   fill($('pick-model'), MODELS, model, (m) => m.label)
   fill($('pick-effort'), EFFORTS, settings.effort, (e) => 'Think: ' + e.label)
-  fill($('pick-testing'), TESTING, settings.testing, (t) => 'Test: ' + t.label)
   $('pick-effort').hidden = !hasEffort(model)
   $('device').value = settings.device
 }
@@ -695,11 +762,6 @@ $('pick-model').onchange = (e) => {
 }
 $('pick-effort').onchange = (e) => {
   settings.effort = e.target.value
-  keepSettings()
-  renderPickers()
-}
-$('pick-testing').onchange = (e) => {
-  settings.testing = e.target.value
   keepSettings()
   renderPickers()
 }
@@ -726,10 +788,8 @@ function fitDevice() {
 }
 window.addEventListener('resize', fitDevice)
 
-function testingNote() {
+function deviceNote() {
   let note = ''
-  if (settings.testing === 'quick') note += '\n\n[Testing mode: Quick, set by the user to save time and usage. After building or changing the game, call run_game and fix any errors. Do not playtest with game_input or game_eval unless something looks broken or the user asks.]'
-  if (settings.testing === 'off') note += '\n\n[Testing mode: Off, set by the user. Do not playtest. After changes, call run_game and fix errors only, then tell the user it is ready to try.]'
   const size = DEVICES[settings.device]
   if (size) note += '\n\n[The Game tab is showing a phone preview, ' + size[0] + '×' + size[1] + ' (' + settings.device + '). The game should fit that screen and be playable by touch.]'
   return note
@@ -748,13 +808,12 @@ Web games only: index.html at the top of the project plus ES modules, with no bu
 If the user asks for Godot, Unity, Unreal, Roblox, Minecraft mods, pygame or a native app, say in one sentence that those need the Mirg desktop app (mirg.ai/download, Mac and Windows) and offer to make a web version here instead.
 
 # How to work
-The loop is: build, run, check, fix.
+The loop is: build, run, fix. You do not playtest here: the user plays the game themselves and tells you what to change.
 - Write all the files of a small game in one reply. A single reply must not write more than about 300 lines of code in total, because a very long reply is cut off: for a bigger game, split the code into modules of a few hundred lines and write one or two per reply.
-- Then call run_game. Errors it reports are yours to fix before you reply.
-- Verify behaviour, not just loading: expose the game's live state on a global, e.g. window.__game = { player, enemies, score, state }, then use game_input to play (move, jump, shoot, press the start button) and game_eval to read exact state. Call several tools in one reply when they do not depend on each other.
-- Every step costs the user part of their plan, so match the checking to the job. For a small game or change: one run_game, one short playtest with game_eval, and if clean, stop. Do not re-read files you just wrote or test what you did not change. Save repeated playtesting for bigger games and anything that failed.
+- Then call run_game once. Errors it reports are yours to fix before you reply; when it reports none, stop and hand the game over.
+- Every step costs the user part of their plan, so do not re-read files you just wrote or re-run the game when nothing changed.
 - Match the build to the request: "a simple Pong game" wants a small, clean game, not title screens, settings and systems nobody asked for.
-- Say what you verified and what you could not. Finish with a short summary of what changed and how to play (the controls), not a list of files.
+- Finish with a short summary of what changed and how to play (the controls), not a list of files.
 
 # Every game
 - Shared games are often opened on phones, so add simple touch controls as well as keyboard and mouse (tap, swipe, or a few large on-screen buttons shown only on touch devices), size the canvas to the window and handle resizing, and start audio on the first input.
@@ -968,7 +1027,7 @@ async function agent(text, images) {
       c.title = text.replace(/\s+/g, ' ').slice(0, 60) || 'Chat'
       renderChatName()
     }
-    const words = recap + text + note + testingNote()
+    const words = recap + text + note + deviceNote()
     const content = images.map((i) => ({ type: 'image', source: { type: 'base64', media_type: i.mediaType, data: i.data } })).concat([{ type: 'text', text: words }])
     const prev = c.messages[c.messages.length - 1]
     // After an error or Stop the history can end on the user's side: carry on in the same turn.
@@ -1141,6 +1200,7 @@ function duration(ms) {
 }
 
 function tokens(n) {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
   return n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'k' : String(n)
 }
 

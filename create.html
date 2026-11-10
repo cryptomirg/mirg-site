@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#0e0f14" />
     <link rel="canonical" href="https://mirg.ai/create" />
     <link rel="icon" href="assets/icon.png?v=2" />
-    <link rel="stylesheet" href="create.css?v=2" />
+    <link rel="stylesheet" href="create.css?v=3" />
   </head>
   <body>
     <!-- Start: describe a game, or open one made before. -->
@@ -70,7 +70,6 @@
             <div class="options">
               <select id="pick-model" aria-label="Model"></select>
               <select id="pick-effort" aria-label="Thinking level"></select>
-              <select id="pick-testing" aria-label="Testing"></select>
             </div>
             <div class="row">
               <input type="file" id="attach-input" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden />
@@ -130,6 +129,16 @@
       </form>
     </dialog>
 
+    <dialog id="accountbox" class="modal wide">
+      <h2>Your account</h2>
+      <div id="account-body"></div>
+      <div class="actions">
+        <button class="linklike" type="button" data-signout>Sign out</button>
+        <span class="grow"></span>
+        <button class="btn" type="button" onclick="this.closest('dialog').close()">Close</button>
+      </div>
+    </dialog>
+
     <dialog id="sharebox" class="modal">
       <form method="dialog" id="share-form">
         <h2>Share your game</h2>
@@ -151,6 +160,6 @@
       </form>
     </dialog>
 
-    <script type="module" src="create.js?v=3"></script>
+    <script type="module" src="create.js?v=4"></script>
   </body>
 </html>

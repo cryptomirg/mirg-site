@@ -1338,3 +1338,27 @@ a {
     background: rgba(255, 107, 107, 0.28);
   }
 }
+
+.share-pic {
+  margin: 12px 0;
+}
+
+.share-pic img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: #000;
+  display: block;
+}
+
+.share-pic .fine {
+  margin: 6px 0;
+}
+
+.share-pic .row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

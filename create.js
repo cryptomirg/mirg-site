@@ -420,6 +420,8 @@ el.dispatchEvent(new PointerEvent('pointerdown',b));el.dispatchEvent(new MouseEv
 addEventListener('message',async function(e){if(e.source!==parent)return;var m=e.data||{};
 if(m.type==='eval'){try{var r;try{r=(0,eval)('('+m.code+'\\n)')}catch(se){if(!(se instanceof SyntaxError))throw se;r=(0,eval)('(async function(){'+m.code+'\\n})()')}if(r&&typeof r.then==='function')r=await r;P({type:'evalResult',id:m.id,ok:true,value:fmt(r,true)})}catch(err){P({type:'evalResult',id:m.id,ok:false,value:String(err&&err.stack||err)})}}
 if(m.type==='input'){try{for(var i=0;i<(m.actions||[]).length;i++)await act(m.actions[i]);P({type:'inputDone',id:m.id,ok:true})}catch(err){P({type:'inputDone',id:m.id,ok:false,value:String(err)})}}});
+try{var gc=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(t,o){if(/webgl/i.test(String(t))){o=Object.assign({},o||{},{preserveDrawingBuffer:true})}return gc.call(this,t,o)}}catch(e){}
+addEventListener('message',function(e){if(e.source!==parent)return;var m=e.data||{};if(m.type!=='snapshot')return;var url=null;try{var cs=[].slice.call(document.querySelectorAll('canvas')).filter(function(c){var r=c.getBoundingClientRect();return c.width*c.height>0&&r.width>40&&r.height>40}).sort(function(a,b){return b.width*b.height-a.width*a.height});var c=cs[0];if(c){var w=Math.min(800,c.width),h=Math.round(c.height*w/c.width);var out=document.createElement('canvas');out.width=w;out.height=h;var x=out.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,w,h);x.drawImage(c,0,0,w,h);url=out.toDataURL('image/jpeg',0.82)}}catch(err){url=null}P({type:'snapshotResult',id:m.id,ok:true,value:url})});
 addEventListener('load',function(){P({type:'loaded'})});
 })();`
 
@@ -2705,6 +2707,143 @@ for (const c of CATEGORIES) {
   $('share-category').appendChild(o)
 }
 
+/** A picture of the running game for its card on the games page, or null if it cannot be taken. */
+async function snapshot() {
+  if (!frame) {
+    if (!project.files['index.html']) return null
+    await runGame()
+    await sleep(2500)
+  }
+  const reply = await ask({ type: 'snapshot' }, 4000)
+  const url = reply && reply.ok ? reply.value : null
+  if (!url || url.length < 3000) return null
+  // An all-black or blank frame says nothing about the game.
+  return (await looksBlank(url)) ? null : url
+}
+
+async function looksBlank(url) {
+  try {
+    const img = new Image()
+    // Not img.decode(): a browser can put that off while the tab is in the background.
+    const ok = await Promise.race([
+      new Promise((resolve) => {
+        img.onload = () => resolve(true)
+        img.onerror = () => resolve(false)
+        img.src = url
+      }),
+      sleep(2000).then(() => null)
+    ])
+    if (ok === null) return false
+    if (!ok) return true
+    const c = document.createElement('canvas')
+    c.width = 32
+    c.height = 18
+    const x = c.getContext('2d')
+    x.drawImage(img, 0, 0, 32, 18)
+    const d = x.getImageData(0, 0, 32, 18).data
+    let min = 255
+    let max = 0
+    for (let i = 0; i < d.length; i += 4) {
+      const v = (d[i] + d[i + 1] + d[i + 2]) / 3
+      min = Math.min(min, v)
+      max = Math.max(max, v)
+    }
+    return max - min < 6
+  } catch (e) {
+    return true
+  }
+}
+
+/** When the game cannot be pictured: a card with its name. */
+function titleCard(title) {
+  const c = document.createElement('canvas')
+  c.width = 800
+  c.height = 450
+  const x = c.getContext('2d')
+  const g = x.createLinearGradient(0, 0, 800, 450)
+  g.addColorStop(0, '#1d2340')
+  g.addColorStop(1, '#4a1f4f')
+  x.fillStyle = g
+  x.fillRect(0, 0, 800, 450)
+  x.fillStyle = '#fff'
+  x.textAlign = 'center'
+  x.textBaseline = 'middle'
+  let size = 64
+  x.font = '700 ' + size + 'px -apple-system, Segoe UI, Roboto, sans-serif'
+  while (x.measureText(title).width > 700 && size > 28) x.font = '700 ' + (size -= 4) + 'px -apple-system, Segoe UI, Roboto, sans-serif'
+  x.fillText(title, 400, 210)
+  x.fillStyle = 'rgba(255,255,255,0.6)'
+  x.font = '500 22px -apple-system, Segoe UI, Roboto, sans-serif'
+  x.fillText('Made with Mirg', 400, 290)
+  return c.toDataURL('image/jpeg', 0.85)
+}
+
+/** A picture the user picked, cropped to the games page's 16:9 card. */
+async function readCover(file) {
+  const url = URL.createObjectURL(file)
+  try {
+    const img = new Image()
+    img.src = url
+    await img.decode()
+    const w = 800
+    const h = 450
+    const c = document.createElement('canvas')
+    c.width = w
+    c.height = h
+    const x = c.getContext('2d')
+    const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight)
+    const dw = img.naturalWidth * scale
+    const dh = img.naturalHeight * scale
+    x.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh)
+    return c.toDataURL('image/jpeg', 0.85)
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
+let sharePicture = null
+function showSharePicture(url, note) {
+  sharePicture = url
+  $('share-picture').src = url || ''
+  $('share-picture').hidden = !url
+  $('share-picture-note').textContent = note || ''
+}
+
+let pictureTicket = 0
+async function takeSharePicture() {
+  const ticket = ++pictureTicket
+  const forProject = project
+  showSharePicture(null, 'Taking a picture of the game…')
+  const shot = await snapshot().catch(() => null)
+  // A picture that arrives after the box moved on to something else is not used.
+  if (ticket !== pictureTicket || forProject !== project || !$('sharebox').open) return
+  if (shot) showSharePicture(shot, 'A picture of your game as it is now.')
+  else showSharePicture(titleCard(titleOf(project.files) || project.name), "Your game couldn't be pictured, so it gets a card with its name. Take a picture when it shows something, or upload your own.")
+}
+
+$('share-retake').onclick = async () => {
+  if (project.cover) {
+    delete project.cover
+    save()
+  }
+  showTab('game')
+  await takeSharePicture()
+}
+$('share-upload').onclick = () => $('share-upload-input').click()
+$('share-upload-input').onchange = async (e) => {
+  const f = e.target.files && e.target.files[0]
+  e.target.value = ''
+  if (!f) return
+  try {
+    project.cover = await readCover(f)
+    pictureTicket++
+    save()
+    showSharePicture(project.cover, 'Your picture. It shows on the games page.')
+  } catch (err) {
+    toast('Could not read that picture. Try a PNG or JPEG.')
+  }
+}
+
 $('share').onclick = async () => {
   if (!project) return
   if (!project.files['index.html']) {
@@ -2732,6 +2871,8 @@ $('share').onclick = async () => {
   $('share-go').textContent = shared ? 'Update shared game' : 'Share'
   $('share-go').disabled = false
   $('sharebox').showModal()
+  if (project.cover) showSharePicture(project.cover, 'Your picture. It shows on the games page.')
+  else await takeSharePicture()
 }
 $('share-close').onclick = () => $('sharebox').close()
 $('share-copy').onclick = () => {
@@ -2749,7 +2890,11 @@ $('share-form').onsubmit = async (e) => {
     const title = titleOf(p.files) || p.name
     const info = JSON.stringify({ title, madeWith: 'Mirg' })
     const bodies = Object.assign({}, p.files, { 'mirg-share.json': info })
-    const files = Object.keys(bodies).map((path) => ({ path, size: utf8(bodies[path]).length }))
+    // The game's card on the games page.
+    const picture = sharePicture || p.cover || titleCard(title)
+    bodies['mirg-thumb.jpg'] = Uint8Array.from(atob(picture.split(',')[1]), (ch) => ch.charCodeAt(0))
+    const bytes = (v) => (typeof v === 'string' ? utf8(v) : v)
+    const files = Object.keys(bodies).map((path) => ({ path, size: bytes(bodies[path]).length }))
     const opts = { listed: $('share-listed').checked, category: $('share-category').value, phone: $('share-phone').checked }
     $('share-progress').textContent = 'Uploading ' + files.length + ' files…'
     const start = await call('POST', '/share/start', Object.assign({ slug: p.share ? p.share.slug : undefined, title, files }, opts))
@@ -2759,7 +2904,7 @@ $('share-form').onsubmit = async (e) => {
       for (let next = queue.shift(); next; next = queue.shift()) {
         let response = null
         for (let attempt = 0; attempt < 3 && !(response && response.ok); attempt++) {
-          response = await fetch(next.url, { method: 'PUT', headers: { 'content-type': 'application/octet-stream', 'x-upsert': 'true' }, body: utf8(bodies[next.path] || '') }).catch(() => null)
+          response = await fetch(next.url, { method: 'PUT', headers: { 'content-type': 'application/octet-stream', 'x-upsert': 'true' }, body: bytes(bodies[next.path] || '') }).catch(() => null)
         }
         if (!response || !response.ok) throw new Error('Could not upload ' + next.path + '. Check your connection and try again.')
         done++

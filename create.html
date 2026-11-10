@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#0e0f14" />
     <link rel="canonical" href="https://mirg.ai/create" />
     <link rel="icon" href="assets/icon.png?v=2" />
-    <link rel="stylesheet" href="create.css?v=8" />
+    <link rel="stylesheet" href="create.css?v=9" />
   </head>
   <body>
     <!-- Start: describe a game, or open one made before. -->
@@ -171,6 +171,15 @@
       <form method="dialog" id="share-form">
         <h2>Share your game</h2>
         <p class="fine">Anyone with the link can play it, on a computer or a phone.</p>
+        <div class="share-pic">
+          <img id="share-picture" alt="The picture your game will have on the games page" hidden />
+          <p class="fine" id="share-picture-note"></p>
+          <div class="row">
+            <button type="button" class="btn small" id="share-retake">Take a picture of the game</button>
+            <button type="button" class="btn small" id="share-upload">Upload a picture</button>
+            <input type="file" id="share-upload-input" accept="image/png,image/jpeg,image/webp" hidden />
+          </div>
+        </div>
         <label>Type of game <select id="share-category"></select></label>
         <label class="check"><input type="checkbox" id="share-listed" checked /> Show it on mirg.ai's games page</label>
         <label class="check"><input type="checkbox" id="share-phone" /> It works on phones</label>
@@ -189,6 +198,6 @@
     </dialog>
 
     <script src="site.js?v=24"></script>
-    <script type="module" src="create.js?v=9"></script>
+    <script type="module" src="create.js?v=10"></script>
   </body>
 </html>

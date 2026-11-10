@@ -261,8 +261,8 @@ document.addEventListener('click', (e) => {
     renderAccount()
     if (s) fetch(SUPABASE + '/auth/v1/logout', { method: 'POST', headers: { apikey: KEY, authorization: 'Bearer ' + s.accessToken } }).catch(() => undefined)
     if (typeof running !== 'undefined' && running) running.abort()
-    // Settings belongs to the account that just left: go back to the start page.
-    if (location.hash === '#settings') {
+    // Settings and the open game belong to the account that just left: go back to the start page.
+    if (location.hash) {
       history.pushState(null, '', '/create')
       route()
     }
@@ -329,6 +329,8 @@ function signIn() {
         } else {
           keep(await auth('verify', { type: 'email', email, token: $('signin-code').value.trim() }), email)
           await refreshMe()
+          // Show this account's own games on the start page.
+          if (!$('start').hidden) showStart()
           done(true)
         }
       } catch (ex) {
@@ -735,8 +737,8 @@ function fileChanged(path) {
 // Choices: model, thinking level, preview size. Remembered in this browser.
 
 const MODELS = [
-  { id: 'claude-opus-5-5', label: 'Opus 5.5', hint: 'Best for building games. The default.' },
-  { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5', hint: 'Faster and half the cost.' },
+  { id: 'claude-opus-5-5', label: 'Opus 5.5', hint: 'Best for building games. The default on Pro and Max.' },
+  { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5', hint: 'Faster and half the cost. The default on the free plan.' },
   { id: 'claude-haiku-4-5', label: 'Haiku 4.5', hint: 'Fastest and cheapest. Good for small tweaks.', effort: false },
   { id: 'claude-fable-5-1', label: 'Fable 5.1', hint: 'Most capable, most expensive.' }
 ]
@@ -755,7 +757,7 @@ const settings = (() => {
   return Object.assign({ model: null, effort: 'medium', device: 'desktop' }, saved)
 })()
 const keepSettings = () => store.set('mirg-web-settings', JSON.stringify(settings))
-const currentModel = () => (MODELS.some((m) => m.id === settings.model) ? settings.model : 'claude-opus-5-5')
+const currentModel = () => (MODELS.some((m) => m.id === settings.model) ? settings.model : me && me.plan !== 'free' ? 'claude-opus-5-5' : 'claude-sonnet-5-5')
 const hasEffort = (model) => !MODELS.some((m) => m.id === model && m.effort === false)
 
 function renderPickers() {
@@ -1989,7 +1991,7 @@ async function showStart() {
   $('studio').hidden = true
   $('start').hidden = false
   document.title = 'Make a game in your browser · Mirg'
-  const all = (await db.all().catch(() => [])).sort((a, b) => b.updated - a.updated)
+  const all = (await myGames()).sort((a, b) => b.updated - a.updated)
   $('mine').hidden = !all.length
   $('cards').innerHTML = ''
   for (const p of all) {
@@ -2056,7 +2058,7 @@ async function route() {
     fitDevice()
     return
   }
-  const p = (await db.all().catch(() => [])).find((x) => x.id === id[1])
+  const p = (await myGames()).find((x) => x.id === id[1])
   if (!p) {
     history.replaceState(null, '', '/create')
     return showStart()
@@ -2098,7 +2100,7 @@ function showSettings() {
   fill($('pref-effort'), EFFORTS, settings.effort, (e) => e.label + ' · ' + e.hint)
   $('pref-effort').disabled = !hasEffort(model)
   $('pref-device').value = settings.device
-  db.all()
+  myGames()
     .then((all) => {
       const shared = all.filter((p) => p.share).length
       $('settings-games').textContent = all.length
@@ -2123,9 +2125,28 @@ $('pref-device').onchange = (e) => {
   keepSettings()
 }
 
+/** Whose games these are: each account sees only its own games in this browser. */
+function owner() {
+  const s = session()
+  return s && s.email ? s.email.toLowerCase() : null
+}
+
+/** The signed-in account's games. Games made before accounts were kept apart go to whoever is signed in first. */
+async function myGames() {
+  const who = owner()
+  if (!who) return []
+  const all = await db.all().catch(() => [])
+  for (const p of all)
+    if (!p.owner) {
+      p.owner = who
+      db.put(p).catch(() => undefined)
+    }
+  return all.filter((p) => p.owner === who)
+}
+
 function blankProject(name) {
   const chatId = newId()
-  return { id: newId(), name, files: {}, chats: [{ id: chatId, title: 'New chat', messages: [], items: [], updated: Date.now(), contextTokens: 0 }], chatId, updated: Date.now(), share: null }
+  return { id: newId(), owner: owner(), name, files: {}, chats: [{ id: chatId, title: 'New chat', messages: [], items: [], updated: Date.now(), contextTokens: 0 }], chatId, updated: Date.now(), share: null }
 }
 
 async function startGame(text) {

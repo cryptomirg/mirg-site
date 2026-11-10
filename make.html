@@ -2,6 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!-- The ad's landing page now opens Mirg on the web, keeping the ad's tracking tags (gclid, utm_*) so the visit is still counted. -->
+    <script>location.replace('/create' + location.search + location.hash)</script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Make your own game with AI · Mirg</title>
     <meta name="description" content="Describe a game and Mirg's AI builds it, plays it to check it works, and gives you a link anyone can play. No coding. Free to try on Mac and Windows." />

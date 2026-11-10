@@ -260,8 +260,32 @@ document.addEventListener('click', (e) => {
     me = null
     renderAccount()
     if (s) fetch(SUPABASE + '/auth/v1/logout', { method: 'POST', headers: { apikey: KEY, authorization: 'Bearer ' + s.accessToken } }).catch(() => undefined)
+    if (typeof running !== 'undefined' && running) running.abort()
+    // Settings belongs to the account that just left: go back to the start page.
+    if (location.hash === '#settings') {
+      history.pushState(null, '', '/create')
+      route()
+    }
+    toast(s ? 'You are signed out' + (s.email ? ' of ' + s.email : '') + '.' : 'You are signed out.')
   }
 })
+
+let toastTimer = null
+/** A short message at the bottom of the screen that fades by itself. */
+function toast(text) {
+  let el = document.getElementById('toast')
+  if (!el) {
+    el = document.createElement('div')
+    el.id = 'toast'
+    el.className = 'toast'
+    el.setAttribute('role', 'status')
+    document.body.appendChild(el)
+  }
+  el.textContent = text
+  el.classList.add('show')
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3500)
+}
 
 /** Ask for an email and the code sent to it. Resolves once signed in; rejects if cancelled. */
 function signIn() {
@@ -711,8 +735,8 @@ function fileChanged(path) {
 // Choices: model, thinking level, preview size. Remembered in this browser.
 
 const MODELS = [
-  { id: 'claude-opus-5-5', label: 'Opus 5.5', hint: 'Best for building games. The default on Pro and Max.' },
-  { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5', hint: 'Faster and half the cost. The default on the free plan.' },
+  { id: 'claude-opus-5-5', label: 'Opus 5.5', hint: 'Best for building games. The default.' },
+  { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5', hint: 'Faster and half the cost.' },
   { id: 'claude-haiku-4-5', label: 'Haiku 4.5', hint: 'Fastest and cheapest. Good for small tweaks.', effort: false },
   { id: 'claude-fable-5-1', label: 'Fable 5.1', hint: 'Most capable, most expensive.' }
 ]
@@ -731,7 +755,7 @@ const settings = (() => {
   return Object.assign({ model: null, effort: 'medium', device: 'desktop' }, saved)
 })()
 const keepSettings = () => store.set('mirg-web-settings', JSON.stringify(settings))
-const currentModel = () => (MODELS.some((m) => m.id === settings.model) ? settings.model : me && me.plan !== 'free' ? 'claude-opus-5-5' : 'claude-sonnet-5-5')
+const currentModel = () => (MODELS.some((m) => m.id === settings.model) ? settings.model : 'claude-opus-5-5')
 const hasEffort = (model) => !MODELS.some((m) => m.id === model && m.effort === false)
 
 function renderPickers() {

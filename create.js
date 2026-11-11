@@ -288,18 +288,64 @@ function toast(text) {
 }
 
 /** Ask for an email and the code sent to it. Resolves once signed in; rejects if cancelled. */
+/** The code step survives closing the box or reloading the page: codes stay valid for an hour. */
+const PENDING_KEY = 'mirg-web-pending-signin'
+function pendingSignIn() {
+  try {
+    const p = JSON.parse(store.get(PENDING_KEY) || 'null')
+    return p && Date.now() - p.at < 55 * 60_000 ? p : null
+  } catch (e) {
+    return null
+  }
+}
+
+function friendlyAuthError(message) {
+  if (/expired|invalid/i.test(message)) return 'That code did not work. It may have expired or been mistyped: check it, or send a new code.'
+  if (/rate limit|too many|seconds/i.test(message)) return 'Too many codes asked for at once. Wait a minute, then send a new code.'
+  return message
+}
+
+/** Ask for an email and the code sent to it. Resolves once signed in; rejects if cancelled. */
 function signIn() {
   const box = $('signin')
   const err = $('signin-error')
   let stage = 'email'
   let email = ''
-  $('email-row').hidden = false
-  $('code-row').hidden = true
-  $('signin-code').required = false
-  $('signin-go').textContent = 'Email me a code'
+  let sentAt = 0
+  const showEmail = () => {
+    stage = 'email'
+    $('email-row').hidden = false
+    $('code-row').hidden = true
+    $('signin-help').hidden = true
+    $('signin-code').required = false
+    $('signin-go').textContent = 'Email me a code'
+    $('signin-note').textContent = "Free to try. We'll email you a code. Same account as the Mirg app."
+    setTimeout(() => $('email').focus(), 0)
+  }
+  const showCode = () => {
+    stage = 'code'
+    $('email-row').hidden = true
+    $('code-row').hidden = false
+    $('signin-help').hidden = false
+    $('signin-code').required = true
+    $('signin-go').textContent = 'Sign in'
+    $('signin-note').textContent = 'We sent a code to ' + email + '. Enter it here.'
+    setTimeout(() => $('signin-code').focus(), 0)
+  }
+  const send = async () => {
+    await auth('otp', { email, create_user: true })
+    sentAt = Date.now()
+    store.set(PENDING_KEY, JSON.stringify({ email, at: sentAt }))
+  }
   err.hidden = true
+  const pending = pendingSignIn()
+  if (pending) {
+    email = pending.email
+    sentAt = pending.at
+    $('signin-code').value = ''
+    showCode()
+  } else showEmail()
   box.showModal()
-  setTimeout(() => $('email').focus(), 0)
   return new Promise((resolve, reject) => {
     const done = (ok) => {
       $('signin-form').onsubmit = null
@@ -310,6 +356,27 @@ function signIn() {
     }
     $('signin-cancel').onclick = () => done(false)
     box.onclose = () => (session() ? resolve() : reject(new Error('cancelled')))
+    $('signin-other').onclick = () => {
+      store.set(PENDING_KEY, null)
+      err.hidden = true
+      showEmail()
+    }
+    $('signin-resend').onclick = async () => {
+      err.hidden = true
+      const wait = 30 - Math.round((Date.now() - sentAt) / 1000)
+      if (wait > 0) {
+        err.textContent = 'You can send a new code in ' + wait + ' seconds.'
+        err.hidden = false
+        return
+      }
+      try {
+        await send()
+        $('signin-note').textContent = 'We sent a new code to ' + email + '. Use the newest one.'
+      } catch (ex) {
+        err.textContent = friendlyAuthError(ex.message)
+        err.hidden = false
+      }
+    }
     $('signin-form').onsubmit = async (e) => {
       e.preventDefault()
       err.hidden = true
@@ -318,23 +385,21 @@ function signIn() {
         if (stage === 'email') {
           email = $('email').value.trim().toLowerCase()
           if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error('Enter a valid email address.')
-          await auth('otp', { email, create_user: true })
-          stage = 'code'
-          $('email-row').hidden = true
-          $('code-row').hidden = false
-          $('signin-code').required = true
-          $('signin-go').textContent = 'Sign in'
-          $('signin-note').textContent = 'We sent a code to ' + email + '. It can take a minute; check spam too.'
-          $('signin-code').focus()
+          await send()
+          $('signin-code').value = ''
+          showCode()
         } else {
-          keep(await auth('verify', { type: 'email', email, token: $('signin-code').value.trim() }), email)
+          const code = $('signin-code').value.replace(/\s+/g, '')
+          if (!code) throw new Error('Enter the code from the email.')
+          keep(await auth('verify', { type: 'email', email, token: code }), email)
+          store.set(PENDING_KEY, null)
           await refreshMe()
           // Show this account's own games on the start page.
           if (!$('start').hidden) showStart()
           done(true)
         }
       } catch (ex) {
-        err.textContent = ex.message
+        err.textContent = friendlyAuthError(ex.message)
         err.hidden = false
       } finally {
         $('signin-go').disabled = false
@@ -608,7 +673,12 @@ const TOOLS = [
   },
   {
     name: 'write_file',
-    description: 'Create a file or replace its whole content. Use for new files and full rewrites; prefer edit_file for small changes.',
+    description: 'Create a file or replace its whole content. Use for new files and full rewrites; prefer edit_file for small changes. For a file longer than about 250 lines, write the first part here and add the rest with append_file.',
+    input_schema: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string' } }, required: ['path', 'content'] }
+  },
+  {
+    name: 'append_file',
+    description: 'Add text to the end of a file, creating it if needed. Use it to write a long file in parts of up to about 250 lines each, one part per reply.',
     input_schema: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string' } }, required: ['path', 'content'] }
   },
   {
@@ -671,6 +741,18 @@ async function runTool(name, input) {
       const lines = content.split('\n').length
       return { text: (existed ? 'Replaced ' : 'Created ') + path + ' (' + lines + ' lines).', title: (existed ? 'Rewrote ' : 'Created ') + path + ' · ' + lines + (lines === 1 ? ' line' : ' lines'), detail: clip(content, 8000), changed: true }
     }
+    case 'append_file': {
+      const path = checkPath(input.path)
+      const content = String(input.content == null ? '' : input.content)
+      const next = (files[path] || '') + content
+      if (utf8(next).length > MAX_FILE_BYTES) throw new Error('That file is too big for Mirg on the web. Split it into smaller modules.')
+      if (files[path] === undefined && Object.keys(files).length >= MAX_FILES) throw new Error('The project has too many files. Combine some.')
+      files[path] = next
+      fileChanged(path)
+      const added = content.split('\n').length
+      const total = next.split('\n').length
+      return { text: 'Added ' + added + ' lines to ' + path + ' (' + total + ' lines now).', title: 'Added to ' + path + ' · ' + total + ' lines', detail: clip(content, 8000), changed: true }
+    }
     case 'edit_file': {
       const path = checkPath(input.path)
       const t = files[path]
@@ -714,6 +796,7 @@ function toolLabel(name) {
   return (
     {
       write_file: 'Writing a file',
+      append_file: 'Writing a file',
       edit_file: 'Editing a file',
       read_file: 'Reading a file',
       delete_file: 'Deleting a file',
@@ -861,7 +944,7 @@ If the user asks for Godot, Unity, Unreal, Roblox, Minecraft mods, pygame or a n
 
 # How to work
 The loop is: build, run, fix. You do not playtest here: the user plays the game themselves and tells you what to change.
-- Write all the files of a small game in one reply. A single reply must not write more than about 300 lines of code in total, because a very long reply is cut off: for a bigger game, split the code into modules of a few hundred lines and write one or two per reply.
+- Write all the files of a small game in one reply. A single reply must not write more than about 250 lines of code in total, because a longer reply is cut off and the user pays for it twice: for a bigger game, split the code into modules of a few hundred lines and write one or two per reply, and write a long file in parts (write_file, then append_file in the following replies).
 - Then call run_game once. Errors it reports are yours to fix before you reply; when it reports none, stop and hand the game over.
 - Every step costs the user part of their plan, so do not re-read files you just wrote or re-run the game when nothing changed.
 - Match the build to the request: "a simple Pong game" wants a small, clean game, not title screens, settings and systems nobody asked for.
@@ -1009,16 +1092,65 @@ function chat() {
 const providerOf = (model) => (/^gpt-/.test(model) ? 'openai' : /^gemini-/.test(model) ? 'gemini' : 'anthropic')
 const PROVIDER_NAMES = { anthropic: 'Claude', openai: 'GPT', gemini: 'Gemini' }
 
+/** The path and content of a write that was cut off part-way, read from its unfinished JSON. */
+function partialWrite(raw) {
+  const path = /"path"\s*:\s*"((?:[^"\\]|\\.)*)"/.exec(raw)
+  const content = /"content"\s*:\s*"((?:[^"\\]|\\.)*)/.exec(raw)
+  if (!path || !content) return null
+  // An escape cut in half at the very end is dropped.
+  const body = content[1].replace(/\\u[0-9a-fA-F]{0,3}$/, '').replace(/(^|[^\\])((?:\\\\)*)\\$/, '$1$2')
+  try {
+    return { path: JSON.parse('"' + path[1] + '"'), content: JSON.parse('"' + body + '"') }
+  } catch (e) {
+    return null
+  }
+}
+
+/** Saves the complete lines of cut-off write_file and append_file calls. */
+function salvage(cutCalls) {
+  const kept = []
+  for (const call of cutCalls) {
+    if (call.name !== 'write_file' && call.name !== 'append_file') continue
+    const w = partialWrite(call.raw || '')
+    if (!w) continue
+    let path
+    try {
+      path = checkPath(w.path)
+    } catch (e) {
+      continue
+    }
+    // Stop at the last whole line, so the next part starts cleanly.
+    const content = w.content.slice(0, w.content.lastIndexOf('\n') + 1)
+    if (!content.trim()) continue
+    const next = call.name === 'append_file' ? (project.files[path] || '') + content : content
+    if (utf8(next).length > MAX_FILE_BYTES) continue
+    project.files[path] = next
+    fileChanged(path)
+    const lines = content.split('\n').length - 1
+    const tail = content.trimEnd().split('\n').slice(-3).join('\n')
+    kept.push({ id: call.id, path, lines, content, tail, total: next.split('\n').length - 1 })
+  }
+  return kept
+}
+
+function keptNote(kept) {
+  return (
+    'Your last reply was cut off because it was too long. Nothing else in it was run, but what it had written so far was saved: ' +
+    kept.map((k) => k.path + ' now has ' + k.total + ' lines, ending with:\n' + k.tail).join('\n\n') +
+    '\n\nCarry on from exactly where it stopped: add the rest with append_file, at most about 250 lines per reply, and do not rewrite what is already there.'
+  )
+}
+
 /** The model's reply when it was cut off for being too long; it is told this so it writes less. */
 const CUT_NOTE = 'Your last reply was cut off because it was too long, and nothing in it was run. Write less per reply: split big files into modules of a few hundred lines and write one or two per reply.'
 
-async function postModel(path, body, signal) {
+async function postModel(path, body, signal, extra) {
   const t = await token()
   if (!t) throw Object.assign(new Error('Your session ended. Sign in again.'), { signin: true })
   const response = await fetch(API + '/proxy/' + path, {
     method: 'POST',
     signal,
-    headers: { authorization: 'Bearer ' + t, 'x-mirg-device': device(), 'content-type': 'application/json', 'anthropic-version': '2023-06-01' },
+    headers: Object.assign({ authorization: 'Bearer ' + t, 'x-mirg-device': device(), 'content-type': 'application/json', 'anthropic-version': '2023-06-01' }, extra || {}),
     body: JSON.stringify(body)
   })
   if (!response.ok) {
@@ -1096,7 +1228,10 @@ const ADAPTERS = {
         body.output_config = { effort: settings.effort }
       }
       if (opts.noTools) body.tool_choice = { type: 'none' }
-      const response = await postModel('anthropic/v1/messages?beta=true', body, signal)
+      // As in the app: if a safety check declines a request, the API retries it on its recommended model.
+      const fallback = ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-1'].includes(model)
+      if (fallback) body.fallbacks = 'default'
+      const response = await postModel('anthropic/v1/messages?beta=true', body, signal, fallback ? { 'anthropic-beta': 'server-side-fallback-2026-07-01' } : null)
       const blocks = []
       let stop = null
       const usage = { input: 0, cacheWrite: 0, cacheRead: 0, output: 0 }
@@ -1124,6 +1259,7 @@ const ADAPTERS = {
           const b = blocks[ev.index]
           if (!b) continue
           if (b.type === 'tool_use') {
+            b.raw = b.json
             try {
               b.input = b.json ? JSON.parse(b.json) : {}
             } catch (e) {
@@ -1145,7 +1281,10 @@ const ADAPTERS = {
         .map((b) => b.text)
         .join('\n')
       const result = { billed: usage.input + usage.cacheWrite + usage.output, context: usage.input + usage.cacheWrite + usage.cacheRead, text, calls: [] }
-      if (stop === 'max_tokens') return Object.assign(result, { stop: 'cut', cutIds: all.filter((b) => b.type === 'tool_use').map((b) => b.id) })
+      if (stop === 'max_tokens') {
+        const cut = all.filter((b) => b.type === 'tool_use')
+        return Object.assign(result, { stop: 'cut', cutIds: cut.map((b) => b.id), cutCalls: cut.map((b) => ({ id: b.id, name: b.name, raw: b.raw != null ? b.raw : b.json || '' })) })
+      }
       const content = []
       for (const b of all) {
         if (b.type === 'text') {
@@ -1249,7 +1388,8 @@ const ADAPTERS = {
       const result = { billed: (u.total_tokens || 0) - cached, context: u.input_tokens || 0, text, calls }
       if (final.status === 'incomplete') {
         const reason = final.incomplete_details && final.incomplete_details.reason
-        return Object.assign(result, { calls: [], stop: reason === 'content_filter' ? 'refusal' : 'cut', cutIds: calls.map((c) => c.id) })
+        const cutCalls = output.filter((o) => o.type === 'function_call').map((o) => ({ id: o.call_id, name: o.name, raw: o.arguments || '' }))
+        return Object.assign(result, { calls: [], stop: reason === 'content_filter' ? 'refusal' : 'cut', cutIds: calls.map((c) => c.id), cutCalls })
       }
       // Everything the model produced (reasoning, text, calls) goes back unchanged next turn.
       if (!opts.dryRun) messages.push(...output)
@@ -1496,8 +1636,15 @@ async function agent(text, files) {
       for (const [b, item] of live) if (b.type === 'text' && !b.text.trim()) removeItem(item)
       if (result.stop === 'cut') {
         for (const id of result.cutIds || []) if (toolItems.get(id)) Object.assign(toolItems.get(id), { running: false, bad: true, title: 'Cut off: the reply was too long' })
+        // Keep what a cut-off file already had, so the next reply carries on instead of starting over.
+        const kept = salvage(result.cutCalls || [])
+        for (const k of kept) {
+          const item = toolItems.get(k.id)
+          if (item) Object.assign(item, { bad: false, title: 'Saved the first ' + k.lines + ' lines of ' + k.path + ' (reply was cut off)', detail: clip(k.content, 8000) })
+          changed = true
+        }
         toolItems.forEach(refresh)
-        adapter.addUser(c.messages, CUT_NOTE, [])
+        adapter.addUser(c.messages, kept.length ? keptNote(kept) : CUT_NOTE, [])
         continue
       }
       save()

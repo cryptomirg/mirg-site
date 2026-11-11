@@ -1362,3 +1362,13 @@ a {
   gap: 8px;
   flex-wrap: wrap;
 }
+
+.signin-help {
+  margin: 4px 0 0;
+}
+
+.signin-help .row {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}

@@ -164,13 +164,16 @@ async function renderAccountSettings() {
     }
     if (me.suspended) add('Your account is suspended because a payment failed or was disputed. Contact <strong>support@mirg.ai</strong> to restore it.', 'error')
     const pct = me.allowanceMicros > 0 ? Math.min(100, Math.round((me.usedMicros / me.allowanceMicros) * 100)) : 0
-    const resets = me.periodEnd ? ' · resets ' + new Date(me.periodEnd).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''
-    add('<div class="usage-bar"><span style="width:' + pct + '%"></span></div><div class="fine usage-line"><span>' + tokens(me.usedTokens || 0) + ' tokens used this ' + (me.plan === 'free' ? 'month' : 'period') + '</span><span>' + (pct >= 100 ? 'All' : pct + '%') + ' of your plan' + resets + '</span></div>', 'usage')
+    // The free plan renews every 12 hours, so its reset is a time of day; paid plans renew on a date.
+    const resets = !me.periodEnd ? '' : me.plan === 'free'
+      ? ' · resets at ' + new Date(me.periodEnd).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+      : ' · resets ' + new Date(me.periodEnd).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    add('<div class="usage-bar"><span style="width:' + pct + '%"></span></div><div class="fine usage-line"><span>' + tokens(me.usedTokens || 0) + ' tokens used ' + (me.plan === 'free' ? 'in these 12 hours' : 'this period') + '</span><span>' + (pct >= 100 ? 'All' : pct + '%') + ' of your plan' + resets + '</span></div>', 'usage')
     if (me.bonus && me.bonus.leftMicros > 0) add('Includes ' + usd(me.bonus.micros) + ' of free credit' + (me.bonus.until ? ', until ' + new Date(me.bonus.until).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '') + '.', 'fine')
     if (me.plan === 'free') {
       const plans = add('', 'plans')
       for (const [kind, name, price, what] of [
-        ['pro', 'Pro', '$20 / month', "For regular game-making: 14 times the free plan's usage, and Claude Opus by default"],
+        ['pro', 'Pro', '$20 / month', 'For regular game-making: no waiting 12 hours for more, and Claude Opus by default'],
         ['max', 'Max', '$100 / month', "For big projects and heavy use: over 5 times Pro's usage"]
       ]) {
         const b = document.createElement('button')
@@ -1915,10 +1918,10 @@ function draw(item) {
     el.className = 'msg error'
     el.textContent = item.text
     if (item.limit) {
+      // Settings has the Pro and Max buttons; the game and chat stay as they are.
       const a = document.createElement('a')
-      a.href = '/pricing'
-      a.target = '_blank'
-      a.textContent = ' See plans'
+      a.href = '#settings'
+      a.textContent = ' Upgrade'
       el.appendChild(a)
     }
   } else {

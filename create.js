@@ -599,7 +599,37 @@ addEventListener('message',async function(e){if(e.source!==parent)return;var m=e
 if(m.type==='eval'){try{var r;try{r=(0,eval)('('+m.code+'\\n)')}catch(se){if(!(se instanceof SyntaxError))throw se;r=(0,eval)('(async function(){'+m.code+'\\n})()')}if(r&&typeof r.then==='function')r=await r;P({type:'evalResult',id:m.id,ok:true,value:fmt(r,true)})}catch(err){P({type:'evalResult',id:m.id,ok:false,value:String(err&&err.stack||err)})}}
 if(m.type==='input'){try{for(var i=0;i<(m.actions||[]).length;i++)await act(m.actions[i]);P({type:'inputDone',id:m.id,ok:true})}catch(err){P({type:'inputDone',id:m.id,ok:false,value:String(err)})}}});
 try{var gc=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(t,o){if(/webgl/i.test(String(t))){o=Object.assign({},o||{},{preserveDrawingBuffer:true})}return gc.call(this,t,o)}}catch(e){}
-addEventListener('message',function(e){if(e.source!==parent)return;var m=e.data||{};if(m.type!=='snapshot')return;var url=null;try{var cs=[].slice.call(document.querySelectorAll('canvas')).filter(function(c){var r=c.getBoundingClientRect();return c.width*c.height>0&&r.width>40&&r.height>40}).sort(function(a,b){return b.width*b.height-a.width*a.height});var c=cs[0];if(c){var w=Math.min(800,c.width),h=Math.round(c.height*w/c.width);var out=document.createElement('canvas');out.width=w;out.height=h;var x=out.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,w,h);x.drawImage(c,0,0,w,h);url=out.toDataURL('image/jpeg',0.82)}}catch(err){url=null}P({type:'snapshotResult',id:m.id,ok:true,value:url})});
+// A picture of the game as the player sees it: the whole page, with each canvas drawn in its place
+// (page elements such as menus, text and buttons included). If the browser will not allow that,
+// the biggest canvas alone.
+function canvasShot(c){var w=Math.min(800,c.width),h=Math.round(c.height*w/c.width);var out=document.createElement('canvas');out.width=w;out.height=h;var x=out.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,w,h);x.drawImage(c,0,0,w,h);return out.toDataURL('image/jpeg',0.82)}
+function pageShot(){return new Promise(function(done){try{
+var W=innerWidth,H=innerHeight;if(W<40||H<40)return done(null);
+var LAYOUT=['position','top','left','right','bottom','width','height','display','z-index','transform','transform-origin','margin','opacity','object-fit','border-radius'];
+var clone=document.documentElement.cloneNode(true);
+[].slice.call(clone.querySelectorAll('script,noscript,iframe,video,audio')).forEach(function(n){n.remove()});
+var from=[].slice.call(document.querySelectorAll('canvas')),to=[].slice.call(clone.querySelectorAll('canvas'));
+from.forEach(function(c,i){var d=to[i];if(!d)return;var img=document.createElement('img');
+for(var a=0;a<c.attributes.length;a++)if(c.attributes[a].name!=='width'&&c.attributes[a].name!=='height')img.setAttribute(c.attributes[a].name,c.attributes[a].value);
+var cs=getComputedStyle(c),r=c.getBoundingClientRect(),st=LAYOUT.map(function(k){return k+':'+cs.getPropertyValue(k)}).join(';');
+img.setAttribute('style',st+';width:'+r.width+'px;height:'+r.height+'px');
+try{img.src=c.width*c.height>0?c.toDataURL():''}catch(e){}d.replaceWith(img)});
+var vals=[].slice.call(document.querySelectorAll('input,textarea,select')),cv=[].slice.call(clone.querySelectorAll('input,textarea,select'));
+vals.forEach(function(el,i){var d=cv[i];if(!d)return;if(el.type==='checkbox'||el.type==='radio'){if(el.checked)d.setAttribute('checked','')}else if(el.tagName==='TEXTAREA')d.textContent=el.value;else if(el.tagName!=='SELECT')d.setAttribute('value',el.value)});
+var body=clone.querySelector('body');if(body)body.style.margin=getComputedStyle(document.body).margin;
+clone.style.width=W+'px';clone.style.height=H+'px';clone.style.overflow='hidden';
+var xml=new XMLSerializer().serializeToString(clone);
+var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'"><foreignObject x="0" y="0" width="100%" height="100%">'+xml+'</foreignObject></svg>';
+var pic=new Image(),t=setTimeout(function(){done(null)},2500);
+pic.onload=function(){clearTimeout(t);try{var w=Math.min(800,W),h=Math.round(H*w/W);var out=document.createElement('canvas');out.width=w;out.height=h;var x=out.getContext('2d');
+var bg=getComputedStyle(document.body).backgroundColor;x.fillStyle=bg&&bg!=='rgba(0, 0, 0, 0)'?bg:(getComputedStyle(document.documentElement).backgroundColor||'#fff');if(x.fillStyle==='rgba(0, 0, 0, 0)')x.fillStyle='#fff';x.fillRect(0,0,w,h);
+x.drawImage(pic,0,0,w,h);done(out.toDataURL('image/jpeg',0.82))}catch(e){done(null)}};
+pic.onerror=function(){clearTimeout(t);done(null)};
+pic.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}catch(e){done(null)}})}
+addEventListener('message',async function(e){if(e.source!==parent)return;var m=e.data||{};if(m.type!=='snapshot')return;var url=null;
+try{url=await pageShot()}catch(err){url=null}
+if(!url){try{var cs=[].slice.call(document.querySelectorAll('canvas')).filter(function(c){var r=c.getBoundingClientRect();return c.width*c.height>0&&r.width>40&&r.height>40}).sort(function(a,b){return b.width*b.height-a.width*a.height});if(cs[0])url=canvasShot(cs[0])}catch(err){url=null}}
+P({type:'snapshotResult',id:m.id,ok:true,value:url})});
 addEventListener('load',function(){P({type:'loaded'})});
 })();`
 

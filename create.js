@@ -75,6 +75,79 @@ function keep(data, email) {
   return s
 }
 
+// Sign in with Google. Google's page opens in a small window, so whatever was typed here stays put.
+// The window comes back to /create?signin=google, swaps the one-time code for a session (stored in
+// this browser, which this page shares) and closes; this page sees the session and carries on.
+// PKCE keeps the code useless to anyone but the page that started the sign-in.
+const OAUTH_KEY = 'mirg-web-google'
+const OAUTH_ERROR_KEY = 'mirg-web-google-error'
+const b64url = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+
+async function googleSignIn() {
+  // Opened during the click, or the browser blocks it as a pop-up.
+  const popup = window.open('about:blank', 'mirg-google', 'width=520,height=680')
+  const verifier = b64url(crypto.getRandomValues(new Uint8Array(32)))
+  const challenge = b64url(new Uint8Array(await crypto.subtle.digest('SHA-256', utf8(verifier))))
+  store.set(OAUTH_KEY, JSON.stringify({ verifier, at: Date.now() }))
+  store.set(OAUTH_ERROR_KEY, null)
+  const url = SUPABASE + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(location.origin + '/create?signin=google') + '&code_challenge=' + challenge + '&code_challenge_method=s256'
+  if (!popup) {
+    // Pop-ups blocked: sign in in this tab instead. The page finishes the sign-in when it comes back.
+    location.href = url
+    return new Promise(() => undefined)
+  }
+  popup.location.href = url
+  const started = Date.now()
+  return new Promise((resolve, reject) => {
+    const timer = setInterval(() => {
+      if (session()) {
+        clearInterval(timer)
+        return resolve()
+      }
+      const failed = store.get(OAUTH_ERROR_KEY)
+      if (failed) {
+        clearInterval(timer)
+        store.set(OAUTH_ERROR_KEY, null)
+        return reject(new Error(failed))
+      }
+      // Google's page may cut the link to its window, so a "closed" window is not trusted at once.
+      if ((popup.closed && Date.now() - started > 120_000) || Date.now() - started > 600_000) {
+        clearInterval(timer)
+        reject(new Error('Google sign-in did not finish. Try again.'))
+      }
+    }, 400)
+  })
+}
+
+/** Back from Google: finish signing in. True when this is the sign-in window, which then closes. */
+async function finishGoogleSignIn() {
+  const q = new URLSearchParams(location.search)
+  if (q.get('signin') !== 'google') return false
+  const h = new URLSearchParams(location.hash.slice(1))
+  let pending = null
+  try {
+    pending = JSON.parse(store.get(OAUTH_KEY) || 'null')
+  } catch (e) {}
+  store.set(OAUTH_KEY, null)
+  history.replaceState(null, '', '/create')
+  let error = q.get('error_description') || h.get('error_description') || q.get('error') || h.get('error')
+  const code = q.get('code')
+  if (!error && code && pending) {
+    try {
+      keep(await auth('token?grant_type=pkce', { auth_code: code, code_verifier: pending.verifier }))
+    } catch (e) {
+      error = e.message
+    }
+  } else if (!error) error = 'Google sign-in did not finish. Try again.'
+  if (error) store.set(OAUTH_ERROR_KEY, String(error).replace(/\+/g, ' '))
+  if (window.opener || window.name === 'mirg-google') {
+    document.body.innerHTML = '<p style="font:16px system-ui;padding:24px">' + (error ? 'Sign-in did not work. You can close this window.' : 'Signed in. You can close this window.') + '</p>'
+    window.close()
+    return true
+  }
+  return false
+}
+
 async function token() {
   const s = session()
   if (!s) return null
@@ -321,9 +394,10 @@ function signIn() {
     $('email-row').hidden = false
     $('code-row').hidden = true
     $('signin-help').hidden = true
+    $('signin-google-row').hidden = false
     $('signin-code').required = false
     $('signin-go').textContent = 'Email me a code'
-    $('signin-note').textContent = "Free to try. We'll email you a code. Same account as the Mirg app."
+    $('signin-note').textContent = 'Free to try. Same account as the Mirg app.'
     setTimeout(() => $('email').focus(), 0)
   }
   const showCode = () => {
@@ -331,6 +405,7 @@ function signIn() {
     $('email-row').hidden = true
     $('code-row').hidden = false
     $('signin-help').hidden = false
+    $('signin-google-row').hidden = true
     $('signin-code').required = true
     $('signin-go').textContent = 'Sign in'
     $('signin-note').textContent = 'We sent a code to ' + email + '. Enter it here.'
@@ -360,6 +435,24 @@ function signIn() {
     }
     $('signin-cancel').onclick = () => done(false)
     box.onclose = () => (session() ? resolve() : reject(new Error('cancelled')))
+    $('signin-google').onclick = async () => {
+      err.hidden = true
+      $('signin-google').disabled = true
+      $('signin-note').textContent = 'Finish signing in with Google in the window that opened.'
+      try {
+        await googleSignIn()
+        store.set(PENDING_KEY, null)
+        await refreshMe()
+        if (!$('start').hidden) showStart()
+        done(true)
+      } catch (ex) {
+        err.textContent = ex.message
+        err.hidden = false
+        $('signin-note').textContent = "Free to try. Same account as the Mirg app."
+      } finally {
+        $('signin-google').disabled = false
+      }
+    }
     $('signin-other').onclick = () => {
       store.set(PENDING_KEY, null)
       err.hidden = true
@@ -3085,10 +3178,12 @@ $('share-form').onsubmit = async (e) => {
 }
 // ---------------------------------------------------------------------------------------------
 
-renderAccount()
-refreshMe().then(renderPickers)
-renderPickers()
-route()
+if (!(await finishGoogleSignIn())) {
+  renderAccount()
+  refreshMe().then(renderPickers)
+  renderPickers()
+  route()
+}
 // Arriving from "Make a game" with an idea already typed: /create?idea=...
 const idea = new URLSearchParams(location.search).get('idea')
 if (idea && !location.hash) $('start-text').value = idea.slice(0, 4000)

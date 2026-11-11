@@ -243,6 +243,7 @@ async function renderAccountSettings() {
       : ' · resets ' + new Date(me.periodEnd).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     add('<div class="usage-bar"><span style="width:' + pct + '%"></span></div><div class="fine usage-line"><span>' + tokens(me.usedTokens || 0) + ' tokens used ' + (me.plan === 'free' ? 'in these 6 hours' : 'this period') + '</span><span>' + (pct >= 100 ? 'All' : pct + '%') + ' of your plan' + resets + '</span></div>', 'usage')
     if (me.free && me.free.totalMicros > 0) add(Math.min(100, Math.round((me.free.usedMicros / me.free.totalMicros) * 100)) + '% of the free plan used in all. When it is all used, upgrade to keep building.', 'fine free-total')
+    if (me.gift) add('Your ' + (PLAN_NAMES[me.plan] || '') + ' plan is a gift until ' + new Date(me.gift.until).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '.', 'fine')
     if (me.bonus && me.bonus.leftMicros > 0) add('Includes ' + usd(me.bonus.micros) + ' of free credit' + (me.bonus.until ? ', until ' + new Date(me.bonus.until).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '') + '.', 'fine')
     if (me.plan === 'free') {
       const plans = add('', 'plans')
@@ -258,6 +259,21 @@ async function renderAccountSettings() {
         plans.appendChild(b)
       }
       add('Payment opens in a new tab. After paying, come back here; your plan updates within a minute.', 'fine')
+    } else if (me.gift && !me.gift.card) {
+      // A gifted plan with no card yet: on Max, save one for extra usage; on Pro, move up to Max.
+      const row = add('', 'account-row')
+      const b = document.createElement('button')
+      b.type = 'button'
+      b.className = 'btn small'
+      const max = me.plan === 'max'
+      b.textContent = max ? 'Add a card for extra usage' : 'Move up to Max'
+      b.onclick = () => billing(max ? '/billing/card' : '/billing/checkout?plan=max')
+      const t = document.createElement('span')
+      t.className = 'fine'
+      t.textContent = max
+        ? 'To keep building when this month\'s usage runs out. Nothing is charged until you turn on extra usage. Opens in a new tab.'
+        : 'Subscribe to Max for $100 a month. Opens in a new tab.'
+      row.append(b, t)
     } else {
       const row = add('', 'account-row')
       const b = document.createElement('button')

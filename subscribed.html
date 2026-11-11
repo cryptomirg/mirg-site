@@ -39,6 +39,15 @@
           <p>Paid on the web? <a href="/create">Back to Mirg on the web</a>. Your plan shows when you click your usage at the top.</p>
           <p class="fine">If it still says Free after a few minutes, close and reopen Settings. Still stuck? Write to <a href="mailto:support@mirg.ai">support@mirg.ai</a>.</p>
         </div>
+        <script>
+          // Back from saving a card for extra usage, not from subscribing.
+          if (new URLSearchParams(location.search).get('card') === '1') {
+            const p = document.querySelectorAll('.hero p')
+            p[0].textContent = 'Your card is saved. Nothing has been charged. Go back to Mirg and open Settings: turn on "Keep building when my plan runs out" and pick the most to charge each month.'
+            p[1].innerHTML = 'Saved it on the web? <a href="/create#settings">Back to Settings on Mirg on the web</a>.'
+            p[2].innerHTML = 'If extra usage does not show yet, close and reopen Settings. Still stuck? Write to <a href="mailto:support@mirg.ai">support@mirg.ai</a>.'
+          }
+        </script>
       </section>
     </main>
     <footer class="site">

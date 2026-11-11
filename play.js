@@ -11,6 +11,14 @@
     frame.hidden = true
     missing.hidden = false
   }
+  // Mirg is looking at this version before anyone can play it (see play-check on the server).
+  function held() {
+    title.textContent = 'Waiting for a quick check'
+    document.getElementById('play-missing-title').textContent = 'This game is waiting for a quick check.'
+    document.getElementById('play-missing-why').textContent = 'Mirg looks at some games before anyone can play them. Try again a little later.'
+    frame.hidden = true
+    missing.hidden = false
+  }
   // One play per visitor per game per day, so reloading the page does not add to the count.
   function countPlay() {
     var key = 'mirg-played-' + name
@@ -53,6 +61,7 @@
   var base = PLAY_HOST + '/' + name + '/'
   fetch(base + 'mirg-share.json')
     .then(function (r) {
+      if (r.status === 423) throw new Error('held')
       if (!r.ok) throw new Error('missing')
       return r.json()
     })
@@ -64,8 +73,12 @@
       countPlay()
       credit()
       comments()
+      reporting()
     })
-    .catch(gone)
+    .catch(function (err) {
+      if (err && err.message === 'held') held()
+      else gone()
+    })
   // ---------- comments ----------
   var API = 'https://dlnmbeqdtpyjkprkxfvt.supabase.co'
   var CAPTCHA_KEY = '0x4AAAAAAFOZ0Roo6D6Ag9sT'
@@ -191,6 +204,52 @@
         .catch(function () {
           status.className = 'comment-status error'
           status.textContent = 'That did not post. Check your connection and try again.'
+        })
+    })
+  }
+
+  // ---------- reporting the game ----------
+  // Goes to Mirg by email; five reports from different people hide the game until Mirg looks.
+  function reporting() {
+    var open = document.getElementById('play-report')
+    var dialog = document.getElementById('report-dialog')
+    var form = document.getElementById('report-form')
+    var status = document.getElementById('report-status')
+    var send = document.getElementById('report-send')
+    open.parentNode.hidden = false
+    open.addEventListener('click', function () {
+      status.textContent = ''
+      status.className = 'comment-status'
+      if (dialog.showModal) dialog.showModal()
+      else dialog.setAttribute('open', '')
+    })
+    document.getElementById('report-cancel').addEventListener('click', function () {
+      dialog.close ? dialog.close() : dialog.removeAttribute('open')
+    })
+    form.addEventListener('submit', function (e) {
+      e.preventDefault()
+      var reason = form.querySelector('input[name="reason"]:checked')
+      if (!reason) return
+      send.disabled = true
+      status.className = 'comment-status'
+      status.textContent = 'Sending…'
+      fetch(API + '/functions/v1/comments', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'report-game', slug: name, reason: reason.value, detail: form.detail.value })
+      })
+        .then(function (r) {
+          if (!r.ok) throw new Error('failed')
+          dialog.close ? dialog.close() : dialog.removeAttribute('open')
+          open.disabled = true
+          open.textContent = 'Reported. Thank you, Mirg will take a look.'
+        })
+        .catch(function () {
+          status.className = 'comment-status error'
+          status.textContent = 'That did not send. Check your connection and try again.'
+        })
+        .then(function () {
+          send.disabled = false
         })
     })
   }

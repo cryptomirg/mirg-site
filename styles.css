@@ -1703,3 +1703,84 @@ html.play-filled body {
   flex-wrap: wrap;
   margin: 36px 0 70px;
 }
+
+/* ---------- reporting a game ---------- */
+.play-report-row {
+  margin: -50px 0 40px;
+  font-size: 14px;
+}
+.play-report-row .linklike {
+  color: var(--muted);
+}
+.play-report-row .linklike:disabled {
+  text-decoration: none;
+  cursor: default;
+}
+.report-dialog {
+  width: min(480px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+  color: var(--text);
+}
+.report-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+.report-dialog form {
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+}
+.report-dialog h2 {
+  margin: 0;
+  font-size: 20px;
+}
+.report-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.report-dialog fieldset {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.report-dialog legend {
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 15px;
+}
+.report-dialog label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 15px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.report-dialog input[type='radio'] {
+  margin-top: 3px;
+}
+.report-dialog textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+}
+.report-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.report-actions .comment-status {
+  flex: 1;
+}

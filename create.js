@@ -1872,9 +1872,13 @@ async function agent(text, files) {
     if (e.name === 'AbortError' || controller.signal.aborted) addItem({ kind: 'notice', text: 'Stopped.' })
     else {
       const limit = e.code === 'mirg_limit' || e.code === 'mirg_device' || e.code === 'mirg_capacity'
-      addItem({ kind: 'error', text: e.message, limit })
+      const shown = addItem({ kind: 'error', text: e.message, limit })
       // Counted once, when the message first appears (not again when a saved chat is reopened).
-      if (limit && isFreeLimit(e.message)) call('POST', '/track', { kind: 'limit_seen' }).catch(() => undefined)
+      if (limit && isFreeLimit(e.message)) {
+        call('POST', '/track', { kind: 'limit_seen' }).catch(() => undefined)
+        // The plan as it is now, for the time the free building time is back.
+        refreshMe().then(() => refresh(shown)).catch(() => undefined)
+      }
       if (e.signin) signIn().catch(() => undefined)
       queuePaused = queue.length > 0
     }
@@ -2148,8 +2152,15 @@ function freeLimitActions(text) {
     row.appendChild(b)
     return b
   }
-  const offer = me && me.offer
-  button(offer ? 'Keep building with Pro, ' + offer.firstMonth + ' first month' : 'Keep building with Pro, $20/month', 'btn small primary', async () => {
+  // When the free time is back, as a time of day on this computer.
+  const back = /comes back in/i.test(text) && me && me.periodEnd && Date.parse(me.periodEnd) > Date.now() ? new Date(me.periodEnd) : null
+  if (back) {
+    const when = document.createElement('div')
+    when.className = 'limit-when'
+    when.textContent = 'Your free building time is back at ' + back.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) + '.'
+    box.appendChild(when)
+  }
+  button('Keep building with Pro, $20/month', 'btn small primary', async () => {
     call('POST', '/track', { kind: 'upgrade_click' }).catch(() => undefined)
     // Opened now, while the click still counts, so the browser does not block it as a pop-up.
     const tab = window.open('', '_blank')

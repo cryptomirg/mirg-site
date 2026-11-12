@@ -1396,6 +1396,11 @@ a {
   font-size: 13px;
 }
 
+.limit-when {
+  margin-bottom: 10px;
+  color: var(--text);
+  font-weight: 600;
+}
 .limit-note {
   margin-top: 8px;
   color: var(--text);

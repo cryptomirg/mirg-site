@@ -1784,3 +1784,14 @@ html.play-filled body {
 .report-actions .comment-status {
   flex: 1;
 }
+
+/* Shown to visitors who came through a friend's referral link. */
+.friend-banner {
+  padding: 10px 16px;
+  background: #1f6f43;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.4;
+}

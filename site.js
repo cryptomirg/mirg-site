@@ -76,6 +76,19 @@
     history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash)
   }
 
+  // Someone who came through a friend's link: tell them about the $5 they both get.
+  if (touch && touch.source === 'friend' && touch.campaign && !/^\/(create|play)/.test(location.pathname)) {
+    var note = document.createElement('div')
+    note.className = 'friend-banner'
+    note.setAttribute('role', 'note')
+    note.textContent = 'A friend invited you to Mirg. Sign up and build your first game, and you both get $5 of free credit.'
+    var showNote = function () {
+      document.body.insertBefore(note, document.body.firstChild)
+    }
+    if (document.body) showNote()
+    else document.addEventListener('DOMContentLoaded', showNote)
+  }
+
   var ua = navigator.userAgent
   var platform = /Windows/.test(ua) ? 'windows' : /iPhone|iPad|Android/.test(ua) ? 'mobile' : /CrOS/.test(ua) ? 'chromeos' : /Mac/.test(ua) ? 'mac' : /Linux|X11/.test(ua) ? 'linux' : 'other'
   function send(kind) {

@@ -39,6 +39,12 @@ const SESSION_KEY = 'mirg-web-session'
 let refreshing = null
 let me = null
 
+// Which app and system this is, so the account server can count web builders by computer type.
+function client() {
+  const ua = navigator.userAgent
+  return 'web-' + (/iPhone|iPad|Android/.test(ua) ? 'mobile' : /Windows/.test(ua) ? 'windows' : /CrOS/.test(ua) ? 'chromeos' : /Mac/.test(ua) ? 'mac' : /Linux|X11/.test(ua) ? 'linux' : 'other')
+}
+
 function device() {
   let id = store.get('mirg-web-device')
   if (!id) {
@@ -172,7 +178,7 @@ async function call(method, path, body) {
   if (!t) throw new Error('Sign in first.')
   const response = await fetch(API + path, {
     method,
-    headers: Object.assign({ authorization: 'Bearer ' + t, 'x-mirg-device': device() }, body === undefined ? {} : { 'content-type': 'application/json' }),
+    headers: Object.assign({ authorization: 'Bearer ' + t, 'x-mirg-device': device(), 'x-mirg-client': client() }, body === undefined ? {} : { 'content-type': 'application/json' }),
     body: body === undefined ? undefined : JSON.stringify(body)
   })
   const data = await response.json().catch(() => ({}))

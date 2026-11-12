@@ -38,7 +38,7 @@
 
   // The source of this arrival: a tagged link first, then an ad network's click id, then the referring site.
   var q = new URLSearchParams(location.search)
-  var clicks = { gclid: 'google-ads', gbraid: 'google-ads', wbraid: 'google-ads', ttclid: 'tiktok-ads', msclkid: 'bing-ads', fbclid: 'facebook' }
+  var clicks = { gclid: 'google-ads', gbraid: 'google-ads', wbraid: 'google-ads', oppref: 'chatgpt-ads', ttclid: 'tiktok-ads', msclkid: 'bing-ads', fbclid: 'facebook' }
   var clickId = null
   var clickSource = null
   Object.keys(clicks).forEach(function (k) {
@@ -63,7 +63,7 @@
   var arrived = false
   if (source) {
     // A new link always wins: the latest way in is the one that brought them back.
-    touch = { source: clip(String(source).toLowerCase().replace(/[^a-z0-9._-]/g, '-'), 40), campaign: clip(q.get('utm_campaign'), 80), clickId: clip(clickId, 200), at: Date.now() }
+    touch = { source: clip(String(source).toLowerCase().replace(/[^a-z0-9._-]/g, '-'), 40), campaign: clip(q.get('utm_campaign'), 80), clickId: clip(clickId, 300), at: Date.now() }
     put('mirg-source', JSON.stringify(touch))
     arrived = true
   }

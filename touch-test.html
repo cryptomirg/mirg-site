@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<!-- Diagnostic page for "taps do nothing in Safari": runs a shared game from play.mirg.ai and shows, on
+     top of it, which touch events arrive and any errors. Not linked from anywhere; not for search. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+    <meta name="robots" content="noindex" />
+    <title>Touch test · Mirg</title>
+    <style>
+      html,body{margin:0;height:100%;background:#2a1f3d;overflow:hidden;touch-action:none}
+      canvas{position:absolute;left:0;top:0;width:100%;height:100%}
+      #hud{pointer-events:none}
+      #diag{position:fixed;left:6px;right:6px;bottom:6px;z-index:9;background:rgba(255,255,255,.92);color:#111;font:12px/1.4 ui-monospace,Menlo,monospace;white-space:pre-wrap;padding:8px;border-radius:8px;max-height:45%;overflow:auto;pointer-events:none}
+    </style>
+    <script>
+      ;(function () {
+        var counts = {}, lines = []
+        function show() {
+          var d = document.getElementById('diag')
+          if (!d) return
+          d.textContent = 'Events: ' + (Object.keys(counts).map(function (k) { return k + ' ' + counts[k] }).join(', ') || 'none yet') + '\n' + lines.join('\n')
+        }
+        window.__diag = function (m) { lines.push(m); if (lines.length > 14) lines.shift(); show() }
+        ;['pointerdown', 'touchstart', 'mousedown', 'click', 'keydown'].forEach(function (t) {
+          addEventListener(t, function () { counts[t] = (counts[t] || 0) + 1; show() }, { capture: true, passive: true })
+        })
+        addEventListener('error', function (e) { __diag('ERROR: ' + e.message + ' (' + String(e.filename || '').split('/').pop() + ':' + e.lineno + ')') })
+        addEventListener('unhandledrejection', function (e) { __diag('REJECTED: ' + (e.reason && (e.reason.message || e.reason))) })
+        addEventListener('DOMContentLoaded', function () {
+          __diag(navigator.userAgent)
+          try {
+            var C = window.AudioContext || window.webkitAudioContext
+            __diag('AudioContext: ' + (C ? 'yes' : 'missing'))
+          } catch (e) { __diag('AudioContext check failed: ' + e.message) }
+        })
+      })()
+    </script>
+    <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+  </head>
+  <body>
+    <canvas id="gl"></canvas><canvas id="hud"></canvas>
+    <div id="diag">Loading…</div>
+    <script type="module">
+      const g = new URLSearchParams(location.search).get('g') || 'airport-rush-3d-s7hb5'
+      if (!/^[a-z0-9-]{3,64}$/.test(g)) __diag('Bad game name')
+      else
+        import('https://play.mirg.ai/' + g + '/game.js')
+          .then(() => __diag('Game loaded. Tap the screen now.'))
+          .catch((e) => __diag('LOAD FAILED: ' + (e && e.message)))
+    </script>
+  </body>
+</html>

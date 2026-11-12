@@ -580,6 +580,26 @@ function titleOf(files) {
 // ---------------------------------------------------------------------------------------------
 // Running the game: one HTML document built from the files, in a sandboxed frame.
 
+// The game's sound, off or on; remembered on this browser.
+let gameMuted = false
+try {
+  gameMuted = localStorage.getItem('mirg-game-muted') === '1'
+} catch (e) {}
+function showMuted() {
+  const b = $('mute')
+  if (!b) return
+  b.innerHTML = (gameMuted ? 'Unmute' : 'Mute') + '<span class="wide-only"> game</span>'
+  b.setAttribute('aria-pressed', String(gameMuted))
+}
+function setGameMuted(on) {
+  gameMuted = on
+  try {
+    localStorage.setItem('mirg-game-muted', on ? '1' : '0')
+  } catch (e) {}
+  showMuted()
+  if (frame && frame.contentWindow) frame.contentWindow.postMessage({ type: 'mute', on }, '*')
+}
+
 /** Runs first inside the game: reports logs, answers eval and input requests, stands in for storage. */
 const BOOT = `(function(){
 var P=function(m){try{m.mirg=1;parent.postMessage(m,'*')}catch(e){}};
@@ -601,6 +621,11 @@ if(a.wait){await sleep(Math.min(10000,a.wait));return}
 if(a.key){var k=a.key==='Space'?' ':a.key;var o={key:k,code:code(a.key),bubbles:true,cancelable:true,composed:true};var t=target();t.dispatchEvent(new KeyboardEvent('keydown',o));await sleep(Math.min(10000,a.ms||80));t.dispatchEvent(new KeyboardEvent('keyup',o));return}
 if(a.tap){var x=a.tap[0],y=a.tap[1];var el=document.elementFromPoint(x,y)||document.body;var b={clientX:x,clientY:y,bubbles:true,cancelable:true,composed:true,pointerId:1,isPrimary:true,pointerType:'mouse',button:0,buttons:1};
 el.dispatchEvent(new PointerEvent('pointerdown',b));el.dispatchEvent(new MouseEvent('mousedown',b));await sleep(Math.min(10000,a.ms||60));b.buttons=0;el.dispatchEvent(new PointerEvent('pointerup',b));el.dispatchEvent(new MouseEvent('mouseup',b));el.dispatchEvent(new MouseEvent('click',b))}}
+var MUTED=!!window.__mirgMuted,GAINS=[],MEDIA=[];
+try{var AC=window.BaseAudioContext||window.AudioContext||window.webkitAudioContext;var DD=AC&&Object.getOwnPropertyDescriptor(AC.prototype,'destination');if(DD&&DD.get){var GW=new WeakMap();Object.defineProperty(AC.prototype,'destination',{configurable:true,get:function(){var real=DD.get.call(this);if(window.OfflineAudioContext&&this instanceof OfflineAudioContext)return real;var g=GW.get(this);if(!g){g=this.createGain();g.gain.value=MUTED?0:1;g.connect(real);GW.set(this,g);GAINS.push(g)}return g}})}}catch(e){}
+try{var PLAY=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){if(MEDIA.indexOf(this)<0)MEDIA.push(this);if(MUTED)this.muted=true;return PLAY.apply(this,arguments)}}catch(e){}
+function setMuted(on){MUTED=on;GAINS.forEach(function(g){try{g.gain.value=on?0:1}catch(e){}});MEDIA.concat(Array.prototype.slice.call(document.querySelectorAll('audio,video'))).forEach(function(m){try{m.muted=on}catch(e){}})}
+addEventListener('message',function(e){if(e.source===parent&&e.data&&e.data.type==='mute')setMuted(!!e.data.on)});
 addEventListener('message',async function(e){if(e.source!==parent)return;var m=e.data||{};
 if(m.type==='eval'){try{var r;try{r=(0,eval)('('+m.code+'\\n)')}catch(se){if(!(se instanceof SyntaxError))throw se;r=(0,eval)('(async function(){'+m.code+'\\n})()')}if(r&&typeof r.then==='function')r=await r;P({type:'evalResult',id:m.id,ok:true,value:fmt(r,true)})}catch(err){P({type:'evalResult',id:m.id,ok:false,value:String(err&&err.stack||err)})}}
 if(m.type==='input'){try{for(var i=0;i<(m.actions||[]).length;i++)await act(m.actions[i]);P({type:'inputDone',id:m.id,ok:true})}catch(err){P({type:'inputDone',id:m.id,ok:false,value:String(err)})}}});
@@ -711,7 +736,7 @@ function bundle(files) {
     if (isLocal(img.getAttribute('src')) && /\.svg$/i.test(p) && files[p] !== undefined) img.setAttribute('src', 'data:image/svg+xml;base64,' + b64(files[p]))
   }
   const boot = doc.createElement('script')
-  boot.textContent = 'window.__mirgFiles=' + JSON.stringify(data).replace(/</g, '\\u003c') + ';\n' + BOOT
+  boot.textContent = 'window.__mirgFiles=' + JSON.stringify(data).replace(/</g, '\\u003c') + ';window.__mirgMuted=' + (gameMuted ? 'true' : 'false') + ';\n' + BOOT
   doc.head.insertBefore(boot, doc.head.firstChild)
   return '<!doctype html>\n' + doc.documentElement.outerHTML
 }
@@ -3068,6 +3093,8 @@ $('input').addEventListener('keydown', (e) => {
 })
 $('stop').onclick = () => running && running.abort()
 $('restart').onclick = () => runGame()
+$('mute').onclick = () => setGameMuted(!gameMuted)
+showMuted()
 $('home').onclick = (e) => {
   if (running && !confirm('Mirg is still working on this game. Leave anyway?')) e.preventDefault()
   else if (running) running.abort()

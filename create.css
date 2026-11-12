@@ -1401,3 +1401,25 @@ a {
   color: var(--text);
   font-size: 13px;
 }
+
+/* Mute game and Restart game side by side in the game's toolbar; just "Mute" and "Restart" on phones. */
+.tabs .linklike {
+  white-space: nowrap;
+}
+.tabs .linklike + .linklike {
+  margin-left: 14px;
+}
+@media (max-width: 520px) {
+  .tabs .wide-only {
+    display: none;
+  }
+  .tabs .linklike + .linklike {
+    margin-left: 10px;
+  }
+  .tabs #device {
+    max-width: 104px;
+  }
+  .tabs .linklike {
+    margin-left: 6px;
+  }
+}

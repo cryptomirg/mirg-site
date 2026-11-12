@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#0e0f14" />
     <link rel="canonical" href="https://mirg.ai/create" />
     <link rel="icon" href="assets/icon.png?v=2" />
-    <link rel="stylesheet" href="create.css?v=12" />
+    <link rel="stylesheet" href="create.css?v=15" />
   </head>
   <body>
     <!-- Start: describe a game, or open one made before. -->
@@ -104,7 +104,8 @@
               <option value="portrait">Phone</option>
               <option value="landscape">Phone, sideways</option>
             </select>
-            <button type="button" class="linklike" id="restart">Restart game</button>
+            <button type="button" class="linklike" id="mute" aria-pressed="false" title="Turn the game's sound off or on">Mute<span class="wide-only"> game</span></button>
+            <button type="button" class="linklike" id="restart">Restart<span class="wide-only"> game</span></button>
           </div>
           <div class="game" id="game-wrap">
             <div class="empty" id="game-empty">Your game will appear here.</div>
@@ -209,6 +210,6 @@
     </dialog>
 
     <script src="site.js?v=26"></script>
-    <script type="module" src="create.js?v=18"></script>
+    <script type="module" src="create.js?v=20"></script>
   </body>
 </html>

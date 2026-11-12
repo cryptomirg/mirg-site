@@ -70,6 +70,7 @@
       title.textContent = t
       document.title = t + ' · Made with Mirg'
       frame.src = base
+      shareButton(t)
       countPlay()
       credit()
       comments()
@@ -262,6 +263,30 @@
     document.documentElement.classList.toggle('play-filled', on)
     exit.hidden = !on
   }
+  // Share: on a phone, the phone's own share panel (Messages, WhatsApp…); elsewhere, copy the link.
+  // ref=share tells Mirg's visit count that the player came from a shared link.
+  function shareButton(t) {
+    var button = document.getElementById('play-share')
+    var url = location.origin + '/play?g=' + encodeURIComponent(name) + '&ref=share'
+    var label = button.textContent
+    var say = function (text) {
+      button.textContent = text
+      setTimeout(function () { button.textContent = label }, 2000)
+    }
+    button.hidden = false
+    button.addEventListener('click', function () {
+      if (navigator.share && matchMedia('(pointer: coarse)').matches) {
+        navigator.share({ title: t, text: 'Play ' + t + ', a game made with Mirg', url: url }).catch(function () {})
+        return
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () { say('Link copied') }, function () { window.prompt('Copy this link:', url) })
+      } else {
+        window.prompt('Copy this link:', url)
+      }
+    })
+  }
+
   document.getElementById('play-full').addEventListener('click', function () {
     // Phones and tablets: fill the screen with the page itself. iPhones report a full screen
     // command but it only works for videos, so it would silently do nothing.

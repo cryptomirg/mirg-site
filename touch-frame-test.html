@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<!-- Diagnostic page: the same game embedded four ways, to find which part of the play page's frame
+     stops taps on iPhone Safari. Not linked from anywhere; not for search. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>Frame test · Mirg</title>
+    <style>
+      body{margin:0;padding:12px;background:#0e0f14;color:#ddd;font:15px -apple-system,sans-serif}
+      h2{margin:18px 0 6px;font-size:16px;color:#fff}
+      p{margin:0 0 6px;color:#999;font-size:13px}
+      /* The play page's frame, as in styles.css */
+      .play-frame{position:relative;width:100%;aspect-ratio:3/4;max-height:60svh;background:#000;border:1px solid #2d2d2d;border-radius:14px;overflow:hidden}
+      .play-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+      .plain iframe{display:block;width:100%;height:60svh;border:0}
+    </style>
+  </head>
+  <body>
+    <p>Tap inside each game. Note which ones start (the bus drives).</p>
+
+    <h2>1. Exactly like the game page</h2>
+    <div class="play-frame"><iframe data-src allow="fullscreen; gamepad; autoplay" allowfullscreen sandbox="allow-scripts allow-same-origin allow-pointer-lock"></iframe></div>
+
+    <h2>2. Same, without the sandbox setting</h2>
+    <div class="play-frame"><iframe data-src allow="fullscreen; gamepad; autoplay" allowfullscreen></iframe></div>
+
+    <h2>3. Sandbox kept, without the rounded box around it</h2>
+    <div class="plain"><iframe data-src allow="fullscreen; gamepad; autoplay" allowfullscreen sandbox="allow-scripts allow-same-origin allow-pointer-lock"></iframe></div>
+
+    <h2>4. Nothing at all: plain frame</h2>
+    <div class="plain"><iframe data-src></iframe></div>
+
+    <script>
+      var g = new URLSearchParams(location.search).get('g') || 'airport-rush-3d-s7hb5'
+      if (/^[a-z0-9-]{3,64}$/.test(g)) document.querySelectorAll('iframe[data-src]').forEach(function (f) { f.src = 'https://play.mirg.ai/' + g + '/' })
+    </script>
+  </body>
+</html>

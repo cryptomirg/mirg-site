@@ -254,7 +254,7 @@ async function renderAccountSettings() {
     if (me.plan === 'free') {
       const plans = add('', 'plans')
       for (const [kind, name, price, what] of [
-        ['pro', 'Pro', '$20 / month', 'For regular game-making: no waiting for more usage, and Claude Opus by default'],
+        ['pro', 'Pro', me.offer ? me.offer.firstMonth + ' first month, then $20 / month' : '$20 / month', 'For regular game-making: no waiting for more usage, and Claude Opus by default'],
         ['max', 'Max', '$100 / month', "For big projects and heavy use: over 5 times Pro's usage"]
       ]) {
         const b = document.createElement('button')
@@ -2114,7 +2114,8 @@ function freeLimitActions(text) {
     row.appendChild(b)
     return b
   }
-  button('Keep building with Pro, $20/month', 'btn small primary', async () => {
+  const offer = me && me.offer
+  button(offer ? 'Keep building with Pro, ' + offer.firstMonth + ' first month' : 'Keep building with Pro, $20/month', 'btn small primary', async () => {
     call('POST', '/track', { kind: 'upgrade_click' }).catch(() => undefined)
     // Opened now, while the click still counts, so the browser does not block it as a pop-up.
     const tab = window.open('', '_blank')

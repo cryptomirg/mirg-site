@@ -69,7 +69,11 @@
       var t = String(info.title || 'A game made with Mirg').slice(0, 80)
       title.textContent = t
       document.title = t + ' · Made with Mirg'
-      frame.src = base
+      // Phones and tablets: iPhone Safari does not pass taps to a game embedded from play.mirg.ai
+      // (tested Nov 2026: every way of embedding it), so the game opens on its own page instead,
+      // where it fills the screen and taps work. Computers keep it embedded here.
+      if (matchMedia('(pointer: coarse)').matches) launcher(base, t)
+      else frame.src = base
       shareButton(t)
       countPlay()
       credit()
@@ -263,6 +267,26 @@
     document.documentElement.classList.toggle('play-filled', on)
     exit.hidden = !on
   }
+  // The game's picture with a big Play button, which opens the game on its own page.
+  function launcher(base, t) {
+    frame.hidden = true
+    document.getElementById('play-full').hidden = true
+    var a = document.createElement('a')
+    a.className = 'play-launch'
+    a.href = base
+    a.setAttribute('aria-label', 'Play ' + t)
+    var pic = new Image()
+    pic.alt = ''
+    pic.onerror = function () { pic.remove() }
+    pic.src = base + 'mirg-thumb.jpg'
+    var button = document.createElement('span')
+    button.className = 'play-launch-button'
+    button.textContent = '▶ Play'
+    a.appendChild(pic)
+    a.appendChild(button)
+    document.getElementById('play-frame').appendChild(a)
+  }
+
   // Share: on a phone, the phone's own share panel (Messages, WhatsApp…); elsewhere, copy the link.
   // ref=share tells Mirg's visit count that the player came from a shared link.
   function shareButton(t) {

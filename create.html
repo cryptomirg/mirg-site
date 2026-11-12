@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#0e0f14" />
     <link rel="canonical" href="https://mirg.ai/create" />
     <link rel="icon" href="assets/icon.png?v=2" />
-    <link rel="stylesheet" href="create.css?v=15" />
+    <link rel="stylesheet" href="create.css?v=18" />
   </head>
   <body>
     <!-- Start: describe a game, or open one made before. -->
@@ -51,7 +51,7 @@
     <!-- The studio: chat on the left, the game on the right. -->
     <main id="studio" class="studio" hidden>
       <header class="bar">
-        <a class="logo" href="/create" id="home"><img src="assets/icon.png?v=2" alt="" />Mirg</a>
+        <a class="logo" href="/create" id="home" aria-label="Mirg home"><img src="assets/icon.png?v=2" alt="" /><span class="logo-word">Mirg</span></a>
         <span class="title" id="title"></span>
         <span class="grow"></span>
         <nav class="switch" id="switch">
@@ -59,6 +59,7 @@
           <button type="button" data-show="game">Game</button>
         </nav>
         <a class="btn small play-link" href="/" target="_blank" rel="noopener" title="Play games made with Mirg (opens in a new tab, so your game keeps building)">Play games</a>
+        <button class="comments-new" type="button" id="comments-btn" title="New from players: suggestions you can make in one click" hidden></button>
         <button class="btn small primary" type="button" id="share">Share</button>
         <span class="account" data-account></span>
       </header>
@@ -105,6 +106,7 @@
               <option value="landscape">Phone, sideways</option>
             </select>
             <button type="button" class="linklike" id="mute" aria-pressed="false" title="Turn the game's sound off or on">Mute<span class="wide-only"> game</span></button>
+            <button type="button" class="linklike" id="stop-game" title="Stop the game. Restart game plays it again.">Stop<span class="wide-only"> game</span></button>
             <button type="button" class="linklike" id="restart">Restart<span class="wide-only"> game</span></button>
           </div>
           <div class="game" id="game-wrap">
@@ -209,7 +211,16 @@
       </form>
     </dialog>
 
+    <!-- What players said about a shared game: suggestions to fix in one click, and their comments. -->
+    <dialog id="commentsbox" class="modal comments-modal" aria-label="Comments">
+      <div class="comments-head">
+        <h2>Comments</h2>
+        <button type="button" class="linklike" id="comments-close">Close</button>
+      </div>
+      <div id="comments-body"></div>
+    </dialog>
+
     <script src="site.js?v=26"></script>
-    <script type="module" src="create.js?v=20"></script>
+    <script type="module" src="create.js?v=21"></script>
   </body>
 </html>

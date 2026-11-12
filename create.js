@@ -746,6 +746,15 @@ let logs = []
 let loaded = null
 const pending = new Map()
 
+/** Stop the game: its page, sound and all, until Restart game (or the agent) runs it again. */
+function stopGame() {
+  if (frame) frame.remove()
+  frame = null
+  pending.delete('load')
+  $('game-empty').hidden = false
+  $('game-empty').textContent = 'The game is stopped. Press Restart game to play it again.'
+}
+
 function runGame() {
   logs = []
   renderErrors()
@@ -2842,6 +2851,7 @@ async function showStart() {
   setDirty(false)
   $('studio').hidden = true
   $('start').hidden = false
+  clearInterval(commentsTimer)
   document.title = 'Make a game in your browser · Mirg'
   const all = (await myGames()).sort((a, b) => b.updated - a.updated)
   $('mine').hidden = !all.length
@@ -2870,6 +2880,25 @@ async function showStart() {
       showStart()
     }
     row.append(open, del)
+    // Ideas from players on a shared game: a badge that opens the game's Comments panel.
+    if (p.share && session()) {
+      call('POST', '/feedback/count', { slug: p.share.slug })
+        .then((r) => {
+          if (!r.count) return
+          const badge = document.createElement('button')
+          badge.type = 'button'
+          badge.className = 'comments-new'
+          badge.textContent = (r.count > 99 ? '99+' : r.count) + ' new'
+          badge.title = 'Ideas from players for this game'
+          badge.setAttribute('aria-label', 'Ideas from players for ' + p.name)
+          badge.onclick = () => {
+            commentsOnOpen = p.id
+            location.hash = '#g=' + p.id
+          }
+          row.insertBefore(badge, del)
+        })
+        .catch(() => undefined)
+    }
     card.append(name, info, row)
     $('cards').appendChild(card)
   }
@@ -2895,7 +2924,172 @@ function openProject(p) {
   showTab('game')
   showPane('chat')
   runGame()
+  checkComments()
+  if (commentsOnOpen === p.id) openComments()
+  commentsOnOpen = null
 }
+
+// ---------------------------------------------------------------------------------------------
+// Comments: what players said about a shared game. Mirg reads new comments into suggestions; each can
+// be sent to the agent in one click (Fix it) or dismissed. The same panel as the desktop app's.
+
+let commentsCount = 0
+let commentsTimer = null
+// A game opened from its "new" badge on the start page opens with its Comments panel.
+let commentsOnOpen = null
+
+function showCommentsButton() {
+  const b = $('comments-btn')
+  b.hidden = !(project && project.share && session() && commentsCount > 0)
+  b.textContent = (commentsCount > 99 ? '99+' : commentsCount) + ' new'
+  b.setAttribute('aria-label', 'Comments from players, ' + commentsCount + ' new')
+}
+
+/** The count on the Comments button: a cheap check, no model. On opening a game, then every 5 minutes. */
+function checkComments() {
+  clearInterval(commentsTimer)
+  commentsCount = 0
+  showCommentsButton()
+  if (!project || !project.share || !session()) return
+  const id = project.id
+  const check = () =>
+    call('POST', '/feedback/count', { slug: project.share.slug })
+      .then((r) => {
+        if (project && project.id === id) {
+          commentsCount = r.count || 0
+          showCommentsButton()
+        }
+      })
+      .catch(() => undefined)
+  check()
+  commentsTimer = setInterval(check, 5 * 60_000)
+}
+
+function fixPrompt(list) {
+  if (list.length === 1) return 'Players left comments on this game. A change drawn from them: "' + list[0].body + '" Make this change if it suits the game, and tell me what you did.'
+  return 'Players left comments on this game. Changes drawn from them:\n' + list.map((s, i) => i + 1 + '. ' + s.body).join('\n') + '\nMake these changes where they suit the game, and tell me what you did for each.'
+}
+
+function ago(at) {
+  const mins = Math.max(0, Math.round((Date.now() - new Date(at).getTime()) / 60_000))
+  if (mins < 60) return mins <= 1 ? 'just now' : mins + 'm ago'
+  const hours = Math.round(mins / 60)
+  return hours < 24 ? hours + 'h ago' : Math.round(hours / 24) + 'd ago'
+}
+
+async function openComments() {
+  if (!project || !project.share) return
+  const body = $('comments-body')
+  body.innerHTML = '<p class="fine comments-loading">Reading new comments…</p>'
+  $('commentsbox').showModal()
+  let feedback
+  try {
+    feedback = await call('POST', '/feedback', { slug: project.share.slug })
+  } catch (e) {
+    body.innerHTML = ''
+    const p = document.createElement('p')
+    p.className = 'error'
+    p.textContent = e.message || 'The comments could not be loaded.'
+    body.appendChild(p)
+    return
+  }
+  let showDone = false
+  const resolve = (s, status) => {
+    feedback.suggestions = feedback.suggestions.filter((x) => x.id !== s.id)
+    if (status === 'accepted') feedback.done.unshift(s)
+    call('POST', '/suggestions/resolve', { id: s.id, status }).catch(() => undefined)
+  }
+  const fix = (list) => {
+    for (const s of list) resolve(s, 'accepted')
+    commentsCount = feedback.suggestions.length
+    showCommentsButton()
+    $('commentsbox').close()
+    showPane('chat')
+    $('input').value = fixPrompt(list)
+    $('composer').requestSubmit()
+  }
+  const el = (tag, cls, text) => {
+    const x = document.createElement(tag)
+    if (cls) x.className = cls
+    if (text !== undefined) x.textContent = text
+    return x
+  }
+  const draw = () => {
+    // New comments were read just now, so the button counts only what is still waiting.
+    commentsCount = feedback.suggestions.length
+    showCommentsButton()
+    body.innerHTML = ''
+    const open = feedback.suggestions
+    const head = el('div', 'comments-section-head')
+    head.appendChild(el('h3', '', 'Suggestions'))
+    if (open.length > 1) {
+      const all = el('button', 'btn small primary', 'Fix all ' + open.length)
+      all.type = 'button'
+      all.onclick = () => fix(open.slice())
+      head.appendChild(all)
+    }
+    body.appendChild(head)
+    if (open.length) {
+      body.appendChild(el('p', 'fine', 'Drawn from what players wrote. Fix it asks the agent to make the change, which uses your plan.'))
+      for (const s of open) {
+        const row = el('div', 'suggestion')
+        const text = el('span', 'suggestion-body', s.body)
+        text.appendChild(el('span', 'suggestion-from', s.comments + ' player' + (s.comments === 1 ? '' : 's')))
+        const dismiss = el('button', 'linklike', 'Dismiss')
+        dismiss.type = 'button'
+        dismiss.setAttribute('aria-label', 'Dismiss: ' + s.body)
+        dismiss.onclick = () => {
+          resolve(s, 'dismissed')
+          draw()
+        }
+        const go = el('button', 'btn small', 'Fix it')
+        go.type = 'button'
+        go.setAttribute('aria-label', 'Fix it: ' + s.body)
+        go.onclick = () => fix([s])
+        row.append(text, dismiss, go)
+        body.appendChild(row)
+      }
+    } else {
+      body.appendChild(el('p', 'fine', feedback.comments.length ? 'Nothing to change right now. New comments are read each time you open this.' : "No comments yet. Share your game's link and players can comment under it."))
+    }
+    if (feedback.done.length) {
+      const done = el('div', 'comments-done')
+      const t = el('button', 'linklike', '✓ Fixed (' + feedback.done.length + ')')
+      t.type = 'button'
+      t.setAttribute('aria-expanded', String(showDone))
+      t.onclick = () => {
+        showDone = !showDone
+        draw()
+      }
+      done.appendChild(t)
+      if (showDone) {
+        const ul = el('ul')
+        for (const s of feedback.done) ul.appendChild(el('li', '', s.body))
+        done.appendChild(ul)
+      }
+      body.appendChild(done)
+    }
+    if (feedback.comments.length) {
+      const fresh = feedback.comments.filter((c) => c.fresh).length
+      const h = el('div', 'comments-section-head')
+      h.appendChild(el('h3', '', 'What players wrote'))
+      if (fresh) h.appendChild(el('span', 'comments-new-count', fresh + ' new'))
+      body.appendChild(h)
+      const ul = el('ul', 'comments-list')
+      for (const c of feedback.comments) {
+        const li = el('li', c.fresh ? 'fresh' : '')
+        const meta = el('span', 'comment-meta', c.name + ' · ' + ago(c.at))
+        if (c.fresh) meta.appendChild(el('span', 'comment-new', 'New'))
+        li.append(meta, el('span', 'comment-body', c.body))
+        ul.appendChild(li)
+      }
+      body.appendChild(ul)
+    }
+  }
+  draw()
+}
+$('comments-btn').onclick = () => openComments()
+$('comments-close').onclick = () => $('commentsbox').close()
 
 async function route() {
   if (location.hash === '#settings') return showSettings()
@@ -3093,6 +3287,7 @@ $('input').addEventListener('keydown', (e) => {
 })
 $('stop').onclick = () => running && running.abort()
 $('restart').onclick = () => runGame()
+$('stop-game').onclick = () => stopGame()
 $('mute').onclick = () => setGameMuted(!gameMuted)
 showMuted()
 $('home').onclick = (e) => {
@@ -3321,6 +3516,7 @@ $('share-form').onsubmit = async (e) => {
       throw err
     }
     p.share = Object.assign({ slug: start.slug, url: start.url }, opts)
+    if (project === p) checkComments()
     save()
     $('share-progress').textContent = 'Shared. Anyone with this link can play it:'
     $('share-url').value = start.url

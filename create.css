@@ -1378,3 +1378,26 @@ a {
 .btn.google { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; background: #fff; color: #1f1f1f; border: 1px solid #dadce0; font-weight: 600; }
 .btn.google:hover { background: #f7f8f8; }
 .google-row .or { text-align: center; margin: 0; }
+
+/* Under the free plan's limit message: Pro, "Email me when it's back", Compare plans. */
+.limit-actions {
+  margin-top: 10px;
+}
+
+.limit-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.limit-link {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.limit-note {
+  margin-top: 8px;
+  color: var(--text);
+  font-size: 13px;
+}

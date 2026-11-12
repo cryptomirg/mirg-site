@@ -1837,7 +1837,10 @@ async function agent(text, files) {
   } catch (e) {
     if (e.name === 'AbortError' || controller.signal.aborted) addItem({ kind: 'notice', text: 'Stopped.' })
     else {
-      addItem({ kind: 'error', text: e.message, limit: e.code === 'mirg_limit' || e.code === 'mirg_device' || e.code === 'mirg_capacity' })
+      const limit = e.code === 'mirg_limit' || e.code === 'mirg_device' || e.code === 'mirg_capacity'
+      addItem({ kind: 'error', text: e.message, limit })
+      // Counted once, when the message first appears (not again when a saved chat is reopened).
+      if (limit && isFreeLimit(e.message)) call('POST', '/track', { kind: 'limit_seen' }).catch(() => undefined)
       if (e.signin) signIn().catch(() => undefined)
       queuePaused = queue.length > 0
     }
@@ -2063,7 +2066,8 @@ function draw(item) {
     el = document.createElement('div')
     el.className = 'msg error'
     el.textContent = item.text
-    if (item.limit) {
+    if (item.limit && isFreeLimit(item.text)) el.appendChild(freeLimitActions(item.text))
+    else if (item.limit) {
       // Settings has the Pro and Max buttons; the game and chat stay as they are.
       const a = document.createElement('a')
       a.href = '#settings'
@@ -2077,6 +2081,81 @@ function draw(item) {
   }
   drawn.set(item, el)
   return el
+}
+
+// The free plan's limit message ("…free plan's building time… Upgrade to Pro…") gets its own buttons:
+// Pro straight to checkout, an email when the free time is back (only while it is coming back), and
+// the plans in Settings. Paid plans never see this message.
+function isFreeLimit(text) {
+  return /free plan's (building time|usage)/i.test(text) && /upgrade/i.test(text)
+}
+
+function freeLimitActions(text) {
+  const box = document.createElement('div')
+  box.className = 'limit-actions'
+  const row = document.createElement('div')
+  row.className = 'limit-buttons'
+  const note = document.createElement('div')
+  note.className = 'limit-note'
+  note.hidden = true
+  const say = (message) => {
+    note.textContent = message
+    note.hidden = !message
+  }
+  const buttons = []
+  const busy = (on) => buttons.forEach((b) => (b.disabled = on || b.dataset.done === '1'))
+  const button = (label, cls, onclick) => {
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.className = cls
+    b.textContent = label
+    b.onclick = onclick
+    buttons.push(b)
+    row.appendChild(b)
+    return b
+  }
+  button('Keep building with Pro, $20/month', 'btn small primary', async () => {
+    call('POST', '/track', { kind: 'upgrade_click' }).catch(() => undefined)
+    // Opened now, while the click still counts, so the browser does not block it as a pop-up.
+    const tab = window.open('', '_blank')
+    busy(true)
+    say('')
+    try {
+      const { url } = await call('POST', '/billing/checkout?plan=pro')
+      if (!/^https:\/\//.test(url)) throw new Error('The checkout page address was not valid.')
+      if (tab) tab.location.href = url
+      else location.href = url
+      say('Checkout opened in a new tab. After paying, come back here: your plan updates within a minute.')
+    } catch (e) {
+      if (tab) tab.close()
+      say(e.message)
+    } finally {
+      busy(false)
+    }
+  })
+  if (/comes back in/i.test(text)) {
+    const remind = button("Email me when it's back", 'btn small', async () => {
+      busy(true)
+      say('')
+      try {
+        const { at, email } = await call('POST', '/remind')
+        remind.dataset.done = '1'
+        remind.textContent = "We'll email you"
+        say("Done. We'll email " + email + ' at ' + new Date(at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) + ', when your free time is back.')
+      } catch (e) {
+        say(e.message)
+      } finally {
+        busy(false)
+      }
+    })
+  }
+  const compare = document.createElement('a')
+  compare.href = '#settings'
+  compare.className = 'limit-link'
+  compare.textContent = 'Compare plans'
+  row.appendChild(compare)
+  box.append(row, note)
+  return box
 }
 
 const dirtyItems = new Set()

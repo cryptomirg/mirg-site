@@ -196,6 +196,25 @@ section {
 section.games-home {
   padding-top: 32px;
 }
+/* The games fill 80% of the window, leaving 10% blank on each side, with bigger cards. Phones keep the usual edges. */
+@media (min-width: 761px) {
+  section.games-home .wrap,
+  header.site .wrap.wide {
+    width: 80%;
+    max-width: none;
+    padding: 0;
+  }
+  section.games-home .games-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+  }
+}
+/* Wide windows: 4 to a row, so "For you" is two full rows. */
+@media (min-width: 1100px) {
+  section.games-home .games-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
 
 .sr-only {
   position: absolute;

@@ -57,6 +57,14 @@
     title.className = 'game-title'
     title.textContent = g.title
     name.appendChild(title)
+    // The play count, as on the other game cards: "▶ 120".
+    var n = Number(g.plays) || 0
+    var plays = document.createElement('span')
+    plays.className = 'game-plays'
+    plays.setAttribute('aria-label', n === 1 ? '1 play' : n.toLocaleString() + ' plays')
+    plays.innerHTML = '<svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M3 1.8v8.4a.6.6 0 0 0 .9.5l6.6-4.2a.6.6 0 0 0 0-1L3.9 1.3a.6.6 0 0 0-.9.5Z" fill="currentColor"/></svg>'
+    plays.appendChild(document.createTextNode(n.toLocaleString()))
+    name.appendChild(plays)
     var why = document.createElement('div')
     why.className = 'game-why'
     why.textContent = g.reason
@@ -115,8 +123,11 @@
         max_count: opts.count || 4
       })
         .then(function (r) {
-          if (r.ok) return r.json()
-          return LOCAL ? sample(opts) : []
+          if (!r.ok) return LOCAL ? sample(opts) : []
+          return r.json().then(function (rows) {
+            // On this computer, a browser with no plays here still sees the rows, to preview them.
+            return LOCAL && opts.personalOnly && !(rows[0] && rows[0].personal) ? sample(opts) : rows
+          })
         })
         .then(function (rows) {
           if (!rows.length || (opts.personalOnly && !rows[0].personal)) return false

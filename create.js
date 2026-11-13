@@ -338,10 +338,10 @@ async function renderAccountSettings() {
     const resets = !me.periodEnd ? '' : me.plan === 'free'
       ? ' · resets at ' + new Date(me.periodEnd).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
       : ' · resets ' + new Date(me.periodEnd).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-    add('<div class="usage-bar"><span style="width:' + pct + '%"></span></div><div class="fine usage-line"><span>' + tokens(me.usedTokens || 0) + ' tokens used ' + (me.plan === 'free' ? 'in these 6 hours' : 'this period') + '</span><span>' + (pct >= 100 ? 'All' : pct + '%') + ' of your plan' + resets + '</span></div>', 'usage')
-    if (me.free && me.free.totalMicros > 0) add(Math.min(100, Math.round((me.free.usedMicros / me.free.totalMicros) * 100)) + '% of the free plan used in all. When it is all used, upgrade to keep building.', 'fine free-total')
+    add('<div class="usage-bar"><span style="width:' + pct + '%"></span></div><div class="fine usage-line"><span>' + fmtTokens(mirgTokens(Math.min(me.usedMicros, me.allowanceMicros))) + ' of ' + fmtTokens(mirgTokens(me.allowanceMicros)) + ' tokens used ' + (me.plan === 'free' ? 'in these 6 hours' : 'this period') + '</span><span>' + (pct >= 100 ? 'All' : pct + '%') + ' of your plan' + resets + '</span></div>', 'usage')
+    if (me.free && me.free.totalMicros > 0) add(fmtTokens(mirgTokens(Math.min(me.free.usedMicros, me.free.totalMicros))) + ' of the free plan\'s ' + fmtTokens(mirgTokens(me.free.totalMicros)) + ' tokens used in all. When they are all used, upgrade to keep building.', 'fine free-total')
     if (me.gift) add('Your ' + (PLAN_NAMES[me.plan] || '') + ' plan is a gift until ' + new Date(me.gift.until).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '.', 'fine')
-    if (me.bonus && me.bonus.leftMicros > 0) add('Includes ' + usd(me.bonus.micros) + ' of free credit' + (me.bonus.until ? ', until ' + new Date(me.bonus.until).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '') + '.', 'fine')
+    if (me.bonus && me.bonus.leftMicros > 0) add('Includes ' + fmtTokens(mirgTokens(me.bonus.micros)) + ' free tokens' + (me.bonus.until ? ', until ' + new Date(me.bonus.until).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '') + '.', 'fine')
     // Credits, bought once, on any plan: what is left, and buying more. (Max's extra usage below is
     // the automatic way; this is by hand.)
     if (me.credits && !me.suspended) {
@@ -352,7 +352,7 @@ async function renderAccountSettings() {
       left.className = 'fine'
       left.textContent =
         me.credits.leftMicros > 0
-          ? 'About ' + aboutTokens(me.credits.leftMicros / 1e6) + ' tokens of credits left. Used after your plan\'s building time runs out.'
+          ? fmtTokens(mirgTokens(me.credits.leftMicros)) + ' tokens of credits left. Used after your plan\'s building time runs out.'
           : 'Credits: pay once to keep building when your plan\'s time runs out. They do not expire.'
       head.appendChild(left)
       box3.appendChild(head)
@@ -2110,6 +2110,20 @@ async function agent(text, files) {
     if (userItem) {
       userItem.ms = Date.now() - startedAt
       refresh(userItem)
+      // What the message cost, in Mirg tokens: everything this account used since it was sent. A
+      // moment first, so the last step's usage is recorded.
+      const item = userItem
+      const since = new Date(startedAt - 2000).toISOString()
+      setTimeout(() => {
+        call('GET', '/usage/since?from=' + encodeURIComponent(since))
+          .then((out) => {
+            if (!out || !out.tokens) return
+            item.mirgTokens = out.tokens
+            refresh(item)
+            save()
+          })
+          .catch(() => undefined)
+      }, 2500)
     }
     if (controller.signal.aborted) queuePaused = queue.length > 0
     c.updated = Date.now()
@@ -2166,6 +2180,24 @@ function duration(ms) {
 function tokens(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
   return n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'k' : String(n)
+}
+
+// Mirg tokens: how all usage is shown. A Mirg token is a fixed slice of what the AI cost ($1 is
+// 125,000; /me says the rate), so a pricier model uses more of them for the same work, and the
+// count always agrees with how much of the plan is used.
+function tokenRate() {
+  return (me && me.tokens && me.tokens.perDollar) || 125000
+}
+function mirgTokens(micros) {
+  return Math.round(((micros || 0) * tokenRate()) / 1e6)
+}
+// "437.5K", "2.19M", "9.38M": a Mirg token amount, short.
+function fmtTokens(n) {
+  // Trailing zeros after the point only: "375.0" is "375", "400" stays "400".
+  const trim = (x) => (x.includes('.') ? x.replace(/0+$/, '').replace(/\.$/, '') : x)
+  if (n >= 1e6) return trim((n / 1e6).toFixed(n >= 1e7 ? 1 : 2)) + 'M'
+  if (n >= 1e3) return trim((n / 1e3).toFixed(1)) + 'K'
+  return String(Math.round(n))
 }
 
 function markdown(text) {
@@ -2278,11 +2310,11 @@ function draw(item) {
     el.appendChild(bubble)
     const meta = document.createElement('div')
     meta.className = 'meta'
-    const facts = [item.tokens ? tokens(item.tokens) + ' tokens' : '', item.ms >= 1000 ? duration(item.ms) : ''].filter(Boolean).join(' · ')
+    const facts = [item.mirgTokens ? fmtTokens(item.mirgTokens) + ' tokens' : '', item.ms >= 1000 ? duration(item.ms) : ''].filter(Boolean).join(' · ')
     if (facts) {
       const span = document.createElement('span')
       span.textContent = facts
-      span.title = 'Tokens billed at full price (new input and output; re-reading the conversation is not counted) and how long the agent worked on this message'
+      span.title = 'Mirg tokens this message used (pricier models use more for the same work) and how long the agent worked on it'
       meta.appendChild(span)
     }
     if (item.before && item.mark !== undefined) {
@@ -2346,16 +2378,12 @@ function isFreeLimit(text) {
   return (/free plan's (building time|usage)/i.test(text) && /upgrade/i.test(text)) || /add credits/i.test(text)
 }
 
-// Credits, bought once: $5, $25 or an amount of your own. Each shows about how many tokens it buys,
-// from the rate /me sends (tokens per dollar of usage on the default model; $1 of credits is $0.70).
+// Credits, bought once: $5, $25 or an amount of your own, each with the Mirg tokens it buys
+// ($1 of credits is $0.70 of AI cost).
 const CREDIT_AMOUNTS = [5, 25]
-function aboutTokens(usageDollars) {
-  const n = usageDollars * ((me && me.tokens && me.tokens.perDollar) || 85000)
-  return n >= 1e6 ? String(Math.round(n / 1e5) / 10).replace(/\.0$/, '') + 'M' : Math.max(10, Math.round(n / 1e4) * 10) + 'K'
-}
 function creditsLabel(dollars) {
   const ratio = (me && me.credits && me.credits.ratio) || 0.7
-  return '$' + dollars + ' (about ' + aboutTokens(dollars * ratio) + ' tokens)'
+  return '$' + dollars + ' (' + fmtTokens(mirgTokens(dollars * ratio * 1e6)) + ' tokens)'
 }
 // The credit buttons: $5, $25, and "Custom amount", which opens a box for any whole amount from $5.
 // `buy(dollars)` is called with the amount picked; `prefix` starts each label ("Add ").
@@ -2420,12 +2448,11 @@ function creditPicker(prefix, buy) {
   wrap.buttons = buttons.concat(go)
   return wrap
 }
-// "about 1.4M tokens a month": a plan's usage as tokens.
+// "2M tokens a month. ": a paid plan's usage in Mirg tokens.
 function planTokens(plan) {
   const t = me && me.tokens
   if (!t) return ''
-  const micros = plan === 'max' ? t.maxMicros : t.proMicros
-  return 'About ' + aboutTokens(micros / 1e6) + ' tokens a month. '
+  return fmtTokens(mirgTokens(plan === 'max' ? t.maxMicros : t.proMicros)) + ' tokens a month. '
 }
 // Opens Stripe's page for credits in a new tab. `tab` was opened during the click, so it is not blocked.
 async function buyCredits(dollars, tab) {

@@ -53,10 +53,13 @@
           return
         }
         var row = (result && result[0]) || {}
-        var value = row.value_usd ? '$' + row.value_usd + ' of credit' : 'Your credit'
-        if (row.status === 'claimed') done(value + ' is on your account', 'It lasts until ' + day(row.until) + '. Open Mirg, signed in with the email address we wrote to, and describe a game. Your usage in Settings shows the extra credit.', open)
-        else if (row.status === 'already') done('You already claimed this', row.until ? 'Your credit lasts until ' + day(row.until) + '. Open Mirg and describe a game.' : 'Open Mirg and describe a game.', open)
-        else if (row.status === 'expired') done('This offer has ended', 'The link was good for 30 days. Write to support@mirg.ai if you still want to try Mirg with more credit.', '<a class="btn" href="mailto:support@mirg.ai">Email support</a>')
+        // The credit in Mirg tokens: value_usd buys value_usd x 0.75 of AI cost, and $1 of cost is 125,000 tokens.
+        var tokens = row.value_usd ? Math.round(row.value_usd * 0.75 * 125000) : 0
+        var short = tokens >= 1e6 ? String(+(tokens / 1e6).toFixed(2)) + 'M' : String(+(tokens / 1e3).toFixed(1)) + 'K'
+        var value = tokens ? short + ' free tokens' : 'Your free tokens'
+        if (row.status === 'claimed') done(value + ' are on your account', 'They last until ' + day(row.until) + '. Open Mirg, signed in with the email address we wrote to, and describe a game. Settings shows them with your tokens.', open)
+        else if (row.status === 'already') done('You already claimed this', row.until ? 'Your free tokens last until ' + day(row.until) + '. Open Mirg and describe a game.' : 'Open Mirg and describe a game.', open)
+        else if (row.status === 'expired') done('This offer has ended', 'The link was good for 30 days. Write to support@mirg.ai if you still want to try Mirg with more free tokens.', '<a class="btn" href="mailto:support@mirg.ai">Email support</a>')
         else done('This link is not complete', 'Open the link from the email again, or write to support@mirg.ai and we will sort it out.', '<a class="btn" href="mailto:support@mirg.ai">Email support</a>')
       })
       .catch(function () {

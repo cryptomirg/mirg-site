@@ -48,11 +48,15 @@
     }
   })
   var source = q.get('utm_source') || q.get('ref') || clickSource
+  var tagged = Boolean(source)
   if (!source && document.referrer) {
     try {
       var host = new URL(document.referrer).hostname.replace(/^www\./, '')
       var known = { 't.co': 'x', 'x.com': 'x', 'twitter.com': 'x', 'news.ycombinator.com': 'hackernews', 'youtu.be': 'youtube' }
-      if (!/(^|\.)mirg\.ai$/.test(host)) source = known[host] || (host.match(/(google|bing|duckduckgo|yahoo|tiktok|reddit|youtube|facebook|instagram|producthunt|discord|itch)\./) || [])[1] || host
+      // Coming back from signing in (Google, Apple, Mirg's sign-in server) or from paying is not a
+      // new way in: without this, everyone who signed in with Google was counted as from "google".
+      var passing = /(^|\.)(mirg\.ai|accounts\.google\.com|accounts\.youtube\.com|appleid\.apple\.com|supabase\.co|stripe\.com)$/
+      if (!passing.test(host)) source = known[host] || (host.match(/(google|bing|duckduckgo|yahoo|tiktok|reddit|youtube|facebook|instagram|producthunt|discord|itch)\./) || [])[1] || host
     } catch (e) {}
   }
   var touch = null
@@ -60,9 +64,11 @@
     touch = JSON.parse(get('mirg-source') || 'null')
   } catch (e) {}
   if (touch && !(Date.now() - touch.at < 30 * DAY)) touch = null
+  // A visit with only a referring site does not replace an ad click or a tagged link from the last 30 days.
+  if (source && !tagged && touch && (touch.clickId || touch.campaign)) source = null
   var arrived = false
   if (source) {
-    // A new link always wins: the latest way in is the one that brought them back.
+    // A new link wins: the latest way in is the one that brought them back.
     touch = { source: clip(String(source).toLowerCase().replace(/[^a-z0-9._-]/g, '-'), 40), campaign: clip(q.get('utm_campaign'), 80), clickId: clip(clickId, 300), at: Date.now() }
     put('mirg-source', JSON.stringify(touch))
     arrived = true

@@ -251,6 +251,36 @@ async function renderAccountSettings() {
     if (me.free && me.free.totalMicros > 0) add(Math.min(100, Math.round((me.free.usedMicros / me.free.totalMicros) * 100)) + '% of the free plan used in all. When it is all used, upgrade to keep building.', 'fine free-total')
     if (me.gift) add('Your ' + (PLAN_NAMES[me.plan] || '') + ' plan is a gift until ' + new Date(me.gift.until).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '.', 'fine')
     if (me.bonus && me.bonus.leftMicros > 0) add('Includes ' + usd(me.bonus.micros) + ' of free credit' + (me.bonus.until ? ', until ' + new Date(me.bonus.until).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '') + '.', 'fine')
+    // Credits, bought once, on any plan: what is left, and buying more. (Max's extra usage below is
+    // the automatic way; this is by hand.)
+    if (me.credits && !me.suspended) {
+      const box3 = add('', 'credits-box')
+      const head = document.createElement('div')
+      head.className = 'account-row'
+      const left = document.createElement('span')
+      left.className = 'fine'
+      left.textContent = me.credits.leftMicros > 0 ? usd(me.credits.leftMicros) + ' of credits left. Used after your plan\'s building time runs out.' : 'Credits: pay once to keep building when your plan\'s time runs out. They do not expire.'
+      head.appendChild(left)
+      box3.appendChild(head)
+      const amounts = document.createElement('div')
+      amounts.className = 'limit-amounts'
+      for (const dollars of CREDIT_AMOUNTS) {
+        const b = document.createElement('button')
+        b.type = 'button'
+        b.className = 'btn small'
+        b.textContent = 'Add ' + creditsLabel(dollars)
+        b.onclick = async () => {
+          const tab = window.open('', '_blank')
+          try {
+            await buyCredits(dollars, tab)
+          } catch (e) {
+            alert(e.message)
+          }
+        }
+        amounts.appendChild(b)
+      }
+      box3.appendChild(amounts)
+    }
     if (me.plan === 'free') {
       const plans = add('', 'plans')
       for (const [kind, name, price, what] of [
@@ -2224,8 +2254,30 @@ function draw(item) {
 // The free plan's limit message ("…free plan's building time… Upgrade to Pro…") gets its own buttons:
 // Pro straight to checkout, an email when the free time is back (only while it is coming back), and
 // the plans in Settings. Paid plans never see this message.
+// The out-of-building-time message, on any plan: it offers credits (and Pro, on the free plan).
 function isFreeLimit(text) {
-  return /free plan's (building time|usage)/i.test(text) && /upgrade/i.test(text)
+  return (/free plan's (building time|usage)/i.test(text) && /upgrade/i.test(text)) || /add credits/i.test(text)
+}
+
+// Credits, bought once: what each amount buys, from what /me says ($20 buys $14).
+const CREDIT_AMOUNTS = [5, 10, 20, 50]
+function creditsLabel(dollars) {
+  const ratio = (me && me.credits && me.credits.ratio) || 0.7
+  const usage = dollars * ratio
+  return '$' + dollars + ' (' + (Number.isInteger(usage) ? '$' + usage : '$' + usage.toFixed(2)) + ' of building)'
+}
+// Opens Stripe's page for credits in a new tab. `tab` was opened during the click, so it is not blocked.
+async function buyCredits(dollars, tab) {
+  call('POST', '/track', { kind: 'upgrade_click' }).catch(() => undefined)
+  try {
+    const { url } = await call('POST', '/billing/credits?amount=' + dollars)
+    if (!/^https:\/\//.test(url)) throw new Error('The checkout page address was not valid.')
+    if (tab) tab.location.href = url
+    else location.href = url
+  } catch (e) {
+    if (tab) tab.close()
+    throw e
+  }
 }
 
 function freeLimitActions(text) {
@@ -2260,7 +2312,46 @@ function freeLimitActions(text) {
     when.textContent = 'Your free building time is back at ' + back.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) + '.'
     box.appendChild(when)
   }
-  button('Keep building with Pro, $20/month', 'btn small primary', async () => {
+  // Credits: pick an amount, pay once. Shown on every plan.
+  const amounts = document.createElement('div')
+  amounts.className = 'limit-amounts'
+  amounts.hidden = true
+  for (const dollars of CREDIT_AMOUNTS) {
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.className = 'btn small'
+    b.textContent = creditsLabel(dollars)
+    b.onclick = async () => {
+      const tab = window.open('', '_blank')
+      busy(true)
+      say('')
+      try {
+        await buyCredits(dollars, tab)
+        say('Checkout opened in a new tab. After paying, come back here: your credits show within a minute.')
+      } catch (e) {
+        say(e.message)
+      } finally {
+        busy(false)
+      }
+    }
+    buttons.push(b)
+    amounts.appendChild(b)
+  }
+  const credits = button('Add credits', 'btn small' + (me && me.plan !== 'free' ? ' primary' : ''), () => {
+    amounts.hidden = !amounts.hidden
+    credits.setAttribute('aria-expanded', String(!amounts.hidden))
+  })
+  credits.setAttribute('aria-expanded', 'false')
+  if (me && me.plan !== 'free') {
+    const compare = document.createElement('a')
+    compare.href = '#settings'
+    compare.className = 'limit-link'
+    compare.textContent = 'Plans and billing'
+    row.appendChild(compare)
+    box.append(row, amounts, note)
+    return box
+  }
+  button('Upgrade to Pro, $20/month (better deal)', 'btn small primary', async () => {
     call('POST', '/track', { kind: 'upgrade_click' }).catch(() => undefined)
     // Opened now, while the click still counts, so the browser does not block it as a pop-up.
     const tab = window.open('', '_blank')
@@ -2300,7 +2391,7 @@ function freeLimitActions(text) {
   compare.className = 'limit-link'
   compare.textContent = 'Compare plans'
   row.appendChild(compare)
-  box.append(row, note)
+  box.append(row, amounts, note)
   return box
 }
 

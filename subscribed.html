@@ -34,8 +34,8 @@
     <main>
       <section class="hero" style="min-height:62vh">
         <div class="wrap narrow">
-          <h1>You're all set.</h1>
-          <p class="lead">Thank you for subscribing. Go back to Mirg: your new plan shows in Settings within a minute.</p>
+          <h1 id="thanks-title">You're all set.</h1>
+          <p class="lead" id="thanks-lead">Thank you for subscribing. Go back to Mirg: your new plan shows in Settings within a minute.</p>
           <p>Paid on the web? <a href="/create">Back to Mirg on the web</a>. Your plan shows when you click your usage at the top.</p>
           <p class="fine">If it still says Free after a few minutes, close and reopen Settings. Still stuck? Write to <a href="mailto:support@mirg.ai">support@mirg.ai</a>.</p>
         </div>
@@ -50,6 +50,15 @@
         </script>
       </section>
     </main>
+    <script>
+      // After buying credits (/subscribed?credits=20) rather than a plan.
+      ;(function () {
+        var d = Number(new URLSearchParams(location.search).get('credits'))
+        if (!(d >= 5)) return
+        document.getElementById('thanks-title').textContent = 'Your credits are on the way.'
+        document.getElementById('thanks-lead').textContent = 'Thank you. $' + d + ' of credits is being added to your account: go back to Mirg and keep building. They show in Settings within a minute, and do not expire.'
+      })()
+    </script>
     <footer class="site">
       <div class="wrap">
         <span>© 2026 Mirg</span>

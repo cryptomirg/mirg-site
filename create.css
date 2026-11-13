@@ -1570,3 +1570,17 @@ select:not([multiple]) {
   padding-right: 30px;
   cursor: pointer;
 }
+
+/* Credits: the amounts to pick from, in the out-of-time message and in Settings. */
+.limit-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.limit-amounts[hidden] {
+  display: none;
+}
+.credits-box {
+  margin: 10px 0;
+}

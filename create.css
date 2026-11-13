@@ -1670,3 +1670,23 @@ select:not([multiple]) {
   font: inherit;
   padding: 6px 8px;
 }
+
+/* Credits: a custom amount, in dollars. */
+.credit-custom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.credit-custom[hidden] {
+  display: none;
+}
+.credit-custom input {
+  width: 90px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  padding: 6px 8px;
+}

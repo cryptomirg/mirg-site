@@ -350,38 +350,33 @@ async function renderAccountSettings() {
       head.className = 'account-row'
       const left = document.createElement('span')
       left.className = 'fine'
-      left.textContent = me.credits.leftMicros > 0 ? usd(me.credits.leftMicros) + ' of credits left. Used after your plan\'s building time runs out.' : 'Credits: pay once to keep building when your plan\'s time runs out. They do not expire.'
+      left.textContent =
+        me.credits.leftMicros > 0
+          ? 'About ' + aboutTokens(me.credits.leftMicros / 1e6) + ' tokens of credits left. Used after your plan\'s building time runs out.'
+          : 'Credits: pay once to keep building when your plan\'s time runs out. They do not expire.'
       head.appendChild(left)
       box3.appendChild(head)
-      const amounts = document.createElement('div')
-      amounts.className = 'limit-amounts'
-      for (const dollars of CREDIT_AMOUNTS) {
-        const b = document.createElement('button')
-        b.type = 'button'
-        b.className = 'btn small'
-        b.textContent = 'Add ' + creditsLabel(dollars)
-        b.onclick = async () => {
+      box3.appendChild(
+        creditPicker('Add ', async (dollars) => {
           const tab = window.open('', '_blank')
           try {
             await buyCredits(dollars, tab)
           } catch (e) {
             alert(e.message)
           }
-        }
-        amounts.appendChild(b)
-      }
-      box3.appendChild(amounts)
+        })
+      )
     }
     if (me.plan === 'free') {
       const plans = add('', 'plans')
       for (const [kind, name, price, what] of [
         ['pro', 'Pro', me.offer ? me.offer.firstMonth + ' first month, then $20 / month' : '$20 / month', 'For regular game-making: no waiting for more usage, and Claude Opus by default'],
-        ['max', 'Max', '$100 / month', "For big projects and heavy use: over 5 times Pro's usage"]
+        ['max', 'Max', '$100 / month', "For big projects and heavy use: over 4 times Pro's usage"]
       ]) {
         const b = document.createElement('button')
         b.type = 'button'
         b.className = 'plan'
-        b.innerHTML = '<span class="plan-name">' + name + '</span><span class="plan-price">' + price + '</span><span class="fine">' + what + '</span>'
+        b.innerHTML = '<span class="plan-name">' + name + '</span><span class="plan-price">' + price + '</span><span class="fine">' + escapeHtml(planTokens(kind)) + what + '</span>'
         b.onclick = () => billing('/billing/checkout?plan=' + kind)
         plans.appendChild(b)
       }
@@ -2351,12 +2346,86 @@ function isFreeLimit(text) {
   return (/free plan's (building time|usage)/i.test(text) && /upgrade/i.test(text)) || /add credits/i.test(text)
 }
 
-// Credits, bought once: what each amount buys, from what /me says ($20 buys $14).
-const CREDIT_AMOUNTS = [5, 10, 20, 50]
+// Credits, bought once: $5, $25 or an amount of your own. Each shows about how many tokens it buys,
+// from the rate /me sends (tokens per dollar of usage on the default model; $1 of credits is $0.70).
+const CREDIT_AMOUNTS = [5, 25]
+function aboutTokens(usageDollars) {
+  const n = usageDollars * ((me && me.tokens && me.tokens.perDollar) || 85000)
+  return n >= 1e6 ? String(Math.round(n / 1e5) / 10).replace(/\.0$/, '') + 'M' : Math.max(10, Math.round(n / 1e4) * 10) + 'K'
+}
 function creditsLabel(dollars) {
   const ratio = (me && me.credits && me.credits.ratio) || 0.7
-  const usage = dollars * ratio
-  return '$' + dollars + ' (' + (Number.isInteger(usage) ? '$' + usage : '$' + usage.toFixed(2)) + ' of building)'
+  return '$' + dollars + ' (about ' + aboutTokens(dollars * ratio) + ' tokens)'
+}
+// The credit buttons: $5, $25, and "Custom amount", which opens a box for any whole amount from $5.
+// `buy(dollars)` is called with the amount picked; `prefix` starts each label ("Add ").
+function creditPicker(prefix, buy) {
+  const box = document.createElement('div')
+  box.className = 'limit-amounts'
+  const buttons = []
+  for (const dollars of CREDIT_AMOUNTS) {
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.className = 'btn small'
+    b.textContent = prefix + creditsLabel(dollars)
+    b.onclick = () => buy(dollars)
+    buttons.push(b)
+    box.appendChild(b)
+  }
+  const custom = document.createElement('button')
+  custom.type = 'button'
+  custom.className = 'btn small'
+  custom.textContent = 'Custom amount'
+  buttons.push(custom)
+  box.appendChild(custom)
+  const own = document.createElement('div')
+  own.className = 'credit-custom'
+  own.hidden = true
+  const min = (me && me.credits && me.credits.minDollars) || 5
+  const max = (me && me.credits && me.credits.maxDollars) || 500
+  const input = document.createElement('input')
+  input.type = 'number'
+  input.min = String(min)
+  input.max = String(max)
+  input.step = '1'
+  input.value = '10'
+  input.setAttribute('aria-label', 'Amount in dollars')
+  const dollarSign = document.createElement('span')
+  dollarSign.textContent = '$'
+  const go = document.createElement('button')
+  go.type = 'button'
+  go.className = 'btn small primary'
+  const label = () => {
+    const d = Math.floor(Number(input.value))
+    const okAmount = d >= min && d <= max
+    go.disabled = !okAmount
+    go.textContent = okAmount ? 'Add ' + creditsLabel(d) : 'From $' + min + ' to $' + max
+  }
+  input.oninput = label
+  go.onclick = () => buy(Math.floor(Number(input.value)))
+  input.onkeydown = (e) => {
+    if (e.key === 'Enter' && !go.disabled) go.click()
+  }
+  custom.onclick = () => {
+    own.hidden = !own.hidden
+    if (!own.hidden) {
+      label()
+      input.focus()
+      input.select()
+    }
+  }
+  own.append(dollarSign, input, go)
+  const wrap = document.createElement('div')
+  wrap.append(box, own)
+  wrap.buttons = buttons.concat(go)
+  return wrap
+}
+// "about 1.4M tokens a month": a plan's usage as tokens.
+function planTokens(plan) {
+  const t = me && me.tokens
+  if (!t) return ''
+  const micros = plan === 'max' ? t.maxMicros : t.proMicros
+  return 'About ' + aboutTokens(micros / 1e6) + ' tokens a month. '
 }
 // Opens Stripe's page for credits in a new tab. `tab` was opened during the click, so it is not blocked.
 async function buyCredits(dollars, tab) {
@@ -2405,30 +2474,21 @@ function freeLimitActions(text) {
     box.appendChild(when)
   }
   // Credits: pick an amount, pay once. Shown on every plan.
-  const amounts = document.createElement('div')
-  amounts.className = 'limit-amounts'
-  amounts.hidden = true
-  for (const dollars of CREDIT_AMOUNTS) {
-    const b = document.createElement('button')
-    b.type = 'button'
-    b.className = 'btn small'
-    b.textContent = creditsLabel(dollars)
-    b.onclick = async () => {
-      const tab = window.open('', '_blank')
-      busy(true)
-      say('')
-      try {
-        await buyCredits(dollars, tab)
-        say('Checkout opened in a new tab. After paying, come back here: your credits show within a minute.')
-      } catch (e) {
-        say(e.message)
-      } finally {
-        busy(false)
-      }
+  const amounts = creditPicker('', async (dollars) => {
+    const tab = window.open('', '_blank')
+    busy(true)
+    say('')
+    try {
+      await buyCredits(dollars, tab)
+      say('Checkout opened in a new tab. After paying, come back here: your credits show within a minute.')
+    } catch (e) {
+      say(e.message)
+    } finally {
+      busy(false)
     }
-    buttons.push(b)
-    amounts.appendChild(b)
-  }
+  })
+  amounts.hidden = true
+  buttons.push(...amounts.buttons)
   const credits = button('Add credits', 'btn small' + (me && me.plan !== 'free' ? ' primary' : ''), () => {
     amounts.hidden = !amounts.hidden
     credits.setAttribute('aria-expanded', String(!amounts.hidden))

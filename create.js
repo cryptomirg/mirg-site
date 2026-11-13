@@ -1127,7 +1127,8 @@ If the user asks for Godot, Unity, Unreal, Roblox, Minecraft mods, pygame or a n
 
 # How to work
 The loop is: build, run, fix. You do not playtest here: the user plays the game themselves and tells you what to change.
-- Write all the files of a small game in one reply. A single reply must not write more than about 250 lines of code in total, because a longer reply is cut off and the user pays for it twice: for a bigger game, split the code into modules of a few hundred lines and write one or two per reply, and write a long file in parts (write_file, then append_file in the following replies).
+- Write all the files of a small game in one reply. A single reply must not write more than about 250 lines of code in total, thinking included in its length: a longer reply is cut off and the user pays for it without getting anything. For a bigger game, split the code into modules of up to about 200 lines and write one per reply; write a longer file in parts (write_file with the first part, then append_file in the following replies).
+- Plan briefly before writing code: the plan is not shown to the user and counts toward the reply's length.
 - Then call run_game once. Errors it reports are yours to fix before you reply; when it reports none, stop and hand the game over.
 - Every step costs the user part of their plan, so do not re-read files you just wrote or re-run the game when nothing changed.
 - Match the build to the request: "a simple Pong game" wants a small, clean game, not title screens, settings and systems nobody asked for.
@@ -1289,10 +1290,30 @@ function partialWrite(raw) {
   }
 }
 
-/** Saves the complete lines of cut-off write_file and append_file calls. */
-function salvage(cutCalls) {
+/** File tools whose finished calls are still worth running when the reply around them was cut off. */
+const SALVAGED = ['write_file', 'append_file', 'edit_file', 'delete_file']
+
+/**
+ * Keeps what a cut-off reply had done: file calls that finished before the cut are run as they
+ * are, and a write cut off part-way is saved up to its last whole line. Returns one entry per
+ * call kept, for the chat and for the note to the model.
+ */
+async function salvage(cutCalls) {
   const kept = []
   for (const call of cutCalls) {
+    if (!SALVAGED.includes(call.name)) continue
+    let input = null
+    try {
+      input = JSON.parse(call.raw || '')
+    } catch (e) {}
+    if (input && typeof input === 'object') {
+      // A whole call: run it as if the reply had finished.
+      try {
+        const r = await runTool(call.name, input)
+        kept.push({ id: call.id, title: r.title, detail: r.detail, said: r.text })
+      } catch (e) {}
+      continue
+    }
     if (call.name !== 'write_file' && call.name !== 'append_file') continue
     const w = partialWrite(call.raw || '')
     if (!w) continue
@@ -1310,22 +1331,34 @@ function salvage(cutCalls) {
     project.files[path] = next
     fileChanged(path)
     const lines = content.split('\n').length - 1
+    const total = next.split('\n').length - 1
     const tail = content.trimEnd().split('\n').slice(-3).join('\n')
-    kept.push({ id: call.id, path, lines, content, tail, total: next.split('\n').length - 1 })
+    kept.push({
+      id: call.id,
+      title: 'Saved the first ' + lines + ' lines of ' + path + ' (reply was cut off)',
+      detail: clip(content, 8000),
+      said: path + ' was cut off part-way; it now has ' + total + ' lines, ending with:\n' + tail
+    })
   }
   return kept
 }
 
-function keptNote(kept) {
+/**
+ * Lines of code a reply can safely hold, given the output tokens the cut-off reply reached.
+ * About a third of the limit goes to code (a line is ~12 tokens), leaving room for thinking.
+ */
+const linesFor = (tokens) => Math.max(40, Math.min(250, Math.floor((tokens || 12000) / 40 / 10) * 10))
+
+/** What the model is told after a reply was cut off for being too long, sized to the limit it hit. */
+function cutNote(kept, tokens) {
+  const limit = tokens ? ' (about ' + Math.round(tokens / 100) * 100 + ' tokens, and thinking counts toward it)' : ''
+  const saved = kept.length ? 'What it had done was kept:\n' + kept.map((k) => '- ' + k.said).join('\n') + '\nNothing else in it was run.' : 'Nothing in it was run or saved.'
   return (
-    'Your last reply was cut off because it was too long. Nothing else in it was run, but what it had written so far was saved: ' +
-    kept.map((k) => k.path + ' now has ' + k.total + ' lines, ending with:\n' + k.tail).join('\n\n') +
-    '\n\nCarry on from exactly where it stopped: add the rest with append_file, at most about 250 lines per reply, and do not rewrite what is already there.'
+    '[Note from Mirg, not the user: your last reply was cut off because it ran past the output limit per reply' + limit + '. ' + saved + '\n\n' +
+    'Carry on with the same task in a smaller step: think briefly, and write at most about ' + linesFor(tokens) + ' lines of code in your next reply. ' +
+    'Finish a long file with append_file, starting exactly where it stopped, and do not rewrite what is already saved. Do not apologise or explain; just continue.]'
   )
 }
-
-/** The model's reply when it was cut off for being too long; it is told this so it writes less. */
-const CUT_NOTE = 'Your last reply was cut off because it was too long, and nothing in it was run. Write less per reply: split big files into modules of a few hundred lines and write one or two per reply.'
 
 async function postModel(path, body, signal, extra) {
   const t = await token()
@@ -1408,7 +1441,7 @@ const ADAPTERS = {
       }
       if (hasEffort(model)) {
         body.thinking = { type: 'adaptive', display: 'summarized' }
-        body.output_config = { effort: settings.effort }
+        body.output_config = { effort: opts.effort || settings.effort }
       }
       if (opts.noTools) body.tool_choice = { type: 'none' }
       // As in the app: if a safety check declines a request, the API retries it on its recommended model.
@@ -1463,7 +1496,7 @@ const ADAPTERS = {
         .filter((b) => b.type === 'text')
         .map((b) => b.text)
         .join('\n')
-      const result = { billed: usage.input + usage.cacheWrite + usage.output, context: usage.input + usage.cacheWrite + usage.cacheRead, text, calls: [] }
+      const result = { billed: usage.input + usage.cacheWrite + usage.output, context: usage.input + usage.cacheWrite + usage.cacheRead, output: usage.output, text, calls: [] }
       if (stop === 'max_tokens') {
         const cut = all.filter((b) => b.type === 'tool_use')
         return Object.assign(result, { stop: 'cut', cutIds: cut.map((b) => b.id), cutCalls: cut.map((b) => ({ id: b.id, name: b.name, raw: b.raw != null ? b.raw : b.json || '' })) })
@@ -1504,7 +1537,7 @@ const ADAPTERS = {
         instructions: SYSTEM,
         input: messages,
         tools: TOOLS.map((t) => ({ type: 'function', name: t.name, description: t.description, parameters: t.input_schema, strict: false })),
-        reasoning: Object.assign({ effort: settings.effort }, this.summaries ? { summary: 'auto' } : {}),
+        reasoning: Object.assign({ effort: opts.effort || settings.effort }, this.summaries ? { summary: 'auto' } : {}),
         store: false,
         include: ['reasoning.encrypted_content'],
         stream: true
@@ -1568,7 +1601,7 @@ const ADAPTERS = {
         } catch (e) {}
         return { id: o.call_id, name: o.name, input }
       })
-      const result = { billed: (u.total_tokens || 0) - cached, context: u.input_tokens || 0, text, calls }
+      const result = { billed: (u.total_tokens || 0) - cached, context: u.input_tokens || 0, output: u.output_tokens || 0, text, calls }
       if (final.status === 'incomplete') {
         const reason = final.incomplete_details && final.incomplete_details.reason
         const cutCalls = output.filter((o) => o.type === 'function_call').map((o) => ({ id: o.call_id, name: o.name, raw: o.arguments || '' }))
@@ -1606,7 +1639,7 @@ const ADAPTERS = {
         contents: messages,
         systemInstruction: { parts: [{ text: SYSTEM }] },
         tools: [{ functionDeclarations: TOOLS.map((t) => ({ name: t.name, description: t.description, parametersJsonSchema: t.input_schema })) }],
-        generationConfig: { thinkingConfig: Object.assign({ includeThoughts: true }, hasEffort(model) ? { thinkingLevel: settings.effort.toUpperCase() } : {}) }
+        generationConfig: { thinkingConfig: Object.assign({ includeThoughts: true }, hasEffort(model) ? { thinkingLevel: (opts.effort || settings.effort).toUpperCase() } : {}) }
       }
       if (opts.noTools) body.toolConfig = { functionCallingConfig: { mode: 'NONE' } }
       const path = 'gemini/v1beta/models/' + model + ':streamGenerateContent?alt=sse'
@@ -1654,8 +1687,9 @@ const ADAPTERS = {
           throw e
         }
         if (thought) ui.stop(thought)
-        const result = { billed: (usage.totalTokenCount || 0) - (usage.cachedContentTokenCount || 0), context: usage.promptTokenCount || 0, text: textBlock ? textBlock.text : '', calls }
-        if (finish === 'MAX_TOKENS') return Object.assign(result, { calls: [], stop: 'cut', cutIds: calls.map((c) => c.id) })
+        const result = { billed: (usage.totalTokenCount || 0) - (usage.cachedContentTokenCount || 0), context: usage.promptTokenCount || 0, output: (usage.candidatesTokenCount || 0) + (usage.thoughtsTokenCount || 0), text: textBlock ? textBlock.text : '', calls }
+        // Gemini only sends a call once it is whole, so every call here is complete.
+        if (finish === 'MAX_TOKENS') return Object.assign(result, { calls: [], stop: 'cut', cutIds: calls.map((c) => c.id), cutCalls: calls.map((c) => ({ id: c.id, name: c.name, raw: JSON.stringify(c.input || {}) })) })
         if (!parts.length) throw new Error('Gemini returned nothing' + (finish && finish !== 'STOP' ? ' (' + finish + ')' : '') + '. Try rephrasing, or pick another model.')
         // Parts go back exactly as received: thought signatures ride on them.
         if (!opts.dryRun) messages.push({ role: 'model', parts })
@@ -1774,6 +1808,9 @@ async function agent(text, files) {
     // Restore cuts the history back to just before this message.
     userItem.mark = Math.min(userItem.mark, at)
     save()
+    // Replies cut off for length in a row; after one, the rest of this turn thinks at low effort.
+    let cuts = 0
+    let squeezed = false
     for (let round = 0; round < MAX_ROUNDS; round++) {
       const live = new Map()
       const working = addWorking()
@@ -1809,7 +1846,7 @@ async function agent(text, files) {
       const before = c.messages.length
       let result
       try {
-        result = await adapter.turn(model, c.messages, controller.signal, ui, {})
+        result = await adapter.turn(model, c.messages, controller.signal, ui, squeezed ? { effort: 'low' } : {})
       } finally {
         working.remove()
       }
@@ -1818,18 +1855,28 @@ async function agent(text, files) {
       // Text that came to nothing leaves no empty bubble behind.
       for (const [b, item] of live) if (b.type === 'text' && !b.text.trim()) removeItem(item)
       if (result.stop === 'cut') {
+        cuts++
         for (const id of result.cutIds || []) if (toolItems.get(id)) Object.assign(toolItems.get(id), { running: false, bad: true, title: 'Cut off: the reply was too long' })
-        // Keep what a cut-off file already had, so the next reply carries on instead of starting over.
-        const kept = salvage(result.cutCalls || [])
+        // Keep what the cut-off reply had done, so the next reply carries on instead of starting over.
+        const kept = await salvage(result.cutCalls || [])
         for (const k of kept) {
           const item = toolItems.get(k.id)
-          if (item) Object.assign(item, { bad: false, title: 'Saved the first ' + k.lines + ' lines of ' + k.path + ' (reply was cut off)', detail: clip(k.content, 8000) })
+          if (item) Object.assign(item, { running: false, bad: false, title: k.title, detail: k.detail })
           changed = true
         }
         toolItems.forEach(refresh)
-        adapter.addUser(c.messages, kept.length ? keptNote(kept) : CUT_NOTE, [])
+        adapter.addUser(c.messages, cutNote(kept, result.output), [])
+        save()
+        // Thinking counts toward the limit, so the next replies think less and write smaller steps.
+        squeezed = true
+        // A second cut in a row would likely be followed by a third: stop rather than spend more.
+        if (cuts >= 2) {
+          addItem({ kind: 'notice', text: 'The replies kept running too long, so Mirg stopped here to save your building time. What was written is saved. Send "keep going" to carry on in smaller steps.' })
+          break
+        }
         continue
       }
+      cuts = 0
       save()
       if (result.stop !== 'tools') {
         if (result.stop === 'refusal') addItem({ kind: 'error', text: 'The model declined this request. Try describing the game differently.' })

@@ -1049,13 +1049,14 @@ const MODELS = [
   { id: 'claude-opus-5-5', label: 'Opus 5.5', group: 'Claude', hint: 'Best for building games. The default on Pro and Max.' },
   { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5', group: 'Claude', hint: 'Faster and half the cost. The default on the free plan.' },
   { id: 'claude-haiku-4-5', label: 'Haiku 4.5', group: 'Claude', hint: 'Fastest and cheapest. Good for small tweaks.', effort: false },
-  { id: 'claude-fable-5-1', label: 'Fable 5.1', group: 'Claude', hint: 'Most capable, most expensive.' },
+  { id: 'claude-fable-5-2', label: 'Fable 5.2', group: 'Claude', hint: 'Most capable, most expensive.' },
   { id: 'gpt-6-astra', label: 'GPT-6 Astra', group: 'OpenAI', hint: "OpenAI's most capable model." },
   { id: 'gpt-6.1-sol', label: 'GPT-6.1 Sol', group: 'OpenAI', hint: 'Near-Astra quality at lower cost.' },
   { id: 'gpt-6-luna', label: 'GPT-6 Luna', group: 'OpenAI', hint: "OpenAI's fastest, cheapest model." },
   { id: 'gemini-4-argon', label: 'Gemini 4 Argon', group: 'Google', hint: "Google's flagship." },
   { id: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro (preview)', group: 'Google', hint: "Google's previous flagship." },
-  { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash', group: 'Google', hint: 'Fast and inexpensive.' }
+  { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash', group: 'Google', hint: 'Fast and inexpensive.' },
+  { id: 'claude-fable-5-1', label: 'Fable 5.1', group: 'More models', hint: 'The previous Fable.' }
 ]
 const EFFORTS = [
   { id: 'low', label: 'Low', hint: 'Fastest and uses the fewest tokens. Good for small changes.' },
@@ -1486,7 +1487,7 @@ const ADAPTERS = {
       }
       if (opts.noTools) body.tool_choice = { type: 'none' }
       // As in the app: if a safety check declines a request, the API retries it on its recommended model.
-      const fallback = ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-1'].includes(model)
+      const fallback = ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-2', 'claude-fable-5-1'].includes(model)
       if (fallback) body.fallbacks = 'default'
       const response = await postModel('anthropic/v1/messages?beta=true', body, signal, fallback ? { 'anthropic-beta': 'server-side-fallback-2026-07-01' } : null)
       const blocks = []
@@ -1897,13 +1898,22 @@ async function agent(text, files) {
       for (const [b, item] of live) if (b.type === 'text' && !b.text.trim()) removeItem(item)
       if (result.stop === 'cut') {
         cuts++
-        for (const id of result.cutIds || []) if (toolItems.get(id)) Object.assign(toolItems.get(id), { running: false, bad: true, title: 'Cut off: the reply was too long' })
         // Keep what the cut-off reply had done, so the next reply carries on instead of starting over.
         const kept = await salvage(result.cutCalls || [])
         for (const k of kept) {
           const item = toolItems.get(k.id)
           if (item) Object.assign(item, { running: false, bad: false, title: k.title, detail: k.detail })
           changed = true
+        }
+        // A step that was cut off and kept nothing is not shown: the next reply simply carries on,
+        // and a red "cut off" line made people think the builder was broken.
+        const keptIds = new Set(kept.map((k) => k.id))
+        for (const id of result.cutIds || []) {
+          const item = toolItems.get(id)
+          if (item && !keptIds.has(id)) {
+            removeItem(item)
+            toolItems.delete(id)
+          }
         }
         toolItems.forEach(refresh)
         adapter.addUser(c.messages, cutNote(kept, result.output), [])
@@ -1912,7 +1922,7 @@ async function agent(text, files) {
         squeezed = true
         // A second cut in a row would likely be followed by a third: stop rather than spend more.
         if (cuts >= 2) {
-          addItem({ kind: 'notice', text: 'The replies kept running too long, so Mirg stopped here to save your building time. What was written is saved. Send "keep going" to carry on in smaller steps.' })
+          addItem({ kind: 'notice', text: 'Mirg paused here to save your building time. Everything so far is saved. Send "keep going" to carry on.' })
           break
         }
         continue

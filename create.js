@@ -1046,8 +1046,8 @@ function fileChanged(path) {
 // Choices: model, thinking level, preview size. Remembered in this browser.
 
 const MODELS = [
-  { id: 'claude-opus-5-5', label: 'Opus 5.5', group: 'Claude', hint: 'Best for building games. The default on Pro and Max.' },
-  { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5', group: 'Claude', hint: 'Faster and half the cost. The default on the free plan.' },
+  { id: 'claude-opus-5-5', label: 'Opus 5.5', group: 'Claude', hint: 'Best for building games. The default.' },
+  { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5', group: 'Claude', hint: 'Faster and half the cost.' },
   { id: 'claude-haiku-4-5', label: 'Haiku 4.5', group: 'Claude', hint: 'Fastest and cheapest. Good for small tweaks.', effort: false },
   { id: 'claude-fable-5-2', label: 'Fable 5.2', group: 'Claude', hint: 'Most capable, most expensive.' },
   { id: 'gpt-6-astra', label: 'GPT-6 Astra', group: 'OpenAI', hint: "OpenAI's most capable model." },
@@ -1073,7 +1073,8 @@ const settings = (() => {
   return Object.assign({ model: null, effort: 'medium', device: 'desktop' }, saved)
 })()
 const keepSettings = () => store.set('mirg-web-settings', JSON.stringify(settings))
-const currentModel = () => (MODELS.some((m) => m.id === settings.model) ? settings.model : me && me.plan !== 'free' ? 'claude-opus-5-5' : 'claude-sonnet-5-5')
+// Everyone starts on Opus, the free plan included, so a first game impresses.
+const currentModel = () => (MODELS.some((m) => m.id === settings.model) ? settings.model : 'claude-opus-5-5')
 const hasEffort = (model) => !MODELS.some((m) => m.id === model && m.effort === false)
 
 function renderPickers() {

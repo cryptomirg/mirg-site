@@ -6,7 +6,6 @@
 const SUPABASE = 'https://dlnmbeqdtpyjkprkxfvt.supabase.co'
 const KEY = 'sb_publishable_RTQ8CSTfuHByAw1-_bbqag_NX0-kQhp'
 const API = SUPABASE + '/functions/v1/api'
-const CATEGORIES = ['Action', 'Adventure', 'Arcade', 'Card & Casino', 'Party', 'Shooter', 'Sports', 'Strategy', 'Other']
 const MAX_ROUNDS = 30
 const MAX_FILE_BYTES = 400_000
 const MAX_FILES = 60
@@ -3502,11 +3501,88 @@ $('home').onclick = (e) => {
 // ---------------------------------------------------------------------------------------------
 // Sharing: the same upload as the desktop app, so the game lands on play.mirg.ai.
 
-for (const c of CATEGORIES) {
-  const o = document.createElement('option')
-  o.value = c
-  o.textContent = c
-  $('share-category').appendChild(o)
+// Tags: up to 5 short words people find the game by. Mirg's AI suggests them when a game is shared
+// for the first time; the creator adds and removes freely. The server tidies them and refuses
+// offensive ones.
+let shareTags = []
+const TAGS_MAX = 5
+function tidyTag(text) {
+  return String(text).toLowerCase().replace(/^#+/, '').replace(/[^\p{L}\p{N} &'-]+/gu, ' ').replace(/\s+/g, ' ').trim().slice(0, 24).trim()
+}
+function renderTags() {
+  const list = $('share-tag-list')
+  list.textContent = ''
+  for (const tag of shareTags) {
+    const chip = document.createElement('span')
+    chip.className = 'tag-chip'
+    chip.textContent = tag
+    const x = document.createElement('button')
+    x.type = 'button'
+    x.setAttribute('aria-label', 'Remove ' + tag)
+    x.textContent = '×'
+    x.onclick = () => {
+      shareTags = shareTags.filter((t) => t !== tag)
+      renderTags()
+    }
+    chip.appendChild(x)
+    list.appendChild(chip)
+  }
+  $('share-tag-input').hidden = shareTags.length >= TAGS_MAX
+}
+function addTag(text) {
+  const tag = tidyTag(text)
+  if (!tag || shareTags.includes(tag) || shareTags.length >= TAGS_MAX) return
+  shareTags.push(tag)
+  renderTags()
+}
+$('share-tag-input').addEventListener('keydown', (e) => {
+  const input = e.target
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault()
+    addTag(input.value)
+    input.value = ''
+  } else if (e.key === 'Backspace' && !input.value && shareTags.length) {
+    shareTags.pop()
+    renderTags()
+  }
+})
+$('share-tag-input').addEventListener('blur', (e) => {
+  if (e.target.value.trim()) {
+    addTag(e.target.value)
+    e.target.value = ''
+  }
+})
+// The game's code for the AI to read: index.html first, then its scripts, cut short.
+function codeForSuggestion(files) {
+  const names = Object.keys(files).filter((n) => typeof files[n] === 'string' && /\.(html?|m?js)$/i.test(n))
+  names.sort((a, b) => (a === 'index.html' ? -1 : b === 'index.html' ? 1 : 0))
+  let out = ''
+  for (const n of names) {
+    if (out.length > 24000) break
+    out += '\n// ' + n + '\n' + files[n]
+  }
+  return out.slice(0, 24000)
+}
+async function suggestDetails(withDescription) {
+  const title = titleOf(project.files) || project.name
+  return call('POST', '/share/suggest', { title, code: codeForSuggestion(project.files), description: withDescription })
+}
+$('share-describe').onclick = async () => {
+  const b = $('share-describe')
+  b.disabled = true
+  b.textContent = 'Writing…'
+  try {
+    const out = await suggestDetails(true)
+    if (out.description) $('share-description').value = out.description
+    if (!shareTags.length && out.tags) {
+      for (const t of out.tags) addTag(t)
+    }
+  } catch (e) {
+    toast(e.message)
+  } finally {
+    b.disabled = false
+    b.textContent = 'Write it with AI'
+  }
 }
 
 /** A picture of the running game for its card on the games page, or null if it cannot be taken. */
@@ -3666,13 +3742,28 @@ $('share').onclick = async () => {
   if (shared) {
     $('share-url').value = shared.url
     $('share-open').href = shared.url
-    $('share-category').value = shared.category || 'Other'
     $('share-listed').checked = shared.listed !== false
     $('share-phone').checked = Boolean(shared.phone)
   }
   $('share-go').textContent = shared ? 'Update shared game' : 'Share'
   $('share-go').disabled = false
+  // Tags and description as last shared; a game with no tags yet gets Mirg's suggestions.
+  shareTags = shared && Array.isArray(shared.tags) ? shared.tags.slice(0, TAGS_MAX) : []
+  $('share-description').value = (shared && shared.description) || ''
+  $('share-tags-note').textContent = ''
+  renderTags()
   $('sharebox').showModal()
+  if (!shareTags.length) {
+    const asked = project
+    $('share-tags-note').textContent = 'Suggesting tags…'
+    suggestDetails(false)
+      .then((out) => {
+        if (project !== asked || shareTags.length) return
+        for (const t of out.tags || []) addTag(t)
+        $('share-tags-note').textContent = shareTags.length ? 'Suggested by Mirg. Remove any, or add your own.' : ''
+      })
+      .catch(() => ($('share-tags-note').textContent = ''))
+  }
   if (project.cover) showSharePicture(project.cover, 'Your picture. It shows on the games page.')
   else await takeSharePicture()
 }
@@ -3697,7 +3788,12 @@ $('share-form').onsubmit = async (e) => {
     bodies['mirg-thumb.jpg'] = Uint8Array.from(atob(picture.split(',')[1]), (ch) => ch.charCodeAt(0))
     const bytes = (v) => (typeof v === 'string' ? utf8(v) : v)
     const files = Object.keys(bodies).map((path) => ({ path, size: bytes(bodies[path]).length }))
-    const opts = { listed: $('share-listed').checked, category: $('share-category').value, phone: $('share-phone').checked }
+    const pending = $('share-tag-input').value.trim()
+    if (pending) {
+      addTag(pending)
+      $('share-tag-input').value = ''
+    }
+    const opts = { listed: $('share-listed').checked, phone: $('share-phone').checked, tags: shareTags.slice(), description: $('share-description').value.trim() }
     $('share-progress').textContent = 'Uploading ' + files.length + ' files…'
     const start = await call('POST', '/share/start', Object.assign({ slug: p.share ? p.share.slug : undefined, title, files }, opts))
     let done = 0

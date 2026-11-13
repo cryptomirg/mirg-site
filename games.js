@@ -73,7 +73,9 @@
     name.appendChild(plays)
     var pic = picture(game)
     if (rank) pic.appendChild(badge('game-rank', '#' + rank))
-    if (game.category && game.category !== 'Other') pic.appendChild(badge('game-type', game.category))
+    // Its first tag on the picture ("music"), or the old type for a game shared before tags.
+    var label = game.tags && game.tags.length ? game.tags[0] : game.category && game.category !== 'Other' ? game.category : ''
+    if (label) pic.appendChild(badge('game-type', label))
     a.appendChild(pic)
     a.appendChild(name)
     box.appendChild(a)
@@ -103,7 +105,7 @@
       .toLowerCase()
   }
 
-  var FIELDS = 'slug,title,created_at,updated_at,plays,plays_today,handle,category'
+  var FIELDS = 'slug,title,created_at,updated_at,plays,plays_today,handle,category,tags'
   function date(text) {
     return Date.parse(text) || 0
   }
@@ -186,7 +188,8 @@
     voiceSearch(search)
     var params = new URLSearchParams(location.search)
     var games = []
-    var type = params.get('type') || ''
+    // The tag picked in the bar (?tag=music); old links with ?type=Arcade still work.
+    var type = (params.get('tag') || params.get('type') || '').toLowerCase()
     if (SORTS[params.get('sort')]) sortBox.value = params.get('sort')
     search.value = params.get('q') || ''
 
@@ -195,7 +198,7 @@
       var next = new URLSearchParams()
       if (search.value.trim()) next.set('q', search.value.trim())
       if (sortBox.value !== 'new') next.set('sort', sortBox.value)
-      if (type) next.set('type', type)
+      if (type) next.set('tag', type)
       var query = next.toString()
       try {
         history.replaceState(null, '', location.pathname + (query ? '?' + query : ''))
@@ -204,9 +207,9 @@
     function render() {
       var words = plain(search.value).split(/\s+/).filter(Boolean)
       var found = games.filter(function (g) {
-        var text = plain(g.title + ' ' + (g.handle || ''))
+        var text = plain(g.title + ' ' + (g.handle || '') + ' ' + (g.tags || []).join(' '))
         return (
-          (!type || g.category === type) &&
+          (!type || (g.tags || []).indexOf(type) !== -1 || (g.category || '').toLowerCase() === type) &&
           words.every(function (w) {
             return text.indexOf(w) !== -1
           })
@@ -220,7 +223,7 @@
         g.card = g.card || card(g, true)
         grid.appendChild(g.card)
       })
-      allTitle.textContent = words.length ? 'Results' : type ? type + ' games' : 'All games'
+      allTitle.textContent = words.length ? 'Results' : type ? type.charAt(0).toUpperCase() + type.slice(1) + ' games' : 'All games'
       count.textContent = filtered ? found.length + ' of ' + plural(games.length, 'game', 'games') : plural(games.length, 'game', 'games')
       none.hidden = found.length > 0
       noneText.textContent = 'No ' + (type ? type + ' ' : '') + 'games' + (words.length ? ' match "' + search.value.trim() + '".' : ' yet.')
@@ -255,29 +258,35 @@
         }
         document.getElementById('games-tools').hidden = false
         allHead.hidden = false
-        // Only the types that have games, plus a way back to all of them.
-        var types = games
-          .map(function (g) {
-            return g.category
+        // The bar: the tags of the most played games, plus a way back to all of them.
+        fetch(REST + 'rpc/popular_tags', { method: 'POST', headers: { apikey: KEY, authorization: 'Bearer ' + KEY, 'content-type': 'application/json' }, body: JSON.stringify({ max_count: 12 }) })
+          .then(function (r) {
+            return r.ok ? r.json() : []
           })
-          .filter(function (c, i, all) {
-            return c && c !== 'Other' && all.indexOf(c) === i
+          .catch(function () {
+            return []
           })
-          .sort()
-        if (types.length) {
-          ;[''].concat(types).forEach(function (t) {
-            var chip = document.createElement('button')
-            chip.type = 'button'
-            chip.textContent = t || 'All'
-            chip.dataset.type = t
-            chip.addEventListener('click', function () {
-              type = t
-              changed()
+          .then(function (rows) {
+            var tags = rows.map(function (r) {
+              return r.tag
             })
-            typeBox.appendChild(chip)
+            // A tag picked from a link stays in the bar even when it is not among the most played.
+            if (type && tags.indexOf(type) === -1) tags.push(type)
+            if (!tags.length) return
+            ;[''].concat(tags).forEach(function (t) {
+              var chip = document.createElement('button')
+              chip.type = 'button'
+              chip.textContent = t || 'All'
+              chip.dataset.type = t
+              chip.addEventListener('click', function () {
+                type = t
+                changed()
+              })
+              typeBox.appendChild(chip)
+            })
+            typeBox.hidden = false
+            render()
           })
-          typeBox.hidden = false
-        }
         render()
         if (forYou && window.mirgRecs) {
           window.mirgRecs.show({ box: forYou, list: document.getElementById('games-foryou-list'), count: 8 }).then(function (shown) {

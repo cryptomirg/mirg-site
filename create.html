@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#0e0f14" />
     <link rel="canonical" href="https://mirg.ai/create" />
     <link rel="icon" href="assets/icon.png?v=2" />
-    <link rel="stylesheet" href="create.css?v=23" />
+    <link rel="stylesheet" href="create.css?v=24" />
   </head>
   <body>
     <!-- Start: describe a game, or open one made before. -->
@@ -196,7 +196,19 @@
             <input type="file" id="share-upload-input" accept="image/png,image/jpeg,image/webp" hidden />
           </div>
         </div>
-        <label>Type of game <select id="share-category"></select></label>
+        <div class="share-field">
+          <label for="share-tag-input">Tags <span class="fine">up to 5, so people can find it</span></label>
+          <div class="tags-box" id="share-tags">
+            <span id="share-tag-list"></span>
+            <input type="text" id="share-tag-input" maxlength="24" placeholder="Add a tag, then Enter" autocomplete="off" />
+          </div>
+          <p class="fine" id="share-tags-note"></p>
+        </div>
+        <div class="share-field">
+          <label for="share-description">Description <span class="fine">optional, shown under the game</span></label>
+          <textarea id="share-description" rows="3" maxlength="300" placeholder="What do you do in the game, and what makes it fun?"></textarea>
+          <button type="button" class="btn small" id="share-describe">Write it with AI</button>
+        </div>
         <label class="check"><input type="checkbox" id="share-listed" checked /> Show it on mirg.ai's games page</label>
         <label class="check"><input type="checkbox" id="share-phone" /> It works on phones</label>
         <p class="fine" id="share-progress"></p>
@@ -223,6 +235,6 @@
     </dialog>
 
     <script src="site.js?v=26"></script>
-    <script type="module" src="create.js?v=26"></script>
+    <script type="module" src="create.js?v=27"></script>
   </body>
 </html>

@@ -52,6 +52,29 @@
     }
     recs.show({ box: document.getElementById('play-next'), list: document.getElementById('play-next-list'), current: name, count: 4 })
   }
+  // Under the game: what the creator wrote about it, and its tags, each a link to more games like it.
+  function about(info) {
+    if (!info) return
+    var desc = String(info.description || '').trim()
+    var tags = Array.isArray(info.tags) ? info.tags : []
+    if (desc) {
+      var p = document.getElementById('play-desc')
+      p.textContent = desc
+      p.hidden = false
+    }
+    if (tags.length) {
+      var box = document.getElementById('play-tags')
+      tags.forEach(function (t) {
+        var a = document.createElement('a')
+        a.className = 'play-tag'
+        a.href = '/?tag=' + encodeURIComponent(t)
+        a.textContent = t
+        box.appendChild(a)
+      })
+      box.hidden = false
+    }
+    document.getElementById('play-about').hidden = !desc && !tags.length
+  }
   // Who made it, if they picked a creator name: "Made with Mirg by @name", linking to their page.
   function credit() {
     var KEY = 'sb_publishable_RTQ8CSTfuHByAw1-_bbqag_NX0-kQhp'
@@ -65,6 +88,7 @@
       })
       .then(function (rows) {
         var who = rows && rows[0]
+        about(who)
         if (!who || !/^[a-z0-9_]{3,20}$/.test(who.handle)) return
         var sub = document.getElementById('play-sub')
         sub.textContent = 'Made with Mirg by '

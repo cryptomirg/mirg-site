@@ -2092,3 +2092,32 @@ section.stats-page {
     padding: 0;
   }
 }
+
+/* ---------- the game page: description and tags under the game ---------- */
+.play-about {
+  margin: -6px 0 22px;
+}
+.play-desc {
+  margin: 0 0 10px;
+  max-width: 70ch;
+  color: var(--text);
+  line-height: 1.5;
+  white-space: pre-line;
+}
+.play-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.play-tag {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: none;
+}
+.play-tag:hover {
+  color: var(--text);
+  border-color: #5a5a5a;
+}

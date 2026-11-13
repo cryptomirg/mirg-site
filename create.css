@@ -1584,3 +1584,75 @@ select:not([multiple]) {
 .credits-box {
   margin: 10px 0;
 }
+
+/* Share: tags as chips with an input after them, and the description. */
+.share-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 10px 0;
+}
+.share-field > label .fine {
+  margin-left: 6px;
+}
+.tags-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+.tags-box input {
+  flex: 1 1 140px;
+  min-width: 120px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  padding: 4px;
+  outline: none;
+}
+.tags-box input[hidden] {
+  display: none;
+}
+#share-tag-list {
+  display: contents;
+}
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px 3px 10px;
+  border-radius: 999px;
+  background: var(--panel-2, #222);
+  font-size: 13px;
+}
+.tag-chip button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.tag-chip button:hover {
+  color: var(--text);
+}
+.share-field textarea {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+.share-field #share-describe {
+  align-self: flex-start;
+}

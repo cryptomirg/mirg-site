@@ -2094,7 +2094,13 @@ async function agent(text, files) {
       if (limit && isFreeLimit(e.message)) {
         call('POST', '/track', { kind: 'limit_seen' }).catch(() => undefined)
         // The plan as it is now, for the time the free building time is back.
-        refreshMe().then(() => refresh(shown)).catch(() => undefined)
+        // Kept with the message, so that once this time has passed its buttons give way to a note.
+        refreshMe()
+          .then(() => {
+            if (me && me.plan === 'free' && me.periodEnd) shown.backAt = me.periodEnd
+            refresh(shown)
+          })
+          .catch(() => undefined)
       }
       if (e.signin) signIn().catch(() => undefined)
       queuePaused = queue.length > 0
@@ -2353,7 +2359,7 @@ function draw(item) {
     el = document.createElement('div')
     el.className = 'msg error'
     el.textContent = item.text
-    if (item.limit && isFreeLimit(item.text)) el.appendChild(freeLimitActions(item.text))
+    if (item.limit && isFreeLimit(item.text)) el.appendChild(freeLimitActions(item.text, item))
     else if (item.limit) {
       // Settings has the Pro and Max buttons; the game and chat stay as they are.
       const a = document.createElement('a')
@@ -2456,7 +2462,7 @@ function planTokens(plan) {
 }
 // Opens Stripe's page for credits in a new tab. `tab` was opened during the click, so it is not blocked.
 async function buyCredits(dollars, tab) {
-  call('POST', '/track', { kind: 'upgrade_click' }).catch(() => undefined)
+  call('POST', '/track', { kind: 'credits_click' }).catch(() => undefined)
   try {
     const { url } = await call('POST', '/billing/credits?amount=' + dollars)
     if (!/^https:\/\//.test(url)) throw new Error('The checkout page address was not valid.')
@@ -2468,9 +2474,17 @@ async function buyCredits(dollars, tab) {
   }
 }
 
-function freeLimitActions(text) {
+function freeLimitActions(text, item) {
   const box = document.createElement('div')
   box.className = 'limit-actions'
+  // An old limit message whose free time has since come back: no buttons to pay or be reminded.
+  if (item && item.backAt && Date.parse(item.backAt) <= Date.now()) {
+    const over = document.createElement('div')
+    over.className = 'limit-when'
+    over.textContent = 'Your free building time came back at ' + new Date(item.backAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) + '. Send a message to keep building.'
+    box.appendChild(over)
+    return box
+  }
   const row = document.createElement('div')
   row.className = 'limit-buttons'
   const note = document.createElement('div')
@@ -2493,7 +2507,8 @@ function freeLimitActions(text) {
     return b
   }
   // When the free time is back, as a time of day on this computer.
-  const back = /comes back in/i.test(text) && me && me.periodEnd && Date.parse(me.periodEnd) > Date.now() ? new Date(me.periodEnd) : null
+  const until = (item && item.backAt) || (me && me.periodEnd)
+  const back = /comes back in/i.test(text) && until && Date.parse(until) > Date.now() ? new Date(until) : null
   if (back) {
     const when = document.createElement('div')
     when.className = 'limit-when'

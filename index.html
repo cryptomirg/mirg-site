@@ -19,7 +19,7 @@
     <link rel="canonical" href="https://mirg.ai/" />
     <link rel="icon" href="assets/icon.png?v=2" />
     <script type="application/ld+json">[{"@context": "https://schema.org", "@type": "WebSite", "name": "Mirg", "url": "https://mirg.ai/"}, {"@context": "https://schema.org", "@type": "Organization", "name": "Mirg", "legalName": "Milad Mirg LLC", "url": "https://mirg.ai/", "logo": "https://mirg.ai/assets/icon.png?v=2", "email": "support@mirg.ai"}]</script>
-    <link rel="stylesheet" href="styles.css?v=29" />
+    <link rel="stylesheet" href="styles.css?v=30" />
   </head>
   <body>
     <header class="site">
@@ -39,16 +39,9 @@
             <div class="games-search" role="search">
               <input id="games-search" type="search" placeholder="Search games or creators" aria-label="Search games or creators" autocomplete="off" />
             </div>
-            <select class="games-sort" id="games-sort" aria-label="Sort games">
-              <option value="new">Newest</option>
-              <option value="updated">Recently updated</option>
-              <option value="old">Oldest</option>
-              <option value="plays">Most played</option>
-              <option value="today">Most played today</option>
-              <option value="az">A to Z</option>
-              <option value="za">Z to A</option>
-            </select>
-            <span class="games-count" id="games-count" role="status"></span>
+            <button class="games-mic" id="games-mic" type="button" aria-label="Search by voice" title="Search by voice" hidden>
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z" fill="currentColor"/></svg>
+            </button>
           </div>
           <div class="games-types" id="games-types" role="group" aria-label="Type of game" hidden></div>
           <div class="games-top" id="games-foryou" hidden>
@@ -58,7 +51,19 @@
           <div class="games-top" id="games-top" hidden>
             <h2 id="games-top-title">Top games today</h2>
             <div class="games-grid" id="games-top-list"></div>
-            <h2>All games</h2>
+          </div>
+          <div class="games-all-head" id="games-all-head" hidden>
+            <h2 id="games-all-title">All games</h2>
+            <select class="games-sort" id="games-sort" aria-label="Sort all games">
+              <option value="new">Newest</option>
+              <option value="updated">Recently updated</option>
+              <option value="old">Oldest</option>
+              <option value="plays">Most played</option>
+              <option value="today">Most played today</option>
+              <option value="az">A to Z</option>
+              <option value="za">Z to A</option>
+            </select>
+            <span class="games-count" id="games-count" role="status"></span>
           </div>
           <div class="games-grid" id="games-grid"></div>
           <div class="games-empty" id="games-none" hidden>
@@ -88,6 +93,6 @@
     </footer>
     <script src="site.js?v=26"></script>
     <script src="recs.js?v=1"></script>
-    <script src="games.js?v=8"></script>
+    <script src="games.js?v=9"></script>
   </body>
 </html>

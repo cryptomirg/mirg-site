@@ -131,6 +131,44 @@
     }
   }
 
+  // The microphone next to search: the browser's own speech recognition (Chrome, Edge, Safari)
+  // types what was said into the search box. Hidden where the browser has none.
+  function voiceSearch(search) {
+    var mic = document.getElementById('games-mic')
+    var Speech = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!mic || !Speech) return
+    var listening = null
+    mic.hidden = false
+    function stop() {
+      listening = null
+      mic.classList.remove('listening')
+      mic.setAttribute('aria-label', 'Search by voice')
+    }
+    mic.addEventListener('click', function () {
+      if (listening) return listening.stop()
+      var rec = new Speech()
+      rec.lang = navigator.language || 'en-US'
+      rec.interimResults = true
+      rec.maxAlternatives = 1
+      rec.onresult = function (e) {
+        var said = ''
+        for (var i = 0; i < e.results.length; i++) said += e.results[i][0].transcript
+        search.value = said.replace(/[.?!]+$/, '').trim()
+        search.dispatchEvent(new Event('input'))
+      }
+      rec.onend = stop
+      rec.onerror = stop
+      try {
+        rec.start()
+        listening = rec
+        mic.classList.add('listening')
+        mic.setAttribute('aria-label', 'Stop listening')
+      } catch (err) {
+        stop()
+      }
+    })
+  }
+
   placeholders()
 
   if (!creatorHead) {
@@ -144,6 +182,10 @@
     var typeBox = document.getElementById('games-types')
     // "For you": suggestions for a visitor who has played games here before (recs.js).
     var forYou = document.getElementById('games-foryou')
+    // The All games heading carries its own sort and count, so they apply to that list only.
+    var allHead = document.getElementById('games-all-head')
+    var allTitle = document.getElementById('games-all-title')
+    voiceSearch(search)
     var params = new URLSearchParams(location.search)
     var games = []
     var type = params.get('type') || ''
@@ -181,6 +223,7 @@
         g.card = g.card || card(g, true)
         grid.appendChild(g.card)
       })
+      allTitle.textContent = words.length ? 'Results' : type ? type + ' games' : 'All games'
       count.textContent = filtered ? found.length + ' of ' + plural(games.length, 'game', 'games') : plural(games.length, 'game', 'games')
       none.hidden = found.length > 0
       noneText.textContent = 'No ' + (type ? type + ' ' : '') + 'games' + (words.length ? ' match "' + search.value.trim() + '".' : ' yet.')
@@ -214,6 +257,7 @@
           return
         }
         document.getElementById('games-tools').hidden = false
+        allHead.hidden = false
         // Only the types that have games, plus a way back to all of them.
         var types = games
           .map(function (g) {
@@ -248,7 +292,7 @@
         document.getElementById('games-top-title').textContent = top.length && top[0].plays_today ? 'Top games today' : 'Most played'
         render()
         if (forYou && window.mirgRecs) {
-          window.mirgRecs.show({ box: forYou, list: document.getElementById('games-foryou-list'), personalOnly: true, count: 4 }).then(function (shown) {
+          window.mirgRecs.show({ box: forYou, list: document.getElementById('games-foryou-list'), personalOnly: true, count: 8 }).then(function (shown) {
             if (shown) forYou.dataset.shown = '1'
             render()
           })

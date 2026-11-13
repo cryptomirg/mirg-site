@@ -142,6 +142,8 @@
     var topList = document.getElementById('games-top-list')
     var sortBox = document.getElementById('games-sort')
     var typeBox = document.getElementById('games-types')
+    // "For you": suggestions for a visitor who has played games here before (recs.js).
+    var forYou = document.getElementById('games-foryou')
     var params = new URLSearchParams(location.search)
     var games = []
     var type = params.get('type') || ''
@@ -173,6 +175,7 @@
       found.sort(SORTS[sortBox.value])
       var filtered = words.length > 0 || Boolean(type)
       topBox.hidden = filtered || !topList.children.length
+      if (forYou) forYou.hidden = filtered || !forYou.dataset.shown
       grid.textContent = ''
       found.forEach(function (g) {
         g.card = g.card || card(g, true)
@@ -244,6 +247,12 @@
         })
         document.getElementById('games-top-title').textContent = top.length && top[0].plays_today ? 'Top games today' : 'Most played'
         render()
+        if (forYou && window.mirgRecs) {
+          window.mirgRecs.show({ box: forYou, list: document.getElementById('games-foryou-list'), personalOnly: true, count: 4 }).then(function (shown) {
+            if (shown) forYou.dataset.shown = '1'
+            render()
+          })
+        }
       })
       .catch(function () {
         grid.textContent = ''

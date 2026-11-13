@@ -34,6 +34,24 @@
       body: JSON.stringify({ game: name })
     }).catch(function () {})
   }
+  // Suggestions (recs.js): note this play, then every 30 seconds the page stays in view note the time
+  // played, so the suggestions learn what this visitor likes. On phones the game opens on its own
+  // page, so only the opening is noted. Below the game, "Play next".
+  function suggest(embedded) {
+    var recs = window.mirgRecs
+    if (!recs) return
+    recs.note(name, 0, new URLSearchParams(location.search).get('from'))
+    if (embedded) {
+      var noted = 0
+      var timer = setInterval(function () {
+        if (document.visibilityState !== 'visible') return
+        recs.note(name, 30)
+        // The server keeps at most 4 hours a game.
+        if (++noted >= 480) clearInterval(timer)
+      }, 30000)
+    }
+    recs.show({ box: document.getElementById('play-next'), list: document.getElementById('play-next-list'), current: name, count: 4 })
+  }
   // Who made it, if they picked a creator name: "Made with Mirg by @name", linking to their page.
   function credit() {
     var KEY = 'sb_publishable_RTQ8CSTfuHByAw1-_bbqag_NX0-kQhp'
@@ -72,10 +90,12 @@
       // Phones and tablets: iPhone Safari does not pass taps to a game embedded from play.mirg.ai
       // (tested Nov 2026: every way of embedding it), so the game opens on its own page instead,
       // where it fills the screen and taps work. Computers keep it embedded here.
-      if (matchMedia('(pointer: coarse)').matches) launcher(base, t)
-      else frame.src = base
+      var embedded = !matchMedia('(pointer: coarse)').matches
+      if (embedded) frame.src = base
+      else launcher(base, t)
       shareButton(t)
       countPlay()
+      suggest(embedded)
       credit()
       comments()
       reporting()

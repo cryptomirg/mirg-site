@@ -1823,3 +1823,16 @@ html.play-filled body {
   text-align: center;
   line-height: 1.4;
 }
+
+/* ---------- game suggestions (recs.js) ---------- */
+
+/* Why a game was suggested: "Because you play Arcade games", "Popular today". */
+.game-why {
+  padding: 0 14px 12px;
+  margin-top: -6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.play-next {
+  margin-top: 28px;
+}

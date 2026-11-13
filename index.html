@@ -19,7 +19,7 @@
     <link rel="canonical" href="https://mirg.ai/" />
     <link rel="icon" href="assets/icon.png?v=2" />
     <script type="application/ld+json">[{"@context": "https://schema.org", "@type": "WebSite", "name": "Mirg", "url": "https://mirg.ai/"}, {"@context": "https://schema.org", "@type": "Organization", "name": "Mirg", "legalName": "Milad Mirg LLC", "url": "https://mirg.ai/", "logo": "https://mirg.ai/assets/icon.png?v=2", "email": "support@mirg.ai"}]</script>
-    <link rel="stylesheet" href="styles.css?v=27" />
+    <link rel="stylesheet" href="styles.css?v=29" />
   </head>
   <body>
     <header class="site">
@@ -51,6 +51,10 @@
             <span class="games-count" id="games-count" role="status"></span>
           </div>
           <div class="games-types" id="games-types" role="group" aria-label="Type of game" hidden></div>
+          <div class="games-top" id="games-foryou" hidden>
+            <h2>For you</h2>
+            <div class="games-grid" id="games-foryou-list"></div>
+          </div>
           <div class="games-top" id="games-top" hidden>
             <h2 id="games-top-title">Top games today</h2>
             <div class="games-grid" id="games-top-list"></div>
@@ -83,6 +87,7 @@
       </div>
     </footer>
     <script src="site.js?v=26"></script>
-    <script src="games.js?v=7"></script>
+    <script src="recs.js?v=1"></script>
+    <script src="games.js?v=8"></script>
   </body>
 </html>

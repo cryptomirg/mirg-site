@@ -67,6 +67,34 @@
     return box
   }
 
+  // Previewing the site on this computer before the database has recommend_games: real games with
+  // sample reasons, so the rows can be looked at. Never on mirg.ai.
+  var LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+  function sample(opts) {
+    return fetch('https://dlnmbeqdtpyjkprkxfvt.supabase.co/rest/v1/public_games?select=slug,title,category,plays,handle&order=plays.desc&limit=40', {
+      headers: { apikey: KEY, authorization: 'Bearer ' + KEY }
+    })
+      .then(function (r) {
+        return r.ok ? r.json() : []
+      })
+      .then(function (games) {
+        var reasons = opts.current
+          ? ['Players of this game also played', 'Like this game', 'Popular today', 'New']
+          : ['Because you play Arcade games', 'Updated since you played', 'More from @', 'New']
+        return games
+          .filter(function (g) {
+            return g.slug !== opts.current
+          })
+          .slice(3, 3 + (opts.count || 4))
+          .map(function (g, i) {
+            var why = reasons[i % reasons.length]
+            g.reason = why === 'More from @' ? (g.handle ? why + g.handle : 'Popular today') : why
+            g.personal = true
+            return g
+          })
+      })
+  }
+
   window.mirgRecs = {
     /** Note a play of `game`: 0 seconds when it opens, then the seconds since the last note. */
     note: function (game, seconds, from) {
@@ -87,7 +115,8 @@
         max_count: opts.count || 4
       })
         .then(function (r) {
-          return r.ok ? r.json() : []
+          if (r.ok) return r.json()
+          return LOCAL ? sample(opts) : []
         })
         .then(function (rows) {
           if (!rows.length || (opts.personalOnly && !rows[0].personal)) return false

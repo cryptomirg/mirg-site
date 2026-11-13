@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#0e0f14" />
     <link rel="canonical" href="https://mirg.ai/create" />
     <link rel="icon" href="assets/icon.png?v=2" />
-    <link rel="stylesheet" href="create.css?v=20" />
+    <link rel="stylesheet" href="create.css?v=21" />
   </head>
   <body>
     <!-- Start: describe a game, or open one made before. -->
@@ -99,7 +99,7 @@
             <button type="button" data-tab="game" class="on">Game</button>
             <button type="button" data-tab="code">Code</button>
             <span class="grow"></span>
-            <span class="errors" id="errors" hidden></span>
+            <button type="button" class="errors" id="errors" title="Ask Mirg to fix the errors the game showed" hidden></button>
             <select id="device" aria-label="Preview size" title="See the game as it looks on a computer or a phone">
               <option value="desktop">Computer</option>
               <option value="portrait">Phone</option>
@@ -221,6 +221,6 @@
     </dialog>
 
     <script src="site.js?v=26"></script>
-    <script type="module" src="create.js?v=22"></script>
+    <script type="module" src="create.js?v=23"></script>
   </body>
 </html>

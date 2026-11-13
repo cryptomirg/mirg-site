@@ -818,7 +818,48 @@ window.addEventListener('message', (e) => {
 function renderErrors() {
   const n = logs.filter((l) => l.level === 'error').length
   $('errors').hidden = n === 0
-  $('errors').textContent = n === 1 ? '1 error' : n + ' errors'
+  $('errors').textContent = (n === 1 ? '1 error' : n + ' errors') + ' · Fix'
+  if (n) autoFixSoon()
+}
+
+// Errors while you play: when the game shows console errors and Mirg is not working on it, Mirg is
+// asked to fix them, once for each different error, and at most 3 times a visit, so a stubborn error
+// never keeps spending the plan. Pressing the "N errors · Fix" label asks straight away, every time.
+// Not while there is a message being typed: that would send ahead of it; the label still works.
+const autoFixed = new Set()
+let autoFixes = 0
+let autoFixTimer = null
+function errorKey(text) {
+  return String(text).replace(/\d+/g, '#').slice(0, 200)
+}
+function autoFixSoon() {
+  clearTimeout(autoFixTimer)
+  // A moment for errors that come together to be sent together.
+  autoFixTimer = setTimeout(() => {
+    if (running || !project || autoFixes >= 3 || $('input').value.trim()) return
+    const fresh = logs.filter((l) => l.level === 'error' && !autoFixed.has(errorKey(l.text)))
+    if (!fresh.length) return
+    autoFixes++
+    fixErrors(true)
+  }, 3000)
+}
+function fixErrors(auto) {
+  const errors = logs.filter((l) => l.level === 'error')
+  if (!errors.length || !project) return
+  errors.forEach((l) => autoFixed.add(errorKey(l.text)))
+  const unique = [...new Set(errors.map((l) => l.text))].slice(0, 8)
+  const text =
+    (auto ? 'While the game was running it showed ' : 'The game showed ') +
+    (unique.length === 1 ? 'this error' : 'these errors') +
+    ' in the console:\n\n' +
+    unique.map((t) => '- ' + t.slice(0, 1500)).join('\n') +
+    '\n\nFind the cause and fix it, then run the game to check it is gone.'
+  if (running) {
+    queue.push({ text, files: [] })
+    renderQueue()
+    return
+  }
+  agent(text)
 }
 
 function ask(message, timeout) {
@@ -3309,6 +3350,8 @@ function showIdeas() {
 }
 showIdeas()
 $('more-ideas').onclick = showIdeas
+
+$('errors').onclick = () => fixErrors(false)
 
 $('composer').onsubmit = async (e) => {
   e.preventDefault()

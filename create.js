@@ -77,6 +77,7 @@ function keep(data, email) {
   if (!data.access_token || !data.refresh_token) throw new Error('Sign-in did not return a session.')
   const s = { accessToken: data.access_token, refreshToken: data.refresh_token, expiresAt: Date.now() + (data.expires_in || 3600) * 1000, email: (data.user && data.user.email) || email }
   store.set(SESSION_KEY, JSON.stringify(s))
+  creator = undefined
   return s
 }
 
@@ -172,6 +173,96 @@ async function token() {
   return fresh ? fresh.accessToken : null
 }
 
+// The username (creator name) shown on your games at mirg.ai and on mirg.ai/u/<name>: 2 to 20
+// letters, numbers or underscores, and no two accounts can have the same one (the server checks).
+let creator // undefined until asked; null when none is picked yet
+function usernameRow(box) {
+  const show = () => {
+    box.innerHTML = ''
+    const row = document.createElement('div')
+    row.className = 'account-row'
+    const label = document.createElement('span')
+    label.className = 'fine'
+    label.textContent = creator === undefined ? 'Username: …' : creator ? 'Username: ' : 'No username yet. One is picked for you when you share a game.'
+    row.appendChild(label)
+    if (creator) {
+      const a = document.createElement('a')
+      a.href = '/u/' + creator.handle
+      a.target = '_blank'
+      a.rel = 'noopener'
+      a.textContent = '@' + creator.handle
+      row.appendChild(a)
+    }
+    if (creator !== undefined) {
+      const b = document.createElement('button')
+      b.type = 'button'
+      b.className = 'btn small'
+      b.textContent = creator ? 'Change' : 'Pick one'
+      b.onclick = editing
+      row.appendChild(b)
+    }
+    box.appendChild(row)
+  }
+  const editing = () => {
+    box.innerHTML = ''
+    const row = document.createElement('div')
+    row.className = 'account-row username-edit'
+    const at = document.createElement('span')
+    at.textContent = '@'
+    const input = document.createElement('input')
+    input.type = 'text'
+    input.maxLength = 20
+    input.value = creator ? creator.handle : ''
+    input.placeholder = 'yourname'
+    input.setAttribute('aria-label', 'Username')
+    input.oninput = () => (input.value = input.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))
+    const saveB = document.createElement('button')
+    saveB.type = 'button'
+    saveB.className = 'btn small primary'
+    saveB.textContent = 'Save'
+    const cancel = document.createElement('button')
+    cancel.type = 'button'
+    cancel.className = 'btn small'
+    cancel.textContent = 'Cancel'
+    cancel.onclick = show
+    const note = document.createElement('p')
+    note.className = 'fine'
+    note.textContent = '2 to 20 letters, numbers or underscores. Each username belongs to one person.'
+    saveB.onclick = async () => {
+      const handle = input.value.trim()
+      if (handle.length < 2) {
+        note.className = 'error'
+        note.textContent = 'Use at least 2 characters.'
+        return
+      }
+      saveB.disabled = true
+      try {
+        const out = await call('POST', '/share/profile', { handle, link: creator ? creator.link : null })
+        creator = out.profile
+        show()
+      } catch (e) {
+        note.className = 'error'
+        note.textContent = e.message
+        saveB.disabled = false
+      }
+    }
+    input.onkeydown = (e) => {
+      if (e.key === 'Enter') saveB.click()
+    }
+    row.append(at, input, saveB, cancel)
+    box.append(row, note)
+    input.focus()
+  }
+  show()
+  if (creator === undefined)
+    call('POST', '/share/profile/get', {})
+      .then((out) => {
+        creator = out.profile || null
+        if (box.isConnected) show()
+      })
+      .catch(() => undefined)
+}
+
 async function call(method, path, body) {
   const t = await token()
   if (!t) throw new Error('Sign in first.')
@@ -236,6 +327,7 @@ async function renderAccountSettings() {
       return el
     }
     add('<span class="email">' + escapeHtml(s.email) + '</span>' + (me ? '<span class="badge">' + (PLAN_NAMES[me.plan] || 'Free') + '</span>' : ''), 'account-row')
+    usernameRow(add('', 'username'))
     if (!me) {
       add(note || 'Loading your plan…', 'fine')
       return
@@ -387,6 +479,7 @@ document.addEventListener('click', (e) => {
     store.set(SESSION_KEY, null)
     me = null
     renderAccount()
+    creator = undefined
     if (s) fetch(SUPABASE + '/auth/v1/logout', { method: 'POST', headers: { apikey: KEY, authorization: 'Bearer ' + s.accessToken } }).catch(() => undefined)
     if (typeof running !== 'undefined' && running) running.abort()
     // Settings and the open game belong to the account that just left: go back to the start page.

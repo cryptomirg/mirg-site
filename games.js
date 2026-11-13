@@ -312,7 +312,7 @@
     sub.textContent = 'There is no creator by that name, or they have no games on mirg.ai yet.'
     document.getElementById('creator-grid-wrap').hidden = true
   }
-  if (!/^[a-z0-9_]{3,20}$/.test(handle)) return missing()
+  if (!/^[a-z0-9_]{2,20}$/.test(handle)) return missing()
   // Show the short address, mirg.ai/u/<name>, in the address bar.
   try {
     history.replaceState(null, '', '/u/' + handle)

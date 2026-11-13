@@ -89,7 +89,7 @@
       .then(function (rows) {
         var who = rows && rows[0]
         about(who)
-        if (!who || !/^[a-z0-9_]{3,20}$/.test(who.handle)) return
+        if (!who || !/^[a-z0-9_]{2,20}$/.test(who.handle)) return
         var sub = document.getElementById('play-sub')
         sub.textContent = 'Made with Mirg by '
         var a = document.createElement('a')

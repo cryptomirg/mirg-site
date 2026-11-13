@@ -2378,14 +2378,14 @@ function isFreeLimit(text) {
   return (/free plan's (building time|usage)/i.test(text) && /upgrade/i.test(text)) || /add credits/i.test(text)
 }
 
-// Credits, bought once: $5, $25 or an amount of your own, each with the Mirg tokens it buys
+// Credits, bought once: $5, $20 or an amount of your own, each with the Mirg tokens it buys
 // ($1 of credits is $0.70 of AI cost).
-const CREDIT_AMOUNTS = [5, 25]
+const CREDIT_AMOUNTS = [5, 20]
 function creditsLabel(dollars) {
   const ratio = (me && me.credits && me.credits.ratio) || 0.7
   return '$' + dollars + ' (' + fmtTokens(mirgTokens(dollars * ratio * 1e6)) + ' tokens)'
 }
-// The credit buttons: $5, $25, and "Custom amount", which opens a box for any whole amount from $5.
+// The credit buttons: $5, $20, and "Custom amount", which opens a box for any whole amount from $5.
 // `buy(dollars)` is called with the amount picked; `prefix` starts each label ("Add ").
 function creditPicker(prefix, buy) {
   const box = document.createElement('div')

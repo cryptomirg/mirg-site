@@ -620,7 +620,8 @@ a {
   }
 
   .bar .title,
-  .play-link {
+  .play-link,
+  .stats-link {
     display: none;
   }
 

@@ -3650,6 +3650,11 @@ if (!(await finishGoogleSignIn())) {
   refreshMe().then(renderPickers)
   renderPickers()
   route()
+  // Sent here from the stats page to sign in (/create?then=stats): back there once signed in.
+  if (new URLSearchParams(location.search).get('then') === 'stats') {
+    if (session()) location.replace('/stats')
+    else signIn().then(() => location.replace('/stats'), () => undefined)
+  }
 }
 // Arriving from "Make a game" with an idea already typed: /create?idea=...
 const idea = new URLSearchParams(location.search).get('idea')

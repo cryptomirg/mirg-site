@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Your game stats · Mirg</title>
+    <meta name="description" content="How the games you made with Mirg are doing: plays, players, play time and comments." />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="assets/icon.png?v=2" />
+    <link rel="stylesheet" href="styles.css?v=34" />
+  </head>
+  <body>
+    <header class="site">
+      <div class="wrap wide">
+        <a class="logo" href="/"><img src="assets/icon.png?v=2" alt="" />Mirg</a>
+        <nav>
+          <a class="btn small" href="/">Play games</a>
+          <a class="btn primary small" href="/create">Make a game</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="stats-page">
+        <div class="wrap wide">
+          <h1>Your game stats</h1>
+          <p class="lead" id="stats-sub">How the games you shared are doing.</p>
+
+          <div class="stats-signin" id="stats-signin" hidden>
+            <p>Sign in to see the stats for your games. It is the same Mirg account as in the app.</p>
+            <a class="btn primary" href="/create?then=stats">Sign in</a>
+          </div>
+          <p class="stats-error" id="stats-error" role="alert" hidden></p>
+
+          <div class="stats-tiles" id="stats-tiles" hidden></div>
+          <p class="fine stats-note" id="stats-note" hidden></p>
+          <div class="stats-games" id="stats-games"></div>
+          <div class="stats-empty" id="stats-empty" hidden>
+            <p>You have not shared a game yet. Make one, press Share, and its stats show up here.</p>
+            <a class="btn primary" href="/create">Make a game</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="site.js?v=26"></script>
+    <script src="stats.js?v=1"></script>
+  </body>
+</html>

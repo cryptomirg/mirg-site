@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#0e0f14" />
     <link rel="canonical" href="https://mirg.ai/create" />
     <link rel="icon" href="assets/icon.png?v=2" />
-    <link rel="stylesheet" href="create.css?v=21" />
+    <link rel="stylesheet" href="create.css?v=22" />
   </head>
   <body>
     <!-- Start: describe a game, or open one made before. -->
@@ -21,6 +21,7 @@
       <header class="bar">
         <a class="logo" href="/"><img src="assets/icon.png?v=2" alt="" />Mirg</a>
         <span class="grow"></span>
+        <a class="btn small" href="/stats">Your stats</a>
         <a class="btn small" href="/">Play games</a>
         <span class="account" data-account></span>
       </header>
@@ -58,6 +59,7 @@
           <button type="button" data-show="chat" class="on">Chat</button>
           <button type="button" data-show="game">Game</button>
         </nav>
+        <a class="btn small stats-link" href="/stats" target="_blank" rel="noopener" title="How your shared games are doing (opens in a new tab)">Stats</a>
         <a class="btn small play-link" href="/" target="_blank" rel="noopener" title="Play games made with Mirg (opens in a new tab, so your game keeps building)">Play games</a>
         <button class="comments-new" type="button" id="comments-btn" title="New from players: suggestions you can make in one click" hidden></button>
         <button class="btn small primary" type="button" id="share">Share</button>
@@ -221,6 +223,6 @@
     </dialog>
 
     <script src="site.js?v=26"></script>
-    <script type="module" src="create.js?v=23"></script>
+    <script type="module" src="create.js?v=24"></script>
   </body>
 </html>

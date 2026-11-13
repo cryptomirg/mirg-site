@@ -178,7 +178,7 @@
     var noneText = document.getElementById('games-none-text')
     var sortBox = document.getElementById('games-sort')
     var typeBox = document.getElementById('games-types')
-    // "For you": suggestions for a visitor who has played games here before (recs.js).
+    // "For you": suggestions for every visitor, from what Mirg knows about them (recs.js).
     var forYou = document.getElementById('games-foryou')
     // The All games heading carries its own sort and count, so they apply to that list only.
     var allHead = document.getElementById('games-all-head')
@@ -280,7 +280,7 @@
         }
         render()
         if (forYou && window.mirgRecs) {
-          window.mirgRecs.show({ box: forYou, list: document.getElementById('games-foryou-list'), personalOnly: true, count: 8 }).then(function (shown) {
+          window.mirgRecs.show({ box: forYou, list: document.getElementById('games-foryou-list'), count: 8 }).then(function (shown) {
             if (shown) forYou.dataset.shown = '1'
             render()
           })

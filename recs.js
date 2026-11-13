@@ -19,12 +19,45 @@
       return null
     }
   }
-  function rpc(fn, body) {
+  // Signed in to the web builder in this browser: its sign-in goes along, so the suggestions can use
+  // the types of game this person makes (and leave out their own games). Only while it is still valid.
+  function signIn() {
+    try {
+      var s = JSON.parse(localStorage.getItem('mirg-web-session') || 'null')
+      return s && s.accessToken && s.expiresAt > Date.now() + 60000 ? s.accessToken : null
+    } catch (e) {
+      return null
+    }
+  }
+  function rpc(fn, body, withSignIn) {
+    var token = (withSignIn && signIn()) || KEY
     return fetch(RPC + fn, {
       method: 'POST',
-      headers: { apikey: KEY, authorization: 'Bearer ' + KEY, 'content-type': 'application/json' },
+      headers: { apikey: KEY, authorization: 'Bearer ' + token, 'content-type': 'application/json' },
       body: JSON.stringify(body)
     })
+  }
+  // Before suggestions began, the play page already marked each game this browser opened (to count a
+  // play once a day). Those marks are sent once, as play history, so a returning visitor's first
+  // suggestions already know what they played.
+  function importEarlierPlays() {
+    var v = visitor()
+    try {
+      if (!v || localStorage.getItem('mirg-recs-imported')) return Promise.resolve()
+      var slugs = []
+      for (var i = 0; i < localStorage.length; i++) {
+        var m = /^mirg-played-([a-z0-9-]{3,64})$/.exec(localStorage.key(i) || '')
+        if (m) slugs.push(m[1])
+      }
+      localStorage.setItem('mirg-recs-imported', '1')
+      return Promise.all(
+        slugs.slice(0, 50).map(function (slug) {
+          return rpc('note_play', { p_visitor: v, game: slug, p_seconds: 0, p_from: null }).catch(function () {})
+        })
+      )
+    } catch (e) {
+      return Promise.resolve()
+    }
   }
   function card(g) {
     var box = document.createElement('div')
@@ -116,12 +149,14 @@
      * Resolves to whether anything was shown.
      */
     show: function (opts) {
-      return rpc('recommend_games', {
-        p_visitor: visitor() || '',
-        p_current: opts.current || null,
-        p_phone: matchMedia('(pointer: coarse)').matches,
-        max_count: opts.count || 4
-      })
+      return importEarlierPlays()
+        .then(function () {
+          var body = { p_visitor: visitor() || '', p_current: opts.current || null, p_phone: matchMedia('(pointer: coarse)').matches, max_count: opts.count || 4 }
+          // An expired or refused sign-in falls back to asking without it.
+          return rpc('recommend_games', body, true).then(function (r) {
+            return r.status === 401 ? rpc('recommend_games', body) : r
+          })
+        })
         .then(function (r) {
           if (!r.ok) return LOCAL ? sample(opts) : []
           return r.json().then(function (rows) {

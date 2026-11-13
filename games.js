@@ -1,5 +1,5 @@
 // The games page (every shared game whose maker chose to show it, to search, filter and sort, with
-// the three most played of the last 24 hours on top) and a creator's page at /u/<name> (that creator's shown games, most
+// suggestions for returning visitors on top) and a creator's page at /u/<name> (that creator's shown games, most
 // played first). The lists come from Mirg's database as public, read-only lists; each game plays
 // on its own page.
 ;(function () {
@@ -176,8 +176,6 @@
     var count = document.getElementById('games-count')
     var none = document.getElementById('games-none')
     var noneText = document.getElementById('games-none-text')
-    var topBox = document.getElementById('games-top')
-    var topList = document.getElementById('games-top-list')
     var sortBox = document.getElementById('games-sort')
     var typeBox = document.getElementById('games-types')
     // "For you": suggestions for a visitor who has played games here before (recs.js).
@@ -216,7 +214,6 @@
       })
       found.sort(SORTS[sortBox.value])
       var filtered = words.length > 0 || Boolean(type)
-      topBox.hidden = filtered || !topList.children.length
       if (forYou) forYou.hidden = filtered || !forYou.dataset.shown
       grid.textContent = ''
       found.forEach(function (g) {
@@ -281,15 +278,6 @@
           })
           typeBox.hidden = false
         }
-        // Early on, or on a quiet day, the most played of all time fill any empty places.
-        var top = games.filter(function (g) {
-          return g.plays > 0
-        })
-        top.sort(SORTS.today)
-        top.slice(0, 3).forEach(function (g, i) {
-          topList.appendChild(card(g, true, i + 1))
-        })
-        document.getElementById('games-top-title').textContent = top.length && top[0].plays_today ? 'Top games today' : 'Most played'
         render()
         if (forYou && window.mirgRecs) {
           window.mirgRecs.show({ box: forYou, list: document.getElementById('games-foryou-list'), personalOnly: true, count: 8 }).then(function (shown) {

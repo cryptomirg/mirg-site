@@ -339,7 +339,12 @@ async function renderAccountSettings() {
       ? ' · resets at ' + new Date(me.periodEnd).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
       : ' · resets ' + new Date(me.periodEnd).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     add('<div class="usage-bar"><span style="width:' + pct + '%"></span></div><div class="fine usage-line"><span>' + fmtTokens(mirgTokens(Math.min(me.usedMicros, me.allowanceMicros))) + ' of ' + fmtTokens(mirgTokens(me.allowanceMicros)) + ' tokens used ' + (me.plan === 'free' ? 'in these 6 hours' : 'this period') + '</span><span>' + (pct >= 100 ? 'All' : pct + '%') + ' of your plan' + resets + '</span></div>', 'usage')
-    if (me.free && me.free.totalMicros > 0) add(fmtTokens(mirgTokens(Math.min(me.free.usedMicros, me.free.totalMicros))) + ' of the free plan\'s ' + fmtTokens(mirgTokens(me.free.totalMicros)) + ' tokens used in all. When they are all used, upgrade to keep building.', 'fine free-total')
+    if (me.free && me.free.totalMicros > 0) {
+      const freeUsed = fmtTokens(mirgTokens(Math.min(me.free.usedMicros, me.free.totalMicros)))
+      add(me.free.resetsAt
+        ? freeUsed + ' of this month\'s ' + fmtTokens(mirgTokens(me.free.totalMicros)) + ' free tokens used. They start again on ' + new Date(me.free.resetsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '.'
+        : freeUsed + ' of the free plan\'s ' + fmtTokens(mirgTokens(me.free.totalMicros)) + ' tokens used in all. When they are all used, upgrade to keep building.', 'fine free-total')
+    }
     if (me.gift) add('Your ' + (PLAN_NAMES[me.plan] || '') + ' plan is a gift until ' + new Date(me.gift.until).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '.', 'fine')
     if (me.bonus && me.bonus.leftMicros > 0) add('Includes ' + fmtTokens(mirgTokens(me.bonus.micros)) + ' free tokens' + (me.bonus.until ? ', until ' + new Date(me.bonus.until).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '') + '.', 'fine')
     // Credits, bought once, on any plan: what is left, and buying more. (Max's extra usage below is

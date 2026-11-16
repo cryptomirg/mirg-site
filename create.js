@@ -3562,6 +3562,53 @@ function showSettings() {
     })
     .catch(() => undefined)
   renderAccountSettings()
+  renderSupport()
+}
+
+/** "Ask a question or report a bug": emailed to support, who reply to the account's email. Signed in only. */
+function renderSupport() {
+  const s = session()
+  $('support-body').hidden = !s
+  if (s) $('support-replyto').textContent = 'We reply to ' + s.email + '.'
+}
+const supportStatus = (text, error) => {
+  $('support-status').textContent = text
+  $('support-status').className = error ? 'fine error' : 'fine'
+}
+$('support-open').onclick = () => {
+  $('support-open').hidden = true
+  $('support-form').hidden = false
+  supportStatus('')
+  $('support-text').focus()
+}
+$('support-cancel').onclick = () => {
+  $('support-form').hidden = true
+  $('support-open').hidden = false
+}
+$('support-form').addEventListener('change', (e) => {
+  if (e.target.name === 'support-kind') {
+    $('support-text').placeholder = e.target.value === 'bug' ? 'What happened, and what did you expect? Which game or step was it?' : 'What would you like to know?'
+  }
+})
+$('support-form').onsubmit = async (e) => {
+  e.preventDefault()
+  const text = $('support-text').value.trim()
+  if (!text) return supportStatus('Write your message first.', true)
+  const kind = ($('support-form').querySelector('input[name="support-kind"]:checked') || {}).value || 'question'
+  $('support-send').disabled = true
+  $('support-send').textContent = 'Sending…'
+  try {
+    const { email } = await call('POST', '/support', { kind, text })
+    $('support-text').value = ''
+    $('support-form').hidden = true
+    $('support-open').hidden = false
+    supportStatus('Sent. We will reply to ' + email + '.')
+  } catch (err) {
+    supportStatus(err.message, true)
+  } finally {
+    $('support-send').disabled = false
+    $('support-send').textContent = 'Send'
+  }
 }
 
 $('pref-model').onchange = (e) => {

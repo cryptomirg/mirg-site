@@ -1690,3 +1690,31 @@ select:not([multiple]) {
   font: inherit;
   padding: 6px 8px;
 }
+
+.support .support-kind {
+  display: flex;
+  gap: 16px;
+  margin: 8px 0;
+  font-size: 14px;
+}
+.support textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 100px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+.support .support-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.support #support-status.error {
+  color: var(--danger, #f87171);
+}

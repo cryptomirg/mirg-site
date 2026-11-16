@@ -176,6 +176,24 @@
         </div>
         <h2>Your games</h2>
         <p class="fine" id="settings-games"></p>
+        <h2>Help</h2>
+        <div id="support-body" class="support">
+          <p class="fine">Questions, problems, ideas: we read every message.</p>
+          <button class="btn small" type="button" id="support-open">Ask a Question or Report a Bug</button>
+          <form id="support-form" hidden>
+            <div class="support-kind" role="radiogroup" aria-label="Kind of message">
+              <label><input type="radio" name="support-kind" value="question" checked /> Question</label>
+              <label><input type="radio" name="support-kind" value="bug" /> Bug</label>
+            </div>
+            <textarea id="support-text" rows="5" maxlength="5000" aria-label="Your message" placeholder="What would you like to know?"></textarea>
+            <p class="fine" id="support-replyto"></p>
+            <div class="support-actions">
+              <button class="btn small" type="button" id="support-cancel">Cancel</button>
+              <button class="btn small primary" type="submit" id="support-send">Send</button>
+            </div>
+          </form>
+          <p class="fine" id="support-status" role="status"></p>
+        </div>
         <h2>Desktop app</h2>
         <p class="fine">For Godot, Unity, Unreal, Roblox and more, generated art and sound, and an agent that playtests your game itself. Same account and plan. <a data-download="auto" href="/download">Download the desktop app</a></p>
         <div class="settings-foot"><button class="btn small" type="button" data-signout>Sign out</button></div>

@@ -55,8 +55,18 @@
       ;(function () {
         var d = Number(new URLSearchParams(location.search).get('credits'))
         if (!(d >= 5)) return
-        document.getElementById('thanks-title').textContent = 'Your credits are on the way.'
-        document.getElementById('thanks-lead').textContent = 'Thank you. $' + d + ' of credits is being added to your account: go back to Mirg and keep building. They show in Settings within a minute, and do not expire.'
+        document.getElementById('thanks-title').textContent = 'Your tokens are on the way.'
+        document.getElementById('thanks-lead').textContent = 'Thank you. Your tokens are being added to your account: go back to Mirg and keep building. They show in Settings within a minute, and never expire.'
+      })()
+      // Back from checkout without paying (/subscribed?cancelled=1).
+      ;(function () {
+        if (new URLSearchParams(location.search).get('cancelled') !== '1') return
+        document.title = 'No charge made · Mirg'
+        document.getElementById('thanks-title').textContent = 'No charge was made.'
+        document.getElementById('thanks-lead').textContent = 'Nothing was paid, and your games are safe. Go back to Mirg: your free tokens come back every 6 hours, up to your monthly total.'
+        var p = document.querySelectorAll('.hero p')
+        p[1].innerHTML = 'On the web? <a href="/create">Back to Mirg on the web</a>. Using the app? Close this tab and carry on there.'
+        p[2].innerHTML = 'Something stopped you, or a question about plans? Write to <a href="mailto:support@mirg.ai">support@mirg.ai</a>. We read every message.'
       })()
     </script>
     <footer class="site">

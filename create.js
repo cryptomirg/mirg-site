@@ -333,18 +333,15 @@ async function renderAccountSettings() {
       return
     }
     if (me.suspended) add('Your account is suspended because a payment failed or was disputed. Contact <strong>support@mirg.ai</strong> to restore it.', 'error')
-    const pct = me.allowanceMicros > 0 ? Math.min(100, Math.round((me.usedMicros / me.allowanceMicros) * 100)) : 0
-    // The free plan renews every 6 hours, so its reset is a time of day; paid plans renew on a date.
-    const resets = !me.periodEnd ? '' : me.plan === 'free'
-      ? ' · resets at ' + new Date(me.periodEnd).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-      : ' · resets ' + new Date(me.periodEnd).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-    add('<div class="usage-bar"><span style="width:' + pct + '%"></span></div><div class="fine usage-line"><span>' + fmtTokens(mirgTokens(Math.min(me.usedMicros, me.allowanceMicros))) + ' of ' + fmtTokens(mirgTokens(me.allowanceMicros)) + ' tokens used ' + (me.plan === 'free' ? 'in these 6 hours' : 'this period') + '</span><span>' + (pct >= 100 ? 'All' : pct + '%') + ' of your plan' + resets + '</span></div>', 'usage')
-    if (me.free && me.free.totalMicros > 0) {
-      const freeUsed = fmtTokens(mirgTokens(Math.min(me.free.usedMicros, me.free.totalMicros)))
-      add(me.free.resetsAt
-        ? freeUsed + ' of this month\'s ' + fmtTokens(mirgTokens(me.free.totalMicros)) + ' free tokens used. They start again on ' + new Date(me.free.resetsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '.'
-        : freeUsed + ' of the free plan\'s ' + fmtTokens(mirgTokens(me.free.totalMicros)) + ' tokens used in all. When they are all used, upgrade to keep building.', 'fine free-total')
-    }
+    // The free plan is a one-time amount: its bar shows how much of it is used, with no reset.
+    // Paid plans show the period's included usage and the date it renews.
+    const freeOnce = me.plan === 'free' && me.free && me.free.totalMicros > 0
+    const used = freeOnce ? Math.min(me.free.usedMicros, me.free.totalMicros) : Math.min(me.usedMicros, me.allowanceMicros)
+    const of = freeOnce ? me.free.totalMicros : me.allowanceMicros
+    const pct = of > 0 ? Math.min(100, Math.round((used / of) * 100)) : 0
+    const resets = freeOnce || !me.periodEnd ? '' : ' · resets ' + new Date(me.periodEnd).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    add('<div class="usage-bar"><span style="width:' + pct + '%"></span></div><div class="fine usage-line"><span>' + fmtTokens(mirgTokens(used)) + ' of ' + fmtTokens(mirgTokens(of)) + (freeOnce ? ' free tokens used' : ' tokens used this period') + '</span><span>' + (pct >= 100 ? 'All' : pct + '%') + ' of your plan' + resets + '</span></div>', 'usage')
+    if (freeOnce) add(pct >= 100 ? 'Your free tokens are used. Add tokens or upgrade to keep building.' : 'Free tokens are given once. When they are used, add tokens or upgrade to keep building.', 'fine free-total')
     if (me.gift) add('Your ' + (PLAN_NAMES[me.plan] || '') + ' plan is a gift until ' + new Date(me.gift.until).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '.', 'fine')
     if (me.bonus && me.bonus.leftMicros > 0) add('Includes ' + fmtTokens(mirgTokens(me.bonus.micros)) + ' free tokens' + (me.bonus.until ? ', until ' + new Date(me.bonus.until).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '') + '.', 'fine')
     // Credits, bought once, on any plan: what is left, and buying more. (Max's extra usage below is

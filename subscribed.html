@@ -63,7 +63,7 @@
         if (new URLSearchParams(location.search).get('cancelled') !== '1') return
         document.title = 'No charge made · Mirg'
         document.getElementById('thanks-title').textContent = 'No charge was made.'
-        document.getElementById('thanks-lead').textContent = 'Nothing was paid, and your games are safe. Go back to Mirg: your free tokens come back every 6 hours, up to your monthly total.'
+        document.getElementById('thanks-lead').textContent = 'Nothing was paid, and your games are safe. Go back to Mirg to keep working on them.'
         var p = document.querySelectorAll('.hero p')
         p[1].innerHTML = 'On the web? <a href="/create">Back to Mirg on the web</a>. Using the app? Close this tab and carry on there.'
         p[2].innerHTML = 'Something stopped you, or a question about plans? Write to <a href="mailto:support@mirg.ai">support@mirg.ai</a>. We read every message.'

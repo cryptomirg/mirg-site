@@ -1358,7 +1358,7 @@ The loop is: build, run, fix. The user tries the app themselves and tells you wh
   - Any call can fail: catch it, show a short friendly message, and never lose what the person typed. error.code is 'sign_in' when they chose not to sign in.
   - Mirg.download(blobOrText, 'name.ext') saves a file to their device (a recording as .webm, a list as .csv).
 - The microphone, camera and location work through the browser as usual (navigator.mediaDevices.getUserMedia, MediaRecorder, navigator.geolocation): ask only when the person presses a button, say why, and handle a refusal kindly. Mirg asks the person first when the app opens.
-- Never ask for passwords, payment card details, bank details or ID numbers, and never send what people type anywhere: once shared, an app cannot reach other websites at all, so fetch only files in the project. Mirg holds apps that ask for these. Links to other sites are fine and open in a new tab (target="_blank").
+- Never ask for passwords, payment card details, bank details or ID numbers, and never send what people type anywhere: once shared, an app cannot reach other websites at all, so fetch only files in the project. Mirg holds apps that ask for these. Links to other sites are fine and open in a new tab (target="_blank"). A shared app loads pictures, sounds and fonts only from its own files (plus Google Fonts), and code libraries only from cdn.jsdelivr.net, esm.sh, unpkg.com or cdnjs.cloudflare.com.
 - Give index.html a <title> with the app's name.
 - No crypto: do not build anything with cryptocurrency, crypto wallets, web3, blockchains or NFTs. If the user asks, say Mirg does not make crypto apps for now.
 
@@ -4071,7 +4071,7 @@ $('share-upload-input').onchange = async (e) => {
 $('share').onclick = async () => {
   if (!project) return
   if (!project.files['index.html']) {
-    alert('There is no game to share yet. Describe one in the chat first.')
+    alert(project.kind === 'app' ? 'There is no app to share yet. Describe one in the chat first.' : 'There is no game to share yet. Describe one in the chat first.')
     return
   }
   if (!session()) {
@@ -4091,7 +4091,13 @@ $('share').onclick = async () => {
     $('share-listed').checked = shared.listed !== false
     $('share-phone').checked = Boolean(shared.phone)
   }
-  $('share-go').textContent = shared ? 'Update shared game' : 'Share'
+  // An app: its own wording (listed apps show once apps launch). The phone tick is for the iPhone
+  // app, which shows games only, so apps never set it.
+  const isApp = project.kind === 'app'
+  $('share-phone').closest('label').hidden = isApp
+  $('share-listed').closest('label').lastChild.textContent = isApp ? " Show it on mirg.ai's apps page" : " Show it on mirg.ai's games page"
+  $('share-description').placeholder = isApp ? 'What does the app do, and who is it for?' : 'What do you do in the game, and what makes it fun?'
+  $('share-go').textContent = shared ? (isApp ? 'Update shared app' : 'Update shared game') : 'Share'
   $('share-go').disabled = false
   // Tags and description as last shared; a game with no tags yet gets Mirg's suggestions.
   shareTags = shared && Array.isArray(shared.tags) ? shared.tags.slice(0, TAGS_MAX) : []
@@ -4154,7 +4160,7 @@ $('share-form').onsubmit = async (e) => {
       addTag(pending)
       $('share-tag-input').value = ''
     }
-    const opts = { listed: $('share-listed').checked, phone: kind === 'app' ? true : $('share-phone').checked, tags: shareTags.slice(), description: $('share-description').value.trim(), kind, permissions }
+    const opts = { listed: $('share-listed').checked, phone: kind === 'app' ? false : $('share-phone').checked, tags: shareTags.slice(), description: $('share-description').value.trim(), kind, permissions }
     $('share-progress').textContent = 'Uploading ' + files.length + ' files…'
     const start = await call('POST', '/share/start', Object.assign({ slug: p.share ? p.share.slug : undefined, title, files }, opts))
     let done = 0

@@ -505,6 +505,9 @@
 
     function onMessage(e) {
       if (!frame.contentWindow || e.source !== frame.contentWindow) return
+      // A shared app answers only while its frame shows play.mirg.ai: an app that sends its frame to
+      // another site leaves that site nothing to ask for. (The builder's preview has no origin.)
+      if (!preview && e.origin !== 'https://play.mirg.ai') return
       var d = e.data
       if (!d || d.mirg !== 'app' || typeof d.op !== 'string') return
       var reply = function (ok, value) {

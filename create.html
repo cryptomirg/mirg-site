@@ -13,7 +13,7 @@
     <meta name="theme-color" content="#0e0f14" />
     <link rel="canonical" href="https://mirg.ai/create" />
     <link rel="icon" href="assets/icon.png?v=2" />
-    <link rel="stylesheet" href="create.css?v=26" />
+    <link rel="stylesheet" href="create.css?v=27" />
   </head>
   <body>
     <!-- Start: describe a game, or open one made before. -->
@@ -26,8 +26,9 @@
         <span class="account" data-account></span>
       </header>
       <section class="hero">
-        <h1>Make a game.<br />Just describe it.</h1>
-        <p class="lead">Mirg's AI writes the game, runs it, and fixes what's broken, right here in your browser. Then share a link anyone can play.</p>
+        <div class="kind-pick" id="start-kind" role="group" aria-label="What to make" hidden><button type="button" data-kind="game" aria-pressed="true">Game</button><button type="button" data-kind="app" aria-pressed="false">App</button></div>
+        <h1 id="start-title">Make a game.<br />Just describe it.</h1>
+        <p class="lead" id="start-lead">Mirg's AI writes the game, runs it, and fixes what's broken, right here in your browser. Then share a link anyone can play.</p>
         <form id="start-form" class="prompt">
           <textarea id="start-text" rows="3" maxlength="4000" placeholder="A platformer where a fox collects coins and dodges spikes" required></textarea>
           <div class="prompt-row">
@@ -57,7 +58,7 @@
         <span class="grow"></span>
         <nav class="switch" id="switch">
           <button type="button" data-show="chat" class="on">Chat</button>
-          <button type="button" data-show="game">Game</button>
+          <button type="button" data-show="game" data-word>Game</button>
         </nav>
         <a class="btn small stats-link" href="/stats" target="_blank" rel="noopener" title="How your shared games are doing (opens in a new tab)">Stats</a>
         <a class="btn small play-link" href="/" target="_blank" rel="noopener" title="Play games made with Mirg (opens in a new tab, so your game keeps building)">Play games</a>
@@ -98,7 +99,7 @@
         </section>
         <section class="view" id="view">
           <div class="tabs">
-            <button type="button" data-tab="game" class="on">Game</button>
+            <button type="button" data-tab="game" class="on" data-word>Game</button>
             <button type="button" data-tab="code">Code</button>
             <span class="grow"></span>
             <button type="button" class="errors" id="errors" title="Ask Mirg to fix the errors the game showed" hidden></button>
@@ -107,9 +108,9 @@
               <option value="portrait">Phone</option>
               <option value="landscape">Phone, sideways</option>
             </select>
-            <button type="button" class="linklike" id="mute" aria-pressed="false" title="Turn the game's sound off or on">Mute<span class="wide-only"> game</span></button>
-            <button type="button" class="linklike" id="stop-game" title="Stop the game. Restart game plays it again.">Stop<span class="wide-only"> game</span></button>
-            <button type="button" class="linklike" id="restart">Restart<span class="wide-only"> game</span></button>
+            <button type="button" class="linklike" id="mute" aria-pressed="false" title="Turn the game's sound off or on">Mute<span class="wide-only" data-word-lower> game</span></button>
+            <button type="button" class="linklike" id="stop-game" title="Stop the game. Restart game plays it again.">Stop<span class="wide-only" data-word-lower> game</span></button>
+            <button type="button" class="linklike" id="restart">Restart<span class="wide-only" data-word-lower> game</span></button>
           </div>
           <div class="game" id="game-wrap">
             <div class="empty" id="game-empty">Your game will appear here.</div>
@@ -253,6 +254,7 @@
     </dialog>
 
     <script src="site.js?v=27"></script>
-    <script type="module" src="create.js?v=31"></script>
+    <script src="apphost.js?v=1"></script>
+    <script type="module" src="create.js?v=32"></script>
   </body>
 </html>

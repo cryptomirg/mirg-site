@@ -25,7 +25,7 @@
       <div class="wrap">
         <a class="logo" href="/"><img src="assets/icon.png?v=2" alt="" />Mirg</a>
         <nav>
-          <a class="btn primary small" href="/create">Make your own game</a>
+          <a class="btn primary small" href="/create" data-kind-word="Make your own app">Make your own game</a>
         </nav>
       </div>
     </header>
@@ -51,18 +51,18 @@
             <button class="btn" id="play-full" type="button">Full screen</button>
             <button class="btn" id="play-share" type="button" hidden>Share</button>
             <span class="spacer"></span>
-            <span class="play-made">This game was made by describing it to Mirg.</span>
+            <span class="play-made" id="play-made">This game was made by describing it to Mirg.</span>
             <a class="btn primary" href="/create">Make your own</a>
           </div>
           <div class="play-about" id="play-about" hidden>
             <p class="play-desc" id="play-desc" hidden></p>
             <div class="play-tags" id="play-tags" hidden></div>
           </div>
-          <p class="play-report-row" hidden><button class="linklike" id="play-report" type="button">Report this game</button></p>
+          <p class="play-report-row" hidden><button class="linklike" id="play-report" type="button" data-kind-word="Report this app">Report this game</button></p>
           <dialog class="report-dialog" id="report-dialog" aria-labelledby="report-title">
             <form method="dialog" id="report-form">
-              <h2 id="report-title">Report this game</h2>
-              <p class="report-note">Tell Mirg what is wrong. Never type a password, recovery phrase or card number into a game.</p>
+              <h2 id="report-title" data-kind-word="Report this app">Report this game</h2>
+              <p class="report-note">Tell Mirg what is wrong. Never type a password, recovery phrase or card number into a game or app.</p>
               <fieldset>
                 <legend>What is wrong?</legend>
                 <label><input type="radio" name="reason" value="scam" required /> It's a scam, or asks for money, crypto or personal details</label>
@@ -115,6 +115,7 @@
     </footer>
     <script src="site.js?v=27"></script>
     <script src="recs.js?v=3"></script>
-    <script src="play.js?v=13"></script>
+    <script src="apphost.js?v=1"></script>
+    <script src="play.js?v=14"></script>
   </body>
 </html>

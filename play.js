@@ -111,6 +111,7 @@
       var t = String(info.title || 'A game made with Mirg').slice(0, 80)
       title.textContent = t
       document.title = t + ' · Made with Mirg'
+      if (info.kind === 'app' && window.MirgAppHost) return startApp(info, t)
       // Phones and tablets: iPhone Safari does not pass taps to a game embedded from play.mirg.ai
       // (tested Nov 2026: every way of embedding it), so the game opens on its own page instead,
       // where it fills the screen and taps work. Computers keep it embedded here.
@@ -128,6 +129,29 @@
       if (err && err.message === 'held') held()
       else gone()
     })
+  // An app: it stays inside this page on every device, because this page keeps its data and its
+  // visitors' sign-in for it (apphost.js). Before it loads, Mirg asks the visitor about any device it
+  // wants (microphone, camera, location): the frame can only be given them before it opens.
+  function startApp(info, t) {
+    document.querySelectorAll('[data-kind-word]').forEach(function (el) { el.textContent = el.getAttribute('data-kind-word') })
+    document.getElementById('play-made').textContent = 'This app was made by describing it to Mirg.'
+    frame.title = 'The app'
+    var phone = matchMedia('(pointer: coarse)').matches
+    MirgAppHost.askPermissions(name, t, Array.isArray(info.permissions) ? info.permissions : []).then(function (allowed) {
+      frame.setAttribute('allow', MirgAppHost.allowFor(allowed))
+      frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-modals allow-downloads allow-popups allow-popups-to-escape-sandbox')
+      MirgAppHost.attach({ frame: frame, slug: name, title: t })
+      // On a phone the app fills the screen, with the × to come back to the page.
+      if (phone) fill(true)
+      frame.src = base
+    })
+    shareButton(t)
+    countPlay()
+    credit()
+    comments()
+    reporting()
+  }
+
   // ---------- comments ----------
   var API = 'https://dlnmbeqdtpyjkprkxfvt.supabase.co'
   var CAPTCHA_KEY = '0x4AAAAAAFOZ0Roo6D6Ag9sT'

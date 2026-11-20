@@ -294,6 +294,7 @@ const PLAN_NAMES = { free: 'Free', pro: 'Pro', max: 'Max' }
 const usd = (micros) => '$' + (micros / 1_000_000).toFixed(micros % 1_000_000 ? 2 : 0)
 
 function renderAccount() {
+  if (typeof renderStartKind === 'function') renderStartKind()
   document.querySelectorAll('[data-account]').forEach((el) => {
     const s = session()
     if (!s) {
@@ -871,8 +872,11 @@ function stopGame() {
   frame = null
   pending.delete('load')
   $('game-empty').hidden = false
-  $('game-empty').textContent = 'The game is stopped. Press Restart game to play it again.'
+  $('game-empty').textContent = project && project.kind === 'app' ? 'The app is stopped. Press Restart app to open it again.' : 'The game is stopped. Press Restart game to play it again.'
 }
+
+/** The app toolkit's answers for the app running in the preview (apphost.js), while one is. */
+let appHost = null
 
 function runGame() {
   logs = []
@@ -881,14 +885,26 @@ function runGame() {
   if (frame) frame.remove()
   if (!project || !project.files['index.html']) {
     $('game-empty').hidden = false
-    $('game-empty').textContent = 'Your game will appear here.'
+    $('game-empty').textContent = project && project.kind === 'app' ? 'Your app will appear here.' : 'Your game will appear here.'
     frame = null
     return Promise.resolve(false)
   }
   frame = document.createElement('iframe')
-  frame.setAttribute('sandbox', 'allow-scripts allow-pointer-lock')
-  frame.setAttribute('allow', 'fullscreen; autoplay; gamepad')
-  frame.title = 'Your game'
+  if (appHost) appHost.detach()
+  appHost = null
+  if (project.kind === 'app') {
+    // An app can do more than a game: dialogs, forms, downloads, links in a new tab, and the
+    // microphone, camera and location (the maker is the one trying it, so Mirg does not ask first).
+    frame.setAttribute('sandbox', 'allow-scripts allow-pointer-lock allow-modals allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox')
+    frame.setAttribute('allow', 'fullscreen; autoplay; clipboard-write; microphone; camera; geolocation')
+    frame.title = 'Your app'
+    // Its saved data and AI, answered by this page (apphost.js), kept apart for each project.
+    if (window.MirgAppHost) appHost = window.MirgAppHost.attach({ frame, preview: true, key: project.id, title: project.name })
+  } else {
+    frame.setAttribute('sandbox', 'allow-scripts allow-pointer-lock')
+    frame.setAttribute('allow', 'fullscreen; autoplay; gamepad')
+    frame.title = 'Your game'
+  }
   let html
   try {
     html = bundle(project.files)
@@ -918,7 +934,8 @@ function runGame() {
 window.addEventListener('message', (e) => {
   if (!frame || e.source !== frame.contentWindow) return
   const m = e.data
-  if (!m || !m.mirg) return
+  // The app toolkit's requests are answered by apphost.js.
+  if (!m || !m.mirg || m.mirg === 'app') return
   if (m.type === 'log') {
     logs.push({ level: m.level, text: String(m.text).slice(0, 4000) })
     if (logs.length > 300) logs.splice(0, logs.length - 300)
@@ -1311,6 +1328,46 @@ Use PeerJS with Mirg's relay: load <script src="https://play.mirg.ai/_mirg/onlin
 # Sharing
 The Share button at the top gives the user a link anyone can play on a computer or a phone, and can list the game on mirg.ai's games page. Suggest it when the game is fun and working.`
 
+// Apps (behind the 'apps' switch until launch): the same agent, told it is making an everyday app.
+const APP_SYSTEM = `You are the app-building agent in Mirg on the web: the user describes an app, something useful for everyday life such as a voice recorder, a habit tracker, a sign-up sheet, a flashcard maker, a budget or a chore chart, and you build it as a web app that runs in the App tab next to the chat, in their browser. The user sees this chat, an App tab where the app runs, and a Code tab with the files. You work with tools: you write the files and run the app.
+
+# Who you are working with
+Anyone: parents, teachers, small businesses, students, often not programmers. Talk about the app in plain, friendly language, keep replies short, and never paste code into the chat: put it in files. Make the change rather than asking permission. Ask a question only when a decision is really theirs and you cannot reasonably choose. Keep content suitable for all ages.
+
+# What you can build here
+Web apps only: index.html at the top of the project plus ES modules and CSS, with no build step and no npm. Prefer plain HTML, CSS and JavaScript; load a library from a CDN through an import map only when it clearly helps (a chart library, a PDF maker). Text files only: there is no image generation here, so use simple shapes, SVG icons and emoji.
+If the user asks for a native phone app, an app store app or a desktop program, say in one sentence that Mirg makes web apps that open from a link on any phone or computer, and build that.
+
+# How to work
+The loop is: build, run, fix. The user tries the app themselves and tells you what to change.
+- Write all the files of a small app in one reply. A single reply must not write more than about 250 lines of code in total, thinking included in its length: a longer reply is cut off and the user pays for it without getting anything. For a bigger app, split the code into modules of up to about 200 lines and write one per reply; write a longer file in parts (write_file with the first part, then append_file in the following replies).
+- Plan briefly before writing code: the plan is not shown to the user and counts toward the reply's length.
+- Then call run_game once (it runs the app). Errors it reports are yours to fix before you reply; when it reports none, stop and hand the app over.
+- Every step costs the user part of their plan, so do not re-read files you just wrote or re-run the app when nothing changed.
+- Match the build to the request: a simple tool should stay simple. Finish with a short summary of what it does and how to use it, not a list of files.
+
+# Every app
+- Design for phones first: one column that also looks good on a computer, tap targets at least 44px, text at least 16px, no sideways scrolling, clear empty states ("No recordings yet"), and a calm, consistent look. Follow the system's light or dark setting (prefers-color-scheme).
+- Load the Mirg toolkit in index.html: <script src="https://play.mirg.ai/_mirg/app.js"></script>. It is how the app keeps things and talks to Mirg. Never use localStorage, sessionStorage, IndexedDB, cookies, Firebase, Supabase or any other backend yourself, and never ask for API keys. Every call returns a Promise:
+  - await Mirg.device.set(key, value) / get(key) / remove(key) / keys(): kept on this device only (settings, drafts, things that are fine to lose).
+  - await Mirg.data.set(key, value) / get / remove / keys: kept in the person's Mirg account, on every device they use. Use it for what people would be upset to lose (their notes, habits, budget). Mirg asks them to sign in the first time it is needed.
+  - const list = Mirg.shared('name') with await list.all(), list.add(data), list.update(id, data), list.remove(id): one list that everyone using the app sees (sign-up sheets, polls, guest books, team checklists). all() returns [{ id, data, by, mine, createdAt }], newest first; only the person who added a record (mine) or the app's maker can change it. Load the list again to see others' changes.
+  - await Mirg.user() returns { signedIn, id, name }. Never ask anyone for their name, email or password.
+  - await Mirg.ai.ask(prompt, { system, json: true, maxTokens }) for AI features (summaries, ideas, quizzes from notes); await Mirg.ai.ask(prompt, { file: blob }) to ask about a recording, photo or PDF; await Mirg.ai.transcribe(audioBlob) for speech to text. Each use costs the person their Mirg tokens, so call it only when they press a button for it, and show that it is working.
+  - Values are anything JSON can hold (store recordings and photos on the device as data URLs only if small; prefer offering a download).
+  - Any call can fail: catch it, show a short friendly message, and never lose what the person typed. error.code is 'sign_in' when they chose not to sign in.
+  - Mirg.download(blobOrText, 'name.ext') saves a file to their device (a recording as .webm, a list as .csv).
+- The microphone, camera and location work through the browser as usual (navigator.mediaDevices.getUserMedia, MediaRecorder, navigator.geolocation): ask only when the person presses a button, say why, and handle a refusal kindly. Mirg asks the person first when the app opens.
+- Never ask for passwords, payment card details, bank details or ID numbers, and never send what people type anywhere: once shared, an app cannot reach other websites at all, so fetch only files in the project. Mirg holds apps that ask for these. Links to other sites are fine and open in a new tab (target="_blank").
+- Give index.html a <title> with the app's name.
+- No crypto: do not build anything with cryptocurrency, crypto wallets, web3, blockchains or NFTs. If the user asks, say Mirg does not make crypto apps for now.
+
+# Sharing
+The Share button at the top gives the user a link anyone can open on a phone or a computer, with nothing to install. Suggest it when the app works.`
+
+/** What the agent is told: about games, or about apps for an app project. */
+const systemFor = (p) => (p && p.kind === 'app' ? APP_SYSTEM : SYSTEM)
+
 const SUMMARY_REQUEST =
   'Pause the task. This conversation is about to be replaced by a summary so the work can continue with a fresh context. ' +
   'Write that summary now, as plain text, without calling any tools. Include: what the user asked for and any preferences they stated; ' +
@@ -1598,7 +1655,7 @@ const ADAPTERS = {
         model,
         max_tokens: 12000,
         stream: true,
-        system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }],
+        system: [{ type: 'text', text: systemFor(project), cache_control: { type: 'ephemeral' } }],
         tools: TOOLS,
         messages: withCache(messages)
       }
@@ -1697,7 +1754,7 @@ const ADAPTERS = {
     async turn(model, messages, signal, ui, opts) {
       const body = {
         model,
-        instructions: SYSTEM,
+        instructions: systemFor(project),
         input: messages,
         tools: TOOLS.map((t) => ({ type: 'function', name: t.name, description: t.description, parameters: t.input_schema, strict: false })),
         reasoning: Object.assign({ effort: opts.effort || settings.effort }, this.summaries ? { summary: 'auto' } : {}),
@@ -1800,7 +1857,7 @@ const ADAPTERS = {
     async turn(model, messages, signal, ui, opts) {
       const body = {
         contents: messages,
-        systemInstruction: { parts: [{ text: SYSTEM }] },
+        systemInstruction: { parts: [{ text: systemFor(project) }] },
         tools: [{ functionDeclarations: TOOLS.map((t) => ({ name: t.name, description: t.description, parametersJsonSchema: t.input_schema })) }],
         generationConfig: { thinkingConfig: Object.assign({ includeThoughts: true }, hasEffort(model) ? { thinkingLevel: (opts.effort || settings.effort).toUpperCase() } : {}) }
       }
@@ -3309,6 +3366,10 @@ function openProject(p) {
   $('studio').hidden = false
   $('title').textContent = p.name
   document.title = p.name + ' · Mirg'
+  // An app's project says "App" where a game's says "Game".
+  const word = project.kind === 'app' ? 'App' : 'Game'
+  document.querySelectorAll('[data-word]').forEach((el) => (el.textContent = word))
+  document.querySelectorAll('[data-word-lower]').forEach((el) => (el.textContent = ' ' + word.toLowerCase()))
   lastRestore = null
   $('restored').hidden = true
   queue = []
@@ -3641,9 +3702,9 @@ async function myGames() {
   return all.filter((p) => p.owner === who)
 }
 
-function blankProject(name) {
+function blankProject(name, kind) {
   const chatId = newId()
-  return { id: newId(), owner: owner(), name, files: {}, chats: [{ id: chatId, title: 'New chat', messages: [], items: [], updated: Date.now(), contextTokens: 0 }], chatId, updated: Date.now(), share: null }
+  return { id: newId(), owner: owner(), name, kind: kind === 'app' ? 'app' : 'game', files: {}, chats: [{ id: chatId, title: 'New chat', messages: [], items: [], updated: Date.now(), contextTokens: 0 }], chatId, updated: Date.now(), share: null }
 }
 
 async function startGame(text) {
@@ -3657,7 +3718,8 @@ async function startGame(text) {
     }
   }
   if (!me) await refreshMe()
-  const p = blankProject(text.split(/\s+/).slice(0, 6).join(' ').replace(/[.,!?]+$/, '') || 'My game')
+  const kind = appsOn() && startKind === 'app' ? 'app' : 'game'
+  const p = blankProject(text.split(/\s+/).slice(0, 6).join(' ').replace(/[.,!?]+$/, '') || (kind === 'app' ? 'My app' : 'My game'), kind)
   await db.put(p).catch(() => undefined)
   history.pushState(null, '', '#g=' + p.id)
   openProject(p)
@@ -3674,9 +3736,49 @@ $('start-text').addEventListener('keydown', (e) => {
     startGame($('start-text').value)
   }
 })
+// Game or app, on the start page (only for accounts with apps turned on, until they launch).
+const APP_IDEAS = [
+  'A voice memo recorder where I can name, play back and download my recordings',
+  'A habit tracker with daily check-ins and streaks, saved to my account',
+  'A sign-up sheet for our bake sale where people add their name and what they will bring',
+  'A flashcard maker that quizzes me, and uses AI to turn my notes into cards',
+  'A chore chart for my kids with points and a weekly prize',
+  'A bill splitter for a group dinner with tip and who paid what',
+  'A class poll where everyone votes and sees the results',
+  'A budget tracker with categories and a monthly chart',
+  'A workout interval timer with rest beeps and my saved routines',
+  'A recipe box that scales the ingredients for any number of servings',
+  'A meeting recorder that writes down what was said and summarises it',
+  'A packing list for trips that I can reuse and tick off'
+]
+let startKind = 'game'
+function appsOn() {
+  return Boolean(me && Array.isArray(me.features) && me.features.includes('apps'))
+}
+function renderStartKind() {
+  const box = $('start-kind')
+  if (!box) return
+  box.hidden = !appsOn()
+  if (!appsOn()) startKind = 'game'
+  box.querySelectorAll('button[data-kind]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kind === startKind)))
+  const app = startKind === 'app'
+  $('start-title').innerHTML = app ? 'Make an app.<br />Just describe it.' : 'Make a game.<br />Just describe it.'
+  $('start-lead').textContent = app
+    ? "Mirg's AI builds the app, runs it, and fixes what's broken, right here in your browser. Then share a link anyone can open on a phone or computer."
+    : "Mirg's AI writes the game, runs it, and fixes what's broken, right here in your browser. Then share a link anyone can play."
+}
+if ($('start-kind'))
+  $('start-kind').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-kind]')
+    if (!b || startKind === b.dataset.kind) return
+    startKind = b.dataset.kind
+    renderStartKind()
+    showIdeas()
+  })
+
 /** Three ideas picked at random from the list, so the start page is different each visit. */
 function showIdeas() {
-  const pool = IDEAS.slice()
+  const pool = (startKind === 'app' ? APP_IDEAS : IDEAS).slice()
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     ;[pool[i], pool[j]] = [pool[j], pool[i]]
@@ -4018,6 +4120,19 @@ $('share-copy').onclick = () => {
   $('share-copy').textContent = 'Copied'
   setTimeout(() => ($('share-copy').textContent = 'Copy'), 1500)
 }
+/** What an app's code uses that Mirg must ask visitors about first: the microphone, camera or location. */
+function appPermissions(files) {
+  const code = Object.keys(files)
+    .filter((f) => /\.(html?|m?js)$/i.test(f))
+    .map((f) => files[f])
+    .join('\n')
+  const out = []
+  const media = /getUserMedia|MediaRecorder|webkitSpeechRecognition|SpeechRecognition/.test(code)
+  if (media && /audio\s*:|MediaRecorder|SpeechRecognition/.test(code)) out.push('microphone')
+  if (/getUserMedia/.test(code) && /video\s*:/.test(code)) out.push('camera')
+  if (/navigator\.geolocation/.test(code)) out.push('geolocation')
+  return out
+}
 $('share-form').onsubmit = async (e) => {
   e.preventDefault()
   const p = project
@@ -4025,7 +4140,9 @@ $('share-form').onsubmit = async (e) => {
   $('share-error').hidden = true
   try {
     const title = titleOf(p.files) || p.name
-    const info = JSON.stringify({ title, madeWith: 'Mirg' })
+    const kind = p.kind === 'app' ? 'app' : 'game'
+    const permissions = kind === 'app' ? appPermissions(p.files) : []
+    const info = JSON.stringify(kind === 'app' ? { title, madeWith: 'Mirg', kind, permissions } : { title, madeWith: 'Mirg' })
     const bodies = Object.assign({}, p.files, { 'mirg-share.json': info })
     // The game's card on the games page.
     const picture = sharePicture || p.cover || titleCard(title)
@@ -4037,7 +4154,7 @@ $('share-form').onsubmit = async (e) => {
       addTag(pending)
       $('share-tag-input').value = ''
     }
-    const opts = { listed: $('share-listed').checked, phone: $('share-phone').checked, tags: shareTags.slice(), description: $('share-description').value.trim() }
+    const opts = { listed: $('share-listed').checked, phone: kind === 'app' ? true : $('share-phone').checked, tags: shareTags.slice(), description: $('share-description').value.trim(), kind, permissions }
     $('share-progress').textContent = 'Uploading ' + files.length + ' files…'
     const start = await call('POST', '/share/start', Object.assign({ slug: p.share ? p.share.slug : undefined, title, files }, opts))
     let done = 0
@@ -4082,6 +4199,22 @@ if (!(await finishGoogleSignIn())) {
   refreshMe().then(renderPickers)
   renderPickers()
   route()
+  // The small window an app on mirg.ai/play opens to sign in with Mirg (/create?signin=window):
+  // sign in, then close; the app's page sees the session and carries on.
+  if (new URLSearchParams(location.search).get('signin') === 'window') {
+    const close = () => {
+      document.body.innerHTML = '<p style="font:16px system-ui;padding:24px">Signed in. You can close this window.</p>'
+      window.close()
+    }
+    if (session()) close()
+    else signIn().then(close, () => window.close())
+  }
+  // Signed in from an app without a pop-up window (/create?return=/play?g=...): back to the app.
+  const back = new URLSearchParams(location.search).get('return')
+  if (back && /^\/play\?g=[a-z0-9-]{3,64}$/.test(back)) {
+    if (session()) location.replace(back)
+    else signIn().then(() => location.replace(back), () => undefined)
+  }
   // Sent here from the stats page to sign in (/create?then=stats): back there once signed in.
   if (new URLSearchParams(location.search).get('then') === 'stats') {
     if (session()) location.replace('/stats')

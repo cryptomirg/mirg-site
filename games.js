@@ -105,7 +105,7 @@
       .toLowerCase()
   }
 
-  var FIELDS = 'slug,title,created_at,updated_at,plays,plays_today,handle,category,tags'
+  var FIELDS = 'slug,title,created_at,updated_at,plays,plays_today,handle,category,tags,kind'
   function date(text) {
     return Date.parse(text) || 0
   }
@@ -190,6 +190,9 @@
     var games = []
     // The tag picked in the bar (?tag=music); old links with ?type=Arcade still work.
     var type = (params.get('tag') || params.get('type') || '').toLowerCase()
+    // Games or apps (apps show on the home page once they launch): ?kind=apps.
+    var kind = params.get('kind') === 'apps' ? 'app' : 'game'
+    var kindBox = null
     if (SORTS[params.get('sort')]) sortBox.value = params.get('sort')
     search.value = params.get('q') || ''
 
@@ -199,6 +202,7 @@
       if (search.value.trim()) next.set('q', search.value.trim())
       if (sortBox.value !== 'new') next.set('sort', sortBox.value)
       if (type) next.set('tag', type)
+      if (kind === 'app') next.set('kind', 'apps')
       var query = next.toString()
       try {
         history.replaceState(null, '', location.pathname + (query ? '?' + query : ''))
@@ -209,6 +213,7 @@
       var found = games.filter(function (g) {
         var text = plain(g.title + ' ' + (g.handle || '') + ' ' + (g.tags || []).join(' '))
         return (
+          (g.kind || 'game') === kind &&
           (!type || (g.tags || []).indexOf(type) !== -1 || (g.category || '').toLowerCase() === type) &&
           words.every(function (w) {
             return text.indexOf(w) !== -1
@@ -223,10 +228,20 @@
         g.card = g.card || card(g, true)
         grid.appendChild(g.card)
       })
-      allTitle.textContent = words.length ? 'Results' : type ? type.charAt(0).toUpperCase() + type.slice(1) + ' games' : 'All games'
-      count.textContent = filtered ? found.length + ' of ' + plural(games.length, 'game', 'games') : plural(games.length, 'game', 'games')
+      var one = kind === 'app' ? 'app' : 'game'
+      var many = kind === 'app' ? 'apps' : 'games'
+      var ofKind = games.filter(function (g) { return (g.kind || 'game') === kind }).length
+      allTitle.textContent = words.length ? 'Results' : type ? type.charAt(0).toUpperCase() + type.slice(1) + ' ' + many : 'All ' + many
+      count.textContent = filtered ? found.length + ' of ' + plural(ofKind, one, many) : plural(ofKind, one, many)
       none.hidden = found.length > 0
-      noneText.textContent = 'No ' + (type ? type + ' ' : '') + 'games' + (words.length ? ' match "' + search.value.trim() + '".' : ' yet.')
+      noneText.textContent = 'No ' + (type ? type + ' ' : '') + many + (words.length ? ' match "' + search.value.trim() + '".' : ' yet.')
+      // Suggestions and the tag bar are about games.
+      if (forYou && kind === 'app') forYou.hidden = true
+      typeBox.hidden = kind === 'app' || !typeBox.children.length
+      if (kindBox)
+        [].forEach.call(kindBox.children, function (b) {
+          b.setAttribute('aria-pressed', String(b.dataset.kind === kind))
+        })
       ;[].forEach.call(typeBox.children, function (b) {
         b.setAttribute('aria-pressed', String(b.dataset.type === type))
       })
@@ -258,6 +273,27 @@
         }
         document.getElementById('games-tools').hidden = false
         allHead.hidden = false
+        // Once there are apps to show: Games | Apps above the list.
+        if (games.some(function (g) { return g.kind === 'app' })) {
+          kindBox = document.createElement('div')
+          kindBox.className = 'games-kinds'
+          kindBox.setAttribute('role', 'group')
+          kindBox.setAttribute('aria-label', 'Games or apps')
+          ;[['game', 'Games'], ['app', 'Apps']].forEach(function (k) {
+            var b = document.createElement('button')
+            b.type = 'button'
+            b.dataset.kind = k[0]
+            b.textContent = k[1]
+            b.addEventListener('click', function () {
+              if (kind === k[0]) return
+              kind = k[0]
+              type = ''
+              changed()
+            })
+            kindBox.appendChild(b)
+          })
+          typeBox.parentNode.insertBefore(kindBox, typeBox)
+        }
         // The bar: the tags of the most played games, plus a way back to all of them.
         fetch(REST + 'rpc/popular_tags', { method: 'POST', headers: { apikey: KEY, authorization: 'Bearer ' + KEY, 'content-type': 'application/json' }, body: JSON.stringify({ max_count: 12 }) })
           .then(function (r) {

@@ -32,20 +32,20 @@
 
     <main class="doc"><div class="wrap narrow">
 <h1>Privacy Policy</h1>
-<p class="updated">Last updated: November 13, 2026</p>
+<p class="updated">Last updated: November 23, 2026</p>
 
 <p>This policy explains what Milad Mirg LLC ("Mirg", "we") collects when you use the Mirg app, the Mirg app for iPhone, account service and website, why, and who receives it. The short version: your projects stay on your computer; what you ask the agent, and the parts of your project it needs, are sent to an AI model provider to get a response; we keep your email, your plan and a record of how much you used. We may also collect crash reports and basic usage counts, described below, which never include your prompts or files.</p>
 
 <h2>What stays on your computer</h2>
 <ul>
-<li>Your projects: all game files, code and assets.</li>
+<li>Your projects: all game and app files, code and assets.</li>
 <li>Your chat history with the agent, and the snapshots used by Restore.</li>
 <li>Your sign-in session, stored encrypted using your operating system's keychain.</li>
 </ul>
 <p>We do not have a copy of these.</p>
 
-<h2>Making games in your browser (mirg.ai/create)</h2>
-<p>When you make a game on mirg.ai/create instead of in the app, your game files and your chat with the agent are kept in your browser's storage on that computer, not on our servers. Clearing your browser's site data deletes them; sharing a game uploads a copy, as described below for shared games. Your sign-in session and a random device identifier (used, as in the app, to limit free accounts on one device) are kept in your browser's local storage. What you ask the agent, and the parts of your game it needs, go to an AI model provider through our server exactly as described under "What passes through our servers but is not stored".</p>
+<h2>Making games and apps in your browser (mirg.ai/create)</h2>
+<p>When you make a game or app on mirg.ai/create instead of in the app, your project files and your chat with the agent are kept in your browser's storage on that computer, not on our servers. Clearing your browser's site data deletes them; sharing a game uploads a copy, as described below for shared games. Your sign-in session and a random device identifier (used, as in the app, to limit free accounts on one device) are kept in your browser's local storage. What you ask the agent, and the parts of your game it needs, go to an AI model provider through our server exactly as described under "What passes through our servers but is not stored".</p>
 
 <h2>What we collect and keep</h2>
 <ul>
@@ -85,7 +85,7 @@
 <h2>Playing shared games, on mirg.ai and in the Mirg app for iPhone</h2>
 <p>Anyone can play the games people share with Mirg, on mirg.ai or in the Mirg app for iPhone, without an account. When you do:</p>
 <ul>
-<li><strong>Plays:</strong> opening a game adds one to that game's play count, at most once a day per device. The count is not linked to you.</li>
+<li><strong>Plays:</strong> opening a game or app adds one to its play count, at most once a day per device. To count once a day, we keep a scrambled (one-way hashed) form of your IP address with the game for a day or two, then delete it. The count is not linked to you.</li>
 <li><strong>Suggestions:</strong> on mirg.ai, to suggest games you might like, we keep which games you played, on how many days, and for about how long, under the random ID kept in your browser's local storage (see "How you found Mirg"). It does not include your name or email address. If you are signed in to Mirg on the same browser, the suggestions also use the types of game you make. A play is deleted a year after you last played that game. The Mirg app for iPhone does not do this.</li>
 <li><strong>Searching by voice:</strong> the microphone next to the games search uses your browser's own speech recognition, which may send the recording to your browser's maker (for example Google for Chrome, Apple for Safari) to turn it into text. The text stays in your browser; Mirg does not receive the recording or the text.</li>
 <li><strong>Leaderboards:</strong> if a game has a leaderboard and you send a score, we keep the name you typed and your best score, with a scrambled (one-way hashed) form of your IP address, so each player keeps one best score and to limit abuse. Names and scores are public on that game's leaderboard. They are deleted when the game's maker resets its leaderboards or stops sharing it, or when the score drops out of the top 100.</li>
@@ -93,6 +93,18 @@
 <li><strong>Reports:</strong> if you report a game, the reason, any details you write, and a hashed IP address. We use them only to review the game.</li>
 </ul>
 <p>The Mirg app for iPhone keeps on your phone which creators you have hidden and which games you have played today. It has no account, advertising or tracking. Each game is made by its creator and runs from play.mirg.ai; a game may keep its own data, such as saved progress or settings, on your device.</p>
+
+<h2>Using apps shared on Mirg</h2>
+<p>Some things shared on Mirg are apps, such as notes, trackers or tools. You can open and use them without an account. Apps run on mirg.ai inside a protected frame, and Mirg handles anything they keep:</p>
+<ul>
+<li><strong>Signing in:</strong> an app that saves things for you asks you to sign in to Mirg. The app never receives your email address, name or sign-in. It gets only a random ID that is the same each time you use that app and different in every other app, so apps cannot recognise you across apps.</li>
+<li><strong>What an app saves for you:</strong> kept by Mirg with your account, for that app only. Only you, through that app, can read it; the app's maker cannot. It is deleted if the app is deleted from Mirg or you delete your account.</li>
+<li><strong>Shared lists:</strong> some apps have lists everyone using the app sees, such as a guestbook. Mirg asks you before the first time you add to one. What you add is public within that app, shown with the app's random ID for you rather than your name. You or the app's maker can remove it.</li>
+<li><strong>AI in apps:</strong> if an app uses AI, Mirg asks you first. What the app sends (for example text you typed, or a recording you made in it) goes through our server to Google (Gemini) to get an answer, as described under "What passes through our servers but is not stored", and the tokens used count against your Mirg plan. We keep the usage record, not the content.</li>
+<li><strong>Microphone, camera and location:</strong> an app can only ask for these if Mirg allowed it when it was shared, and your browser asks you before it can use them. Recordings and pictures stay in the app on your device unless the app saves them or sends them to AI as above.</li>
+<li><strong>Without signing in,</strong> an app keeps what you save only in your browser's storage on that device.</li>
+</ul>
+<p>Apps are not available in the Mirg app for iPhone.</p>
 
 <h2>Crash and error reports</h2>
 <p>The app may send us a report when it crashes or hits an unexpected error, so that we can find and fix problems. A report contains:</p>
@@ -157,6 +169,6 @@
         <span data-version></span>
       </div>
     </footer>
-    <script src="site.js?v=28"></script>
+    <script src="site.js?v=29"></script>
   </body>
 </html>

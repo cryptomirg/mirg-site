@@ -222,6 +222,27 @@
     var localLists = 'mirg-app-preview-lists:' + (opts.key || 'app') + ':'
     var aiAllowedKey = 'mirg-app-ai-ok:' + (opts.slug || opts.key || 'app')
 
+    // Before anything goes into a shared list for the first time in an app, Mirg says plainly who will
+    // see it, so an app cannot pass off a list everyone can read (its maker included) as private.
+    var sharedOkKey = 'mirg-app-shared-ok:' + (opts.slug || opts.key || 'app')
+    function sharedConsent(collection) {
+      var agreed = readJson(sharedOkKey, [])
+      if (preview || agreed.indexOf(collection) >= 0) return Promise.resolve()
+      return ask(
+        'Share this with everyone using the app?',
+        'What you add here goes on a list that everyone using this app can see, including the person who made it. Do not add anything private, such as bank, card, health or ID details.',
+        [
+          { label: 'Cancel', value: false },
+          { label: 'Add it', value: true, primary: true }
+        ],
+        title
+      ).then(function (yes) {
+        if (!yes) throw error('shared_declined', 'Not added.')
+        agreed.push(collection)
+        lsSet(sharedOkKey, JSON.stringify(agreed))
+      })
+    }
+
     function remote(body) {
       return token().then(function (t) {
         body.slug = opts.slug
@@ -393,7 +414,9 @@
       },
       'shared.add': function (a) {
         return withSignIn('Sign in to Mirg to add to this list. Others using the app see what you add, but never your email.', function () {
-          return remote({ action: 'add', collection: a.collection, data: a.data }).then(function (d) {
+          return sharedConsent(a.collection).then(function () {
+            return remote({ action: 'add', collection: a.collection, data: a.data })
+          }).then(function (d) {
             var now = new Date().toISOString()
             return { id: d.id, data: a.data, by: d.by, mine: true, createdAt: now, updatedAt: now }
           })

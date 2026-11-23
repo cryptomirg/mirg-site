@@ -146,6 +146,8 @@
         if (b.primary) el.className = 'go'
         el.onclick = function () {
           answer = b.value
+          // Opened here, in the click itself, so the browser does not block the new tab.
+          if (b.open) window.open(b.open, '_blank', 'noopener,noreferrer')
           d.close()
         }
         row.appendChild(el)
@@ -536,13 +538,38 @@
         })
     }
 
-    var ops = Object.assign({}, deviceOps, preview ? previewOps : liveOps, { 'ai.ask': askAi })
+    /** A link the app wants to open: Mirg shows where it goes, and opens it only if the person says so. */
+    function openLink(a) {
+      var u
+      try {
+        u = new URL(String(a.url || ''))
+      } catch (x) {
+        throw error('open_bad', 'That is not a link.')
+      }
+      if (!/^(https?|mailto|tel):$/.test(u.protocol)) throw error('open_bad', 'Apps can open web, email and phone links.')
+      var where = u.protocol === 'mailto:' ? 'an email to ' + decodeURIComponent(u.pathname) : u.protocol === 'tel:' ? 'a call to ' + decodeURIComponent(u.pathname) : u.hostname
+      var full = u.href.length > 140 ? u.href.slice(0, 140) + '…' : u.href
+      return ask(
+        title + ' wants to open ' + where,
+        'This goes outside Mirg. Only continue if you trust it, and never type a password or card number on a page an app sent you to.',
+        [
+          { label: 'Cancel', value: false },
+          { label: 'Open', value: true, primary: true, open: u.href }
+        ],
+        full
+      ).then(function (go) {
+        if (!go) throw error('open_cancelled', 'The link was not opened.')
+        return true
+      })
+    }
+
+    var ops = Object.assign({}, deviceOps, preview ? previewOps : liveOps, { 'ai.ask': askAi, open: openLink })
 
     function onMessage(e) {
       if (!frame.contentWindow || e.source !== frame.contentWindow) return
-      // A shared app answers only while its frame shows play.mirg.ai: an app that sends its frame to
-      // another site leaves that site nothing to ask for. (The builder's preview has no origin.)
-      if (!preview && e.origin !== 'https://play.mirg.ai') return
+      // A shared app answers only while its frame shows the app's own address: an app that sends its
+      // frame to another site leaves that site nothing to ask for. (The builder's preview has no origin.)
+      if (!preview && e.origin !== opts.origin) return
       // Answers go only to the address the app is shown from.
       var replyTo = opts.origin || (preview ? '*' : 'https://play.mirg.ai')
       var d = e.data
@@ -552,7 +579,7 @@
           frame.contentWindow.postMessage({ mirg: 'app-reply', id: d.id, ok: ok, value: ok ? value : { code: value.code || 'error', message: value.message || String(value) } }, replyTo)
         } catch (x) {}
       }
-      if (d.op === 'hello') return reply(true, { host: 'mirg', preview: preview, signedIn: preview || Boolean(session()) })
+      if (d.op === 'hello') return reply(true, { host: 'mirg', preview: preview, signedIn: preview || Boolean(session()), links: true })
       var fn = ops[d.op]
       if (!fn) return reply(false, error('unknown', 'Mirg does not know "' + d.op + '".'))
       var args = d.args && typeof d.args === 'object' ? d.args : {}
@@ -614,5 +641,17 @@
     })
   }
 
-  window.MirgAppHost = { attach: attach, allowFor: allowFor, askPermissions: askPermissions, ask: ask }
+  /**
+   * Each shared app has its own address, <20 letters>-app.mirg.ai, so the browser keeps every app's
+   * storage apart from every other app's and from the games on play.mirg.ai. The letters come from
+   * the app's link name; play.mirg.ai's worker checks them the same way.
+   */
+  function originFor(slug) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode('mirg-app|' + slug)).then(function (buf) {
+      var hex = Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2) }).join('')
+      return 'https://' + hex.slice(0, 20) + '-app.mirg.ai'
+    })
+  }
+
+  window.MirgAppHost = { attach: attach, allowFor: allowFor, askPermissions: askPermissions, ask: ask, originFor: originFor }
 })()

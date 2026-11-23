@@ -139,13 +139,16 @@
     document.getElementById('play-made').textContent = 'This app was made by describing it to Mirg.'
     frame.title = 'The app'
     var phone = matchMedia('(pointer: coarse)').matches
-    MirgAppHost.askPermissions(name, t, Array.isArray(info.permissions) ? info.permissions : []).then(function (allowed) {
+    // Each app runs at its own address (see MirgAppHost.originFor), apart from every other app.
+    Promise.all([MirgAppHost.askPermissions(name, t, Array.isArray(info.permissions) ? info.permissions : []), MirgAppHost.originFor(name)]).then(function (got) {
+      var allowed = got[0]
+      var origin = got[1]
       frame.setAttribute('allow', MirgAppHost.allowFor(allowed))
-      frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-modals allow-downloads allow-popups')
-      MirgAppHost.attach({ frame: frame, slug: name, title: t, origin: PLAY_HOST })
+      frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-modals allow-downloads')
+      MirgAppHost.attach({ frame: frame, slug: name, title: t, origin: origin })
       // On a phone the app fills the screen, with the × to come back to the page.
       if (phone) fill(true)
-      frame.src = base
+      frame.src = origin + '/' + name + '/'
     })
     shareButton(t)
     countPlay()

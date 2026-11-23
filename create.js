@@ -1381,6 +1381,7 @@ The loop is: build, run, fix. The user tries the app themselves and tells you wh
   - Values are anything JSON can hold (store recordings and photos on the device as data URLs only if small; prefer offering a download).
   - Any call can fail: catch it, show a short friendly message, and never lose what the person typed. error.code is 'sign_in' when they chose not to sign in.
   - Mirg.download(blobOrText, 'name.ext') saves a file to their device (a recording as .webm, a list as .csv).
+  - Links to other sites (ordinary <a href> links, or Mirg.open(url)) open in a new tab after Mirg shows the person where they go. Never send people to a page to sign in, pay or type personal details.
 - The microphone, camera and location work through the browser as usual (navigator.mediaDevices.getUserMedia, MediaRecorder, navigator.geolocation): ask only when the person presses a button, say why, and handle a refusal kindly. Mirg asks the person first when the app opens.
 - Never ask for passwords, payment card details, bank details or ID numbers, and never send what people type anywhere: once shared, an app cannot reach other websites at all, so fetch only files in the project. Mirg holds apps that ask for these. Links to other sites are fine and open in a new tab (target="_blank"). A shared app loads pictures, sounds and fonts only from its own files (plus Google Fonts), and code libraries only from cdn.jsdelivr.net, esm.sh, unpkg.com or cdnjs.cloudflare.com.
 - Give index.html a <title> with the app's name.

@@ -28,6 +28,16 @@
       <section class="hero">
         <h1 id="start-title">Make a game.<br />Just describe it.</h1>
         <p class="lead" id="start-lead">Mirg's AI writes the game, runs it, and fixes what's broken, right here in your browser. Then share a link anyone can play.</p>
+        <script>
+          // The right heading on the first paint, before create.js loads (see appsOn there).
+          try {
+            if (window.__MIRG_APPS_LIVE === true || (localStorage.getItem('mirg-web-apps') === '1' && localStorage.getItem('mirg-web-session'))) {
+              document.getElementById('start-title').innerHTML = 'Make anything.<br />Just describe it.'
+              document.title = 'Make anything in your browser · Mirg'
+              document.getElementById('start-lead').textContent = "A game, an app for your phone, a tool for your class or team. Mirg's AI builds it, runs it, and fixes what's broken, right here in your browser. Then share a link anyone can open."
+            }
+          } catch (e) {}
+        </script>
         <form id="start-form" class="prompt">
           <textarea id="start-text" rows="3" maxlength="4000" placeholder="A platformer where a fox collects coins and dodges spikes" required></textarea>
           <div class="prompt-row">
@@ -254,6 +264,6 @@
 
     <script src="site.js?v=28"></script>
     <script src="apphost.js?v=1"></script>
-    <script type="module" src="create.js?v=33"></script>
+    <script type="module" src="create.js?v=34"></script>
   </body>
 </html>

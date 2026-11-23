@@ -3369,7 +3369,7 @@ async function showStart() {
   $('studio').hidden = true
   $('start').hidden = false
   clearInterval(commentsTimer)
-  document.title = 'Make a game in your browser · Mirg'
+  document.title = appsOn() ? 'Make anything in your browser · Mirg' : 'Make a game in your browser · Mirg'
   const all = (await myGames()).sort((a, b) => b.updated - a.updated)
   $('mine').hidden = !all.length
   $('cards').innerHTML = ''
@@ -3809,8 +3809,18 @@ const APP_IDEAS = [
   'A meeting recorder that writes down what was said and summarises it',
   'A packing list for trips that I can reuse and tick off'
 ]
+// Apps are on once they launch for everyone (site.js), or for this account. The account's answer is
+// remembered in this browser, so the page opens with the right wording instead of changing it once
+// the account has loaded.
+const APPS_KEY = 'mirg-web-apps'
 function appsOn() {
-  return Boolean(me && Array.isArray(me.features) && me.features.includes('apps'))
+  if (window.MIRG_APPS_LIVE === true || window.__MIRG_APPS_LIVE === true) return true
+  if (me) {
+    const on = Array.isArray(me.features) && me.features.includes('apps')
+    if ((store.get(APPS_KEY) === '1') !== on) store.set(APPS_KEY, on ? '1' : null)
+    return on
+  }
+  return Boolean(session()) && store.get(APPS_KEY) === '1'
 }
 /** With apps on: one box for anything, with ideas for games and apps alike. */
 function renderStartKind() {
@@ -3853,6 +3863,7 @@ function showIdeas() {
   $('start-text').placeholder = pool[3]
 }
 showIdeas()
+renderStartKind()
 $('more-ideas').onclick = showIdeas
 
 $('errors').onclick = () => fixErrors(false)

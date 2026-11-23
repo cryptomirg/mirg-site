@@ -733,6 +733,7 @@
 // Apps launch: one setting for the whole site. Until it is on, mirg.ai talks about games only;
 // at launch (with the 'apps' rollout in the database) it becomes true and the wording below takes
 // over everywhere. A local test can turn it on early (scripts/dev-apps.mjs).
+// At launch, also make create.html's built-in heading the "Make anything" one.
 var MIRG_APPS_LIVE = false
 ;(function () {
   if (!(MIRG_APPS_LIVE || window.__MIRG_APPS_LIVE === true)) return

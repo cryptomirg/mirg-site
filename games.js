@@ -11,6 +11,8 @@
   var creatorHead = document.getElementById('creator-name')
   function get(path) {
     return fetch(REST + path, { headers: { apikey: KEY, authorization: 'Bearer ' + KEY } }).then(function (r) {
+      // A server from before apps has no "kind" for each share: ask again without it (all games).
+      if (!r.ok && /[,=]kind\b/.test(path)) return get(path.replace(/,kind\b/, ''))
       if (!r.ok) throw new Error('list failed')
       return r.json()
     })
@@ -234,6 +236,7 @@
       allTitle.textContent = words.length ? 'Results' : type ? type.charAt(0).toUpperCase() + type.slice(1) + ' ' + many : 'All ' + many
       count.textContent = filtered ? found.length + ' of ' + plural(ofKind, one, many) : plural(ofKind, one, many)
       none.hidden = found.length > 0
+      document.getElementById('games-clear').hidden = !filtered
       noneText.textContent = 'No ' + (type ? type + ' ' : '') + many + (words.length ? ' match "' + search.value.trim() + '".' : ' yet.')
       // Suggestions and the tag bar are about games.
       if (forYou && kind === 'app') forYou.hidden = true
@@ -273,8 +276,8 @@
         }
         document.getElementById('games-tools').hidden = false
         allHead.hidden = false
-        // Once there are apps to show: Games | Apps above the list.
-        if (games.some(function (g) { return g.kind === 'app' })) {
+        // Once apps launch (or there are apps to show): Games | Apps above the list.
+        if (window.MIRG_APPS_LIVE || window.__MIRG_APPS_LIVE === true || games.some(function (g) { return g.kind === 'app' })) {
           kindBox = document.createElement('div')
           kindBox.className = 'games-kinds'
           kindBox.setAttribute('role', 'group')

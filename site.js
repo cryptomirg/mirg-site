@@ -729,3 +729,47 @@
     play(SCENES[0])
   }
 })()
+
+// Apps launch: one setting for the whole site. Until it is on, mirg.ai talks about games only;
+// at launch (with the 'apps' rollout in the database) it becomes true and the wording below takes
+// over everywhere. A local test can turn it on early (scripts/dev-apps.mjs).
+var MIRG_APPS_LIVE = false
+;(function () {
+  if (!(MIRG_APPS_LIVE || window.__MIRG_APPS_LIVE === true)) return
+  document.documentElement.classList.add('apps-live')
+  // Exact wording on any page, game words to wording for anything.
+  var WORDS = {
+    'Make your own game': 'Make your own',
+    'Make a game': 'Make something',
+    'Play games': 'Explore',
+    'Make a game in your browser': 'Make something in your browser',
+    'Play games made with Mirg': 'Explore what people made with Mirg',
+    'Want yours here? Make a game in Mirg and share it.': 'Want yours here? Make a game or an app in Mirg and share it.',
+    'Games made with Mirg': 'Games and apps made with Mirg',
+    'Make your own game by describing it, then share it here.': 'Make your own game or app by describing it, then share it here.',
+    'No games here yet.': 'Nothing here yet.'
+  }
+  function swap(root) {
+    var all = (root || document).querySelectorAll('a, button, span, p, h1, h2, strong')
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i]
+      if (el.children.length) continue
+      var t = el.textContent.trim()
+      if (Object.prototype.hasOwnProperty.call(WORDS, t)) el.textContent = WORDS[t]
+    }
+  }
+  function titles() {
+    if (/^Mirg: play games people made with AI$/.test(document.title)) document.title = 'Mirg: games and apps people made with AI'
+    var search = document.getElementById('games-search')
+    if (search) {
+      search.placeholder = 'Search games, apps or creators'
+      search.setAttribute('aria-label', 'Search games, apps or creators')
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { swap(); titles() })
+  else {
+    swap()
+    titles()
+  }
+  window.mirgAppsWords = swap
+})()

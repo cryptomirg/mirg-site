@@ -178,35 +178,6 @@ a {
   text-align: center;
 }
 
-.kind-pick {
-  display: inline-flex;
-  gap: 4px;
-  padding: 4px;
-  margin: 0 0 18px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-}
-.kind-pick[hidden] {
-  display: none;
-}
-.kind-pick button {
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  min-width: 84px;
-  padding: 7px 16px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-}
-.kind-pick button[aria-pressed='true'] {
-  background: var(--accent);
-  color: var(--bg);
-}
-
 .hero h1 {
   font-size: clamp(32px, 6vw, 52px);
   line-height: 1.1;

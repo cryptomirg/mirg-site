@@ -708,7 +708,7 @@ try {
 function showMuted() {
   const b = $('mute')
   if (!b) return
-  b.innerHTML = (gameMuted ? 'Unmute' : 'Mute') + '<span class="wide-only"> game</span>'
+  b.innerHTML = (gameMuted ? 'Unmute' : 'Mute') + '<span class="wide-only" data-word-lower>' + (appsOn() || (project && project.kind === 'app') ? '' : ' game') + '</span>'
   b.setAttribute('aria-pressed', String(gameMuted))
 }
 function setGameMuted(on) {
@@ -872,7 +872,14 @@ function stopGame() {
   frame = null
   pending.delete('load')
   $('game-empty').hidden = false
-  $('game-empty').textContent = project && project.kind === 'app' ? 'The app is stopped. Press Restart app to open it again.' : 'The game is stopped. Press Restart game to play it again.'
+  $('game-empty').textContent = appsOn() || (project && project.kind === 'app') ? 'Stopped. Press Restart to run it again.' : 'The game is stopped. Press Restart game to play it again.'
+}
+
+/** "Preview" with apps on (a project may be a game or an app), "Game" otherwise. */
+function renderWords() {
+  const any = appsOn() || (project && project.kind === 'app')
+  document.querySelectorAll('[data-word]').forEach((el) => (el.textContent = any ? 'Preview' : 'Game'))
+  document.querySelectorAll('[data-word-lower]').forEach((el) => (el.textContent = any ? '' : ' game'))
 }
 
 /** The app toolkit's answers for the app running in the preview (apphost.js), while one is. */
@@ -885,20 +892,23 @@ function runGame() {
   if (frame) frame.remove()
   if (!project || !project.files['index.html']) {
     $('game-empty').hidden = false
-    $('game-empty').textContent = project && project.kind === 'app' ? 'Your app will appear here.' : 'Your game will appear here.'
+    $('game-empty').textContent = appsOn() || (project && project.kind === 'app') ? 'What you make will appear here.' : 'Your game will appear here.'
     frame = null
     return Promise.resolve(false)
   }
   frame = document.createElement('iframe')
   if (appHost) appHost.detach()
   appHost = null
-  if (project.kind === 'app') {
-    // An app can do more than a game: dialogs, forms, downloads, links in a new tab, and the
-    // microphone, camera and location (the maker is the one trying it, so Mirg does not ask first).
-    frame.setAttribute('sandbox', 'allow-scripts allow-pointer-lock allow-modals allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox')
-    frame.setAttribute('allow', 'fullscreen; autoplay; clipboard-write; microphone; camera; geolocation')
-    frame.title = 'Your app'
-    // Its saved data and AI, answered by this page (apphost.js), kept apart for each project.
+  // With apps on, the preview runs on Mirg's separate address for shared creations (play.mirg.ai),
+  // not walled off as a page of no address: browsers only let a page with a real address use the
+  // microphone, camera or location. It still cannot reach this page or its sign-in. It may also show
+  // dialogs, forms, downloads and links in a new tab (the maker is the one trying it).
+  const hosted = appsOn() || project.kind === 'app'
+  if (hosted) {
+    frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-pointer-lock allow-modals allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox')
+    frame.setAttribute('allow', 'fullscreen; autoplay; gamepad; clipboard-write; microphone; camera; geolocation')
+    frame.title = 'Preview'
+    // An app's saved data and AI, answered by this page (apphost.js), kept apart for each project.
     if (window.MirgAppHost) appHost = window.MirgAppHost.attach({ frame, preview: true, key: project.id, title: project.name })
   } else {
     frame.setAttribute('sandbox', 'allow-scripts allow-pointer-lock')
@@ -911,6 +921,7 @@ function runGame() {
   } catch (e) {
     // Nothing of the game can run, so there is nothing to wait for.
     logs.push({ level: 'error', text: e.message })
+    frame.setAttribute('sandbox', '')
     frame.srcdoc = '<!doctype html><body style="color:#ccc;font:14px sans-serif;padding:20px;background:#111">' + escapeHtml(e.message) + '</body>'
     $('game-wrap').appendChild(frame)
     fitDevice()
@@ -924,12 +935,25 @@ function runGame() {
       resolve(true)
     })
   })
-  frame.srcdoc = html
+  if (hosted) {
+    // The preview page on play.mirg.ai says when it is ready, then shows what it is sent.
+    const f = frame
+    const page = html.split('https://play.mirg.ai/_mirg/').join(PREVIEW_ORIGIN + '/_mirg/')
+    const ready = (e) => {
+      if (e.source !== f.contentWindow || e.origin !== PREVIEW_ORIGIN || !e.data || e.data.mirgPreview !== 'ready') return
+      window.removeEventListener('message', ready)
+      f.contentWindow.postMessage({ mirgPreview: 'load', html: page }, PREVIEW_ORIGIN)
+    }
+    window.addEventListener('message', ready)
+    frame.src = PREVIEW_ORIGIN + '/_mirg/preview'
+  } else frame.srcdoc = html
   $('game-wrap').appendChild(frame)
   fitDevice()
   renderErrors()
   return loaded
 }
+/** Where the preview runs with apps on: Mirg's address for shared creations (a local test may set its own). */
+const PREVIEW_ORIGIN = window.__MIRG_PREVIEW_ORIGIN || 'https://play.mirg.ai'
 
 window.addEventListener('message', (e) => {
   if (!frame || e.source !== frame.contentWindow) return
@@ -1365,8 +1389,46 @@ The loop is: build, run, fix. The user tries the app themselves and tells you wh
 # Sharing
 The Share button at the top gives the user a link anyone can open on a phone or a computer, with nothing to install. Suggest it when the app works.`
 
-/** What the agent is told: about games, or about apps for an app project. */
-const systemFor = (p) => (p && p.kind === 'app' ? APP_SYSTEM : SYSTEM)
+/** One section of a prompt, from its heading to the next. */
+function promptSection(text, heading) {
+  const i = text.indexOf('\n# ' + heading + '\n')
+  if (i < 0) return ''
+  const j = text.indexOf('\n# ', i + 3)
+  return text.slice(i + 1, j < 0 ? undefined : j).trim()
+}
+
+// With apps on (behind the 'apps' switch until launch) there is one box for anything: the agent
+// works out from the request whether to make a game or an app, and follows the rules for each.
+const ANY_SYSTEM = [
+  `You are the building agent in Mirg on the web: the user describes what they want to make, a game or an app, and you build it as a web game or web app that runs in the Preview tab next to the chat, in their browser. The user sees this chat, a Preview tab where it runs, and a Code tab with the files. You work with tools: you write the files, run it and read its state.`,
+  `# Game or app
+Work out from the request what to make; never ask the user to choose between a game and an app.
+- Something to play (a game, a puzzle, a toy, a quiz to play for points) is a game: follow "Every game".
+- Something to use (a tool, tracker, recorder, list, planner, calculator, sign-up sheet, flashcards, a site for a club or class) is an app: follow "Every app".
+- "A phone app" or "a mobile app" means an app designed for phones first. Mirg makes web apps that open from a link on any phone or computer and can be added to the home screen; never make a native, app store or desktop program, and if asked for one say so in one sentence and build the web app.
+- When it could be either, pick the likelier one, say which in one short line, and build it.
+- Once a project is one or the other, keep it that way unless the user asks for something different.`,
+  promptSection(SYSTEM, 'Who you are working with').replace('Talk about the game', 'Talk about what you are making').replace('(the feel or theme of the game)', '(the feel, theme or look)'),
+  `# What you can build here
+Web games and web apps: index.html at the top of the project plus ES modules and CSS, with no build step and no npm. Load libraries from a CDN through an import map (Three.js for 3D, Phaser for 2D arcade games, plain Canvas 2D for simple games; for apps prefer plain HTML, CSS and JavaScript, with a library only when it clearly helps, such as charts). Text files only: there is no image or sound generation here, so draw art in code (canvas shapes, SVG, simple 3D geometry, emoji for apps) and make sounds with the Web Audio API. Make it look deliberate and consistent.
+If the user asks for Godot, Unity, Unreal, Roblox, Minecraft mods or pygame, say in one sentence that those need the Mirg desktop app (mirg.ai/download, Mac and Windows) and offer to make a web version here instead.`,
+  promptSection(SYSTEM, 'How to work').replace('the user plays the game themselves', 'the user tries it themselves').replace('a small game', 'a small game or app').replace('For a bigger game', 'For a bigger project').replace('hand the game over', 'hand it over').replace('re-run the game', 're-run it'),
+  promptSection(SYSTEM, 'Every game'),
+  promptSection(APP_SYSTEM, 'Every app'),
+  promptSection(SYSTEM, 'Leaderboards and high scores'),
+  promptSection(SYSTEM, 'Online multiplayer'),
+  `# Sharing
+The Share button at the top gives the user a link anyone can open on a computer or a phone, with nothing to install, and can list it on mirg.ai. Suggest it when it works.`
+].join('\n\n')
+
+/** What the agent is told: anything (with apps on), a game, or an app for an older app project. */
+const systemFor = (p) => (appsOn() ? ANY_SYSTEM : p && p.kind === 'app' ? APP_SYSTEM : SYSTEM)
+/** A game or an app, as it will be shared: an app is one that uses the Mirg app toolkit. */
+function kindOf(p) {
+  if (p && p.kind === 'app') return 'app'
+  const code = p ? Object.keys(p.files).filter((f) => /\.(html?|m?js)$/i.test(f)).map((f) => p.files[f]).join('\n') : ''
+  return appsOn() && code.includes('play.mirg.ai/_mirg/app.js') ? 'app' : 'game'
+}
 
 const SUMMARY_REQUEST =
   'Pause the task. This conversation is about to be replaced by a summary so the work can continue with a fresh context. ' +
@@ -3366,10 +3428,7 @@ function openProject(p) {
   $('studio').hidden = false
   $('title').textContent = p.name
   document.title = p.name + ' · Mirg'
-  // An app's project says "App" where a game's says "Game".
-  const word = project.kind === 'app' ? 'App' : 'Game'
-  document.querySelectorAll('[data-word]').forEach((el) => (el.textContent = word))
-  document.querySelectorAll('[data-word-lower]').forEach((el) => (el.textContent = ' ' + word.toLowerCase()))
+  renderWords()
   lastRestore = null
   $('restored').hidden = true
   queue = []
@@ -3702,9 +3761,9 @@ async function myGames() {
   return all.filter((p) => p.owner === who)
 }
 
-function blankProject(name, kind) {
+function blankProject(name) {
   const chatId = newId()
-  return { id: newId(), owner: owner(), name, kind: kind === 'app' ? 'app' : 'game', files: {}, chats: [{ id: chatId, title: 'New chat', messages: [], items: [], updated: Date.now(), contextTokens: 0 }], chatId, updated: Date.now(), share: null }
+  return { id: newId(), owner: owner(), name, files: {}, chats: [{ id: chatId, title: 'New chat', messages: [], items: [], updated: Date.now(), contextTokens: 0 }], chatId, updated: Date.now(), share: null }
 }
 
 async function startGame(text) {
@@ -3718,8 +3777,7 @@ async function startGame(text) {
     }
   }
   if (!me) await refreshMe()
-  const kind = appsOn() && startKind === 'app' ? 'app' : 'game'
-  const p = blankProject(text.split(/\s+/).slice(0, 6).join(' ').replace(/[.,!?]+$/, '') || (kind === 'app' ? 'My app' : 'My game'), kind)
+  const p = blankProject(text.split(/\s+/).slice(0, 6).join(' ').replace(/[.,!?]+$/, '') || (appsOn() ? 'My project' : 'My game'))
   await db.put(p).catch(() => undefined)
   history.pushState(null, '', '#g=' + p.id)
   openProject(p)
@@ -3751,34 +3809,32 @@ const APP_IDEAS = [
   'A meeting recorder that writes down what was said and summarises it',
   'A packing list for trips that I can reuse and tick off'
 ]
-let startKind = 'game'
 function appsOn() {
   return Boolean(me && Array.isArray(me.features) && me.features.includes('apps'))
 }
+/** With apps on: one box for anything, with ideas for games and apps alike. */
 function renderStartKind() {
-  const box = $('start-kind')
-  if (!box) return
-  box.hidden = !appsOn()
-  if (!appsOn()) startKind = 'game'
-  box.querySelectorAll('button[data-kind]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kind === startKind)))
-  const app = startKind === 'app'
-  $('start-title').innerHTML = app ? 'Make an app.<br />Just describe it.' : 'Make a game.<br />Just describe it.'
-  $('start-lead').textContent = app
-    ? "Mirg's AI builds the app, runs it, and fixes what's broken, right here in your browser. Then share a link anyone can open on a phone or computer."
+  const any = appsOn()
+  $('start-title').innerHTML = any ? 'Make anything.<br />Just describe it.' : 'Make a game.<br />Just describe it.'
+  $('start-lead').textContent = any
+    ? "A game, an app for your phone, a tool for your class or team. Mirg's AI builds it, runs it, and fixes what's broken, right here in your browser. Then share a link anyone can open."
     : "Mirg's AI writes the game, runs it, and fixes what's broken, right here in your browser. Then share a link anyone can play."
-}
-if ($('start-kind'))
-  $('start-kind').addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-kind]')
-    if (!b || startKind === b.dataset.kind) return
-    startKind = b.dataset.kind
-    renderStartKind()
+  const mine = document.querySelector('#mine h2')
+  if (mine) mine.textContent = any ? 'Your projects' : 'Your games'
+  const mineNote = document.querySelector('#mine .fine')
+  if (mineNote) mineNote.textContent = any ? 'Saved in this browser. Share one to keep a copy online.' : 'Saved in this browser. Share a game to keep a copy online.'
+  if (!project) document.title = any ? 'Make anything in your browser · Mirg' : 'Make a game in your browser · Mirg'
+  if (any !== shownAny) {
+    shownAny = any
     showIdeas()
-  })
+  }
+  if (project) renderWords()
+}
+let shownAny = false
 
 /** Three ideas picked at random from the list, so the start page is different each visit. */
 function showIdeas() {
-  const pool = (startKind === 'app' ? APP_IDEAS : IDEAS).slice()
+  const pool = (appsOn() ? IDEAS.concat(APP_IDEAS) : IDEAS).slice()
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     ;[pool[i], pool[j]] = [pool[j], pool[i]]
@@ -4071,7 +4127,7 @@ $('share-upload-input').onchange = async (e) => {
 $('share').onclick = async () => {
   if (!project) return
   if (!project.files['index.html']) {
-    alert(project.kind === 'app' ? 'There is no app to share yet. Describe one in the chat first.' : 'There is no game to share yet. Describe one in the chat first.')
+    alert(kindOf(project) === 'app' ? 'There is no app to share yet. Describe one in the chat first.' : 'There is no game to share yet. Describe one in the chat first.')
     return
   }
   if (!session()) {
@@ -4093,7 +4149,7 @@ $('share').onclick = async () => {
   }
   // An app: its own wording (listed apps show once apps launch). The phone tick is for the iPhone
   // app, which shows games only, so apps never set it.
-  const isApp = project.kind === 'app'
+  const isApp = kindOf(project) === 'app'
   $('share-phone').closest('label').hidden = isApp
   $('share-listed').closest('label').lastChild.textContent = isApp ? " Show it on mirg.ai's apps page" : " Show it on mirg.ai's games page"
   $('share-description').placeholder = isApp ? 'What does the app do, and who is it for?' : 'What do you do in the game, and what makes it fun?'
@@ -4146,7 +4202,7 @@ $('share-form').onsubmit = async (e) => {
   $('share-error').hidden = true
   try {
     const title = titleOf(p.files) || p.name
-    const kind = p.kind === 'app' ? 'app' : 'game'
+    const kind = kindOf(p)
     const permissions = kind === 'app' ? appPermissions(p.files) : []
     const info = JSON.stringify(kind === 'app' ? { title, madeWith: 'Mirg', kind, permissions } : { title, madeWith: 'Mirg' })
     const bodies = Object.assign({}, p.files, { 'mirg-share.json': info })

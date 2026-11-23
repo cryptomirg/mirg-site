@@ -2071,34 +2071,211 @@ section.stats-page {
   width: 100%;
   height: 64px;
 }
-.stats-chart-bar {
-  fill: #7aa7ff;
+/* Line charts: one number a day, a 2px line over a light fill. */
+.stats-line {
+  position: relative;
+  touch-action: pan-y;
+  cursor: crosshair;
 }
-.stats-chart-base {
+.stats-line svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.stats-line-path {
+  fill: none;
+  stroke: #7aa7ff;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.stats-line-area {
+  fill: rgba(122, 167, 255, 0.12);
+}
+.stats-line-grid {
   stroke: var(--border);
   stroke-width: 1;
+  stroke-dasharray: 3 4;
+  vector-effect: non-scaling-stroke;
 }
-.stats-chart-hit {
-  fill: transparent;
-  cursor: default;
+.stats-line-base {
+  stroke: var(--border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
 }
-.stats-chart-hit:hover {
-  fill: rgba(255, 255, 255, 0.05);
+.stats-line-cross {
+  stroke: var(--muted);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
 }
-.stats-chart-tip {
+.stats-line-max {
   position: absolute;
-  top: -30px;
-  transform: translateX(-50%);
-  padding: 3px 8px;
-  border-radius: 6px;
-  background: #2a2a2a;
-  color: var(--text);
-  font-size: 12px;
-  white-space: nowrap;
+  right: 0;
+  transform: translateY(-120%);
+  color: var(--muted);
+  font-size: 11px;
   pointer-events: none;
 }
-.stats-chart-tip[hidden] {
+.stats-line-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: #7aa7ff;
+  box-shadow: 0 0 0 2px var(--panel);
+  pointer-events: none;
+}
+.stats-line-dot[hidden],
+.stats-line-tip[hidden] {
   display: none;
+}
+.stats-line-tip {
+  position: absolute;
+  top: -44px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #222;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+}
+.stats-line-tip strong {
+  color: var(--text);
+  font-size: 13px;
+}
+/* The overview at the top: a tab per number, the chosen one drawn below. */
+.stats-overview,
+.stats-ideas {
+  margin-bottom: 18px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+}
+.stats-overview[hidden],
+.stats-ideas[hidden] {
+  display: none;
+}
+.stats-overview-head,
+.stats-ideas-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-bottom: 12px;
+}
+.stats-overview h2,
+.stats-ideas h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.stats-overview .fine,
+.stats-ideas .fine {
+  color: var(--muted);
+  font-size: 13px;
+}
+.stats-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 -18px 34px;
+  border-bottom: 1px solid var(--border);
+}
+.stats-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 18px 14px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+.stats-tab:hover {
+  background: var(--accent-soft);
+}
+.stats-tab.on {
+  border-bottom-color: #7aa7ff;
+  color: var(--text);
+}
+.stats-tab-label {
+  font-size: 13px;
+}
+.stats-tab-value {
+  color: var(--text);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.stats-tab-change {
+  font-size: 12px;
+}
+.stats-tab-change.up {
+  color: #58d68d;
+}
+.stats-tab-change.down {
+  color: #f0a35e;
+}
+/* Ideas from players. */
+.stats-ideas-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.stats-idea {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+.stats-idea-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.stats-idea-from {
+  color: var(--muted);
+  font-size: 13px;
+}
+.stats-idea .linklike {
+  color: var(--muted);
+  font-size: 14px;
+}
+@media (max-width: 520px) {
+  .stats-tab {
+    padding: 8px 10px 12px;
+  }
+  .stats-tab-value {
+    font-size: 22px;
+  }
+  .stats-tab-change {
+    font-size: 11px;
+  }
+  .stats-tab-more {
+    display: none;
+  }
+  .stats-idea {
+    flex-wrap: wrap;
+  }
+  .stats-idea-text {
+    flex-basis: 100%;
+  }
 }
 .stats-chart-axis {
   display: flex;

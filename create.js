@@ -3427,6 +3427,99 @@ async function showStart() {
     card.append(name, info, row)
     $('cards').appendChild(card)
   }
+  showPlayerIdeas(all)
+}
+
+// Ideas from players on everything this account shared, on the start page: the same suggestions as
+// each project's Comments panel and the stats page (mirg.ai/stats). Mirg reads new comments at most
+// every so often (POST /suggestions), so opening the start page often costs nothing extra.
+async function showPlayerIdeas(all) {
+  $('player-ideas').hidden = true
+  if (!session() || !all.some((p) => p.share)) return
+  let list
+  try {
+    list = (await call('POST', '/suggestions', {})).suggestions || []
+  } catch {
+    return
+  }
+  if (project || !list.length) return
+  const box = $('player-ideas-list')
+  box.innerHTML = ''
+  for (const s of list) {
+    const local = all.find((p) => p.share && p.share.slug === s.slug)
+    const row = document.createElement('div')
+    row.className = 'suggestion'
+    const text = document.createElement('span')
+    text.className = 'suggestion-body'
+    text.textContent = s.body
+    const from = document.createElement('span')
+    from.className = 'suggestion-from'
+    from.textContent = (s.title || s.slug) + ' · ' + s.comments + (s.comments === 1 ? ' player' : ' players') + (local ? '' : ' · made in another browser or the desktop app')
+    text.appendChild(from)
+    const dismiss = document.createElement('button')
+    dismiss.type = 'button'
+    dismiss.className = 'linklike'
+    dismiss.textContent = 'Dismiss'
+    dismiss.setAttribute('aria-label', 'Dismiss: ' + s.body)
+    dismiss.onclick = () => {
+      row.remove()
+      if (!box.children.length) $('player-ideas').hidden = true
+      call('POST', '/suggestions/resolve', { id: s.id, status: 'dismissed' }).catch(() => undefined)
+    }
+    row.append(text, dismiss)
+    if (local) {
+      const go = document.createElement('button')
+      go.type = 'button'
+      go.className = 'btn small'
+      go.textContent = 'Fix it'
+      go.setAttribute('aria-label', 'Fix it: ' + s.body)
+      go.onclick = () => fixIdea(local, s)
+      row.appendChild(go)
+    }
+    box.appendChild(row)
+  }
+  $('player-ideas').hidden = false
+}
+
+/** Open a project and ask the agent to make one player idea, marking it done. */
+function fixIdea(p, s) {
+  history.pushState(null, '', '#g=' + p.id)
+  openProject(p)
+  call('POST', '/suggestions/resolve', { id: s.id, status: 'accepted' }).catch(() => undefined)
+  showPane('chat')
+  $('input').value = fixPrompt([s])
+  setTimeout(() => $('composer').requestSubmit(), 0)
+}
+
+/** Sent from the stats page's Fix it (/create?fix=<idea>&slug=<link name>): fix that idea in its project. */
+async function fixFromStats(id, slug) {
+  history.replaceState(null, '', '/create')
+  if (!session()) {
+    try {
+      await signIn()
+    } catch {
+      return
+    }
+  }
+  const p = (await myGames()).find((x) => x.share && x.share.slug === slug)
+  if (!p) {
+    toast("That one is not saved in this browser. Open it where you made it (another browser, or the Mirg desktop app, under Comments) to fix it there.")
+    return
+  }
+  let s
+  try {
+    s = ((await call('POST', '/suggestions', {})).suggestions || []).find((x) => String(x.id) === id)
+  } catch (e) {
+    toast(e.message || 'The idea could not be loaded. Try again from the stats page.')
+    return
+  }
+  if (!s) {
+    history.replaceState(null, '', '#g=' + p.id)
+    openProject(p)
+    toast('That idea was already fixed or dismissed.')
+    return
+  }
+  fixIdea(p, s)
 }
 
 function openProject(p) {
@@ -3492,8 +3585,10 @@ function checkComments() {
 }
 
 function fixPrompt(list) {
-  if (list.length === 1) return 'Players left comments on this game. A change drawn from them: "' + list[0].body + '" Make this change if it suits the game, and tell me what you did.'
-  return 'Players left comments on this game. Changes drawn from them:\n' + list.map((s, i) => i + 1 + '. ' + s.body).join('\n') + '\nMake these changes where they suit the game, and tell me what you did for each.'
+  const it = kindOf(project) === 'app' ? 'app' : 'game'
+  const who = it === 'app' ? 'People using it' : 'Players'
+  if (list.length === 1) return who + ' left comments on this ' + it + '. A change drawn from them: "' + list[0].body + '" Make this change if it suits the ' + it + ', and tell me what you did.'
+  return who + ' left comments on this ' + it + '. Changes drawn from them:\n' + list.map((s, i) => i + 1 + '. ' + s.body).join('\n') + '\nMake these changes where they suit the ' + it + ', and tell me what you did for each.'
 }
 
 function ago(at) {
@@ -4333,6 +4428,13 @@ if (!(await finishGoogleSignIn())) {
     if (session()) location.replace('/stats')
     else signIn().then(() => location.replace('/stats'), () => undefined)
   }
+}
+// Arriving from the stats page's Fix it: /create?fix=<idea id>&slug=<link name>
+{
+  const q = new URLSearchParams(location.search)
+  const fix = q.get('fix')
+  const slug = q.get('slug')
+  if (fix && /^\d{1,12}$/.test(fix) && slug && /^[a-z0-9-]{3,64}$/.test(slug)) fixFromStats(fix, slug)
 }
 // Arriving from "Make a game" with an idea already typed: /create?idea=...
 const idea = new URLSearchParams(location.search).get('idea')

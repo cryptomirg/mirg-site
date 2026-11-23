@@ -192,9 +192,13 @@
     var games = []
     // The tag picked in the bar (?tag=music); old links with ?type=Arcade still work.
     var type = (params.get('tag') || params.get('type') || '').toLowerCase()
-    // Games or apps (apps show on the home page once they launch): ?kind=apps.
-    var kind = params.get('kind') === 'apps' ? 'app' : 'game'
+    // One page for everything. Once apps launch, the top filters are All, Games and Apps (?kind=games
+    // or ?kind=apps), and picking Games or Apps opens its own row of tags under it. Before apps, the
+    // page is games only, with the tag row as before.
+    var appsLive = window.MIRG_APPS_LIVE === true || window.__MIRG_APPS_LIVE === true
+    var kind = params.get('kind') === 'apps' ? 'app' : params.get('kind') === 'games' ? 'game' : ''
     var kindBox = null
+    var gameTags = []
     if (SORTS[params.get('sort')]) sortBox.value = params.get('sort')
     search.value = params.get('q') || ''
 
@@ -204,7 +208,7 @@
       if (search.value.trim()) next.set('q', search.value.trim())
       if (sortBox.value !== 'new') next.set('sort', sortBox.value)
       if (type) next.set('tag', type)
-      if (kind === 'app') next.set('kind', 'apps')
+      if (appsLive && kind) next.set('kind', kind === 'app' ? 'apps' : 'games')
       var query = next.toString()
       try {
         history.replaceState(null, '', location.pathname + (query ? '?' + query : ''))
@@ -215,7 +219,7 @@
       var found = games.filter(function (g) {
         var text = plain(g.title + ' ' + (g.handle || '') + ' ' + (g.tags || []).join(' '))
         return (
-          (g.kind || 'game') === kind &&
+          (!kind || (g.kind || 'game') === kind) &&
           (!type || (g.tags || []).indexOf(type) !== -1 || (g.category || '').toLowerCase() === type) &&
           words.every(function (w) {
             return text.indexOf(w) !== -1
@@ -230,23 +234,51 @@
         g.card = g.card || card(g, true)
         grid.appendChild(g.card)
       })
-      var one = kind === 'app' ? 'app' : 'game'
-      var many = kind === 'app' ? 'apps' : 'games'
-      var ofKind = games.filter(function (g) { return (g.kind || 'game') === kind }).length
-      allTitle.textContent = words.length ? 'Results' : type ? type.charAt(0).toUpperCase() + type.slice(1) + ' ' + many : 'All ' + many
+      var one = kind === 'app' ? 'app' : kind === 'game' || !appsLive ? 'game' : 'creation'
+      var many = kind === 'app' ? 'apps' : kind === 'game' || !appsLive ? 'games' : 'creations'
+      var ofKind = games.filter(function (g) { return !kind || (g.kind || 'game') === kind }).length
+      var label = kind === 'app' ? 'apps' : kind === 'game' || !appsLive ? 'games' : ''
+      allTitle.textContent = words.length ? 'Results' : type ? type.charAt(0).toUpperCase() + type.slice(1) + (label ? ' ' + label : '') : label ? 'All ' + label : 'Everything'
       count.textContent = filtered ? found.length + ' of ' + plural(ofKind, one, many) : plural(ofKind, one, many)
       none.hidden = found.length > 0
-      document.getElementById('games-clear').hidden = !filtered
-      noneText.textContent = 'No ' + (type ? type + ' ' : '') + many + (words.length ? ' match "' + search.value.trim() + '".' : ' yet.')
-      // Suggestions and the tag bar are about games.
+      document.getElementById('games-clear').hidden = !filtered && !(appsLive && kind)
+      noneText.textContent = 'No ' + (type ? type + ' ' : '') + (label || 'games or apps') + (words.length ? ' match "' + search.value.trim() + '".' : ' yet.')
+      // Suggestions are games: they show on Everything and Games.
       if (forYou && kind === 'app') forYou.hidden = true
-      typeBox.hidden = kind === 'app' || !typeBox.children.length
+      // The row of tags: before apps, always; with apps, under Games or Apps once one is picked.
+      typeBox.hidden = (appsLive && !kind) || !typeBox.children.length
       if (kindBox)
         [].forEach.call(kindBox.children, function (b) {
           b.setAttribute('aria-pressed', String(b.dataset.kind === kind))
         })
       ;[].forEach.call(typeBox.children, function (b) {
         b.setAttribute('aria-pressed', String(b.dataset.type === type))
+      })
+    }
+    /** The row of tags for what is shown: games' most played tags, or the apps' most used ones. */
+    function renderTags() {
+      var tags
+      if (kind === 'app') {
+        var counts = {}
+        games.forEach(function (g) {
+          if (g.kind === 'app') (g.tags || []).forEach(function (t) { counts[t] = (counts[t] || 0) + 1 })
+        })
+        tags = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b) }).slice(0, 12)
+      } else tags = gameTags.slice()
+      // A tag picked from a link stays in the row even when it is not among the most used.
+      if (type && tags.indexOf(type) === -1) tags.push(type)
+      typeBox.textContent = ''
+      if (!tags.length) return
+      ;[''].concat(tags).forEach(function (t) {
+        var chip = document.createElement('button')
+        chip.type = 'button'
+        chip.textContent = t || (appsLive ? (kind === 'app' ? 'All apps' : 'All games') : 'All')
+        chip.dataset.type = t
+        chip.addEventListener('click', function () {
+          type = t
+          changed()
+        })
+        typeBox.appendChild(chip)
       })
     }
     function changed() {
@@ -258,6 +290,10 @@
     document.getElementById('games-clear').addEventListener('click', function () {
       search.value = ''
       type = ''
+      if (appsLive && kind) {
+        kind = ''
+        renderTags()
+      }
       changed()
       search.focus()
     })
@@ -276,13 +312,16 @@
         }
         document.getElementById('games-tools').hidden = false
         allHead.hidden = false
-        // Once apps launch (or there are apps to show): Games | Apps above the list.
-        if (window.MIRG_APPS_LIVE || window.__MIRG_APPS_LIVE === true || games.some(function (g) { return g.kind === 'app' })) {
+        // Apps may already be listed (an account testing them): the page then shows everything.
+        if (games.some(function (g) { return g.kind === 'app' })) appsLive = true
+        if (!appsLive) kind = 'game'
+        // With apps: All, Games and Apps at the top.
+        if (appsLive) {
           kindBox = document.createElement('div')
           kindBox.className = 'games-kinds'
           kindBox.setAttribute('role', 'group')
-          kindBox.setAttribute('aria-label', 'Games or apps')
-          ;[['game', 'Games'], ['app', 'Apps']].forEach(function (k) {
+          kindBox.setAttribute('aria-label', 'Show')
+          ;[['', 'All'], ['game', 'Games'], ['app', 'Apps']].forEach(function (k) {
             var b = document.createElement('button')
             b.type = 'button'
             b.dataset.kind = k[0]
@@ -291,13 +330,14 @@
               if (kind === k[0]) return
               kind = k[0]
               type = ''
+              renderTags()
               changed()
             })
             kindBox.appendChild(b)
           })
           typeBox.parentNode.insertBefore(kindBox, typeBox)
         }
-        // The bar: the tags of the most played games, plus a way back to all of them.
+        // The tags of the most played games, from the server; apps' tags come from the apps listed.
         fetch(REST + 'rpc/popular_tags', { method: 'POST', headers: { apikey: KEY, authorization: 'Bearer ' + KEY, 'content-type': 'application/json' }, body: JSON.stringify({ max_count: 12 }) })
           .then(function (r) {
             return r.ok ? r.json() : []
@@ -306,24 +346,10 @@
             return []
           })
           .then(function (rows) {
-            var tags = rows.map(function (r) {
+            gameTags = rows.map(function (r) {
               return r.tag
             })
-            // A tag picked from a link stays in the bar even when it is not among the most played.
-            if (type && tags.indexOf(type) === -1) tags.push(type)
-            if (!tags.length) return
-            ;[''].concat(tags).forEach(function (t) {
-              var chip = document.createElement('button')
-              chip.type = 'button'
-              chip.textContent = t || 'All'
-              chip.dataset.type = t
-              chip.addEventListener('click', function () {
-                type = t
-                changed()
-              })
-              typeBox.appendChild(chip)
-            })
-            typeBox.hidden = false
+            renderTags()
             render()
           })
         render()

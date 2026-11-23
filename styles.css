@@ -1725,18 +1725,15 @@ html.play-filled body {
 }
 .games-kinds {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 4px;
-  width: max-content;
-  margin: 0 auto 14px;
-  padding: 4px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 .games-kinds button {
-  min-width: 88px;
-  padding: 7px 16px;
-  border: 0;
+  min-width: 76px;
+  padding: 8px 18px;
+  border: 1px solid var(--border);
   border-radius: 999px;
   background: none;
   color: var(--muted);
@@ -1745,8 +1742,12 @@ html.play-filled body {
   font-weight: 600;
   cursor: pointer;
 }
+.games-kinds button:hover {
+  color: var(--text);
+}
 .games-kinds button[aria-pressed='true'] {
   background: var(--accent);
+  border-color: var(--accent);
   color: var(--bg);
 }
 .games-types {

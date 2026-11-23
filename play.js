@@ -134,6 +134,8 @@
   // wants (microphone, camera, location): the frame can only be given them before it opens.
   function startApp(info, t) {
     document.querySelectorAll('[data-kind-word]').forEach(function (el) { el.textContent = el.getAttribute('data-kind-word') })
+    var commentBox = document.getElementById('comment-body')
+    if (commentBox) commentBox.placeholder = 'Say something about this app…'
     document.getElementById('play-made').textContent = 'This app was made by describing it to Mirg.'
     frame.title = 'The app'
     var phone = matchMedia('(pointer: coarse)').matches

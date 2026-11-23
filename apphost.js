@@ -21,6 +21,7 @@
   var AI_MAX_OUTPUT = 4096
   var AI_MAX_PROMPT = 60000
   var AI_MAX_FILE = 15 * 1024 * 1024
+  var AI_PER_APP_PER_DAY = 60 // AI requests one app may make for one person on one device in a day
 
   function lsGet(k) {
     try {
@@ -221,6 +222,7 @@
     var localData = 'mirg-app-preview-data:' + (opts.key || 'app') + ':'
     var localLists = 'mirg-app-preview-lists:' + (opts.key || 'app') + ':'
     var aiAllowedKey = 'mirg-app-ai-ok:' + (opts.slug || opts.key || 'app')
+    var aiDayKey = 'mirg-app-ai-day:' + (opts.slug || opts.key || 'app')
 
     // Before anything goes into a shared list for the first time in an app, Mirg says plainly who will
     // see it, so an app cannot pass off a list everyone can read (its maker included) as private.
@@ -462,6 +464,12 @@
       if (a.file && !(a.file instanceof Blob)) throw error('ai_file', 'Send a recording, picture or file as a Blob.')
       if (a.file && a.file.size > AI_MAX_FILE) throw error('ai_file', 'That file is too big to ask about (15 MB at most).')
       if (aiBusy >= 3) throw error('ai_busy', 'Wait for the last answers before asking more.')
+      // A limit per app per day on this device, kept by Mirg's page (an app cannot change it), so an
+      // app cannot keep spending someone's tokens after they allowed it once.
+      var today = new Date().toISOString().slice(0, 10)
+      var used = readJson(aiDayKey, { day: today, n: 0 })
+      if (used.day !== today) used = { day: today, n: 0 }
+      if (!preview && used.n >= AI_PER_APP_PER_DAY) throw error('ai_daily_limit', 'This app has used AI as many times as Mirg allows in a day. Try again tomorrow.')
       var why = 'Sign in to Mirg to use this app\'s AI features. It uses your Mirg tokens; the app never sees your email.'
       return (preview ? Promise.resolve() : needSignIn(why))
         .then(aiConsent)
@@ -481,6 +489,10 @@
           var system = String(a.system || '').slice(0, 8000)
           body.systemInstruction = { parts: [{ text: 'You are an AI feature inside an app someone made with Mirg, used by a member of the public. Be helpful and safe; do not ask for passwords or payment details.' + (system ? '\n\nThe app\'s instructions:\n' + system : '') }] }
           aiBusy++
+          if (!preview) {
+            var count = readJson(aiDayKey, { day: today, n: 0 })
+            lsSet(aiDayKey, JSON.stringify({ day: today, n: (count.day === today ? count.n : 0) + 1 }))
+          }
           return fetch(API + '/proxy/gemini/v1beta/models/' + AI_MODEL + ':generateContent', {
             method: 'POST',
             headers: { authorization: 'Bearer ' + t, 'x-mirg-device': device(), 'x-mirg-client': 'web-other', 'content-type': 'application/json' },
@@ -531,11 +543,13 @@
       // A shared app answers only while its frame shows play.mirg.ai: an app that sends its frame to
       // another site leaves that site nothing to ask for. (The builder's preview has no origin.)
       if (!preview && e.origin !== 'https://play.mirg.ai') return
+      // Answers go only to the address the app is shown from.
+      var replyTo = opts.origin || (preview ? '*' : 'https://play.mirg.ai')
       var d = e.data
       if (!d || d.mirg !== 'app' || typeof d.op !== 'string') return
       var reply = function (ok, value) {
         try {
-          frame.contentWindow.postMessage({ mirg: 'app-reply', id: d.id, ok: ok, value: ok ? value : { code: value.code || 'error', message: value.message || String(value) } }, '*')
+          frame.contentWindow.postMessage({ mirg: 'app-reply', id: d.id, ok: ok, value: ok ? value : { code: value.code || 'error', message: value.message || String(value) } }, replyTo)
         } catch (x) {}
       }
       if (d.op === 'hello') return reply(true, { host: 'mirg', preview: preview, signedIn: preview || Boolean(session()) })

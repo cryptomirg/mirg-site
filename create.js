@@ -905,11 +905,11 @@ function runGame() {
   // dialogs, forms, downloads and links in a new tab (the maker is the one trying it).
   const hosted = appsOn() || project.kind === 'app'
   if (hosted) {
-    frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-pointer-lock allow-modals allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox')
+    frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-pointer-lock allow-modals allow-forms allow-downloads allow-popups')
     frame.setAttribute('allow', 'fullscreen; autoplay; gamepad; clipboard-write; microphone; camera; geolocation')
     frame.title = 'Preview'
     // An app's saved data and AI, answered by this page (apphost.js), kept apart for each project.
-    if (window.MirgAppHost) appHost = window.MirgAppHost.attach({ frame, preview: true, key: project.id, title: project.name })
+    if (window.MirgAppHost) appHost = window.MirgAppHost.attach({ frame, preview: true, key: project.id, title: project.name, origin: PREVIEW_ORIGIN })
   } else {
     frame.setAttribute('sandbox', 'allow-scripts allow-pointer-lock')
     frame.setAttribute('allow', 'fullscreen; autoplay; gamepad')

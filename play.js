@@ -139,8 +139,8 @@
     var phone = matchMedia('(pointer: coarse)').matches
     MirgAppHost.askPermissions(name, t, Array.isArray(info.permissions) ? info.permissions : []).then(function (allowed) {
       frame.setAttribute('allow', MirgAppHost.allowFor(allowed))
-      frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-modals allow-downloads allow-popups allow-popups-to-escape-sandbox')
-      MirgAppHost.attach({ frame: frame, slug: name, title: t })
+      frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-modals allow-downloads allow-popups')
+      MirgAppHost.attach({ frame: frame, slug: name, title: t, origin: PLAY_HOST })
       // On a phone the app fills the screen, with the × to come back to the page.
       if (phone) fill(true)
       frame.src = base

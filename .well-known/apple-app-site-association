@@ -1,0 +1,12 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["43Y8S2CCR7.ai.mirg.games"],
+        "components": [
+          { "/": "/play", "?": { "g": "?*" }, "comment": "A game's page on mirg.ai opens that game in the Mirg iPhone app; the app sends anything it does not show back to www.mirg.ai in Safari." }
+        ]
+      }
+    ]
+  }
+}

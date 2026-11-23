@@ -1586,6 +1586,26 @@ select:not([multiple]) {
 }
 
 /* Share: tags as chips with an input after them, and the description. */
+/* Game or app: Mirg's guess when the Share window opens, which the maker can change. */
+.share-kind {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+  font-size: 14px;
+}
+.share-kind[hidden] {
+  display: none;
+}
+.share-kind select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  padding: 5px 8px;
+}
 .share-field {
   display: flex;
   flex-direction: column;

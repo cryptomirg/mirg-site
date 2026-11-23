@@ -892,7 +892,7 @@ function runGame() {
   if (frame) frame.remove()
   if (!project || !project.files['index.html']) {
     $('game-empty').hidden = false
-    $('game-empty').textContent = appsOn() || (project && project.kind === 'app') ? 'What you make will appear here.' : 'Your game will appear here.'
+    $('game-empty').textContent = 'What you make will appear here.'
     frame = null
     return Promise.resolve(false)
   }
@@ -1165,7 +1165,7 @@ async function runTool(name, input) {
       await sleep(2000)
       const errors = logs.filter((l) => l.level === 'error').length
       const text = (ok ? 'The game loaded.' : 'The page did not finish loading within 8 seconds.') + '\n' + logText(logs, 60)
-      return { text, title: 'Ran the game: ' + (errors ? errors + (errors === 1 ? ' error' : ' errors') : 'no errors'), detail: logText(logs, 60), bad: errors > 0, ran: true }
+      return { text, title: 'Ran it: ' + (errors ? errors + (errors === 1 ? ' error' : ' errors') : 'no errors'), detail: logText(logs, 60), bad: errors > 0, ran: true }
     }
     case 'game_logs': {
       const text = logText(logs, 120)
@@ -1206,7 +1206,7 @@ function fileChanged(path) {
 // Choices: model, thinking level, preview size. Remembered in this browser.
 
 const MODELS = [
-  { id: 'claude-opus-5-5', label: 'Opus 5.5', group: 'Claude', hint: 'Best for building games. The default.' },
+  { id: 'claude-opus-5-5', label: 'Opus 5.5', group: 'Claude', hint: 'Best for building. The default.' },
   { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5', group: 'Claude', hint: 'Faster and half the cost.' },
   { id: 'claude-haiku-4-5', label: 'Haiku 4.5', group: 'Claude', hint: 'Fastest and cheapest. Good for small tweaks.', effort: false },
   { id: 'claude-fable-5-2', label: 'Fable 5.2', group: 'Claude', hint: 'Most capable, most expensive.' },
@@ -1404,7 +1404,7 @@ const ANY_SYSTEM = [
   `# Game or app
 Work out from the request what to make; never ask the user to choose between a game and an app.
 - Something to play (a game, a puzzle, a toy, a quiz to play for points) is a game: follow "Every game".
-- Something to use (a tool, tracker, recorder, list, planner, calculator, sign-up sheet, flashcards, a site for a club or class) is an app: follow "Every app".
+- Something to use (a tool, tracker, recorder, list, planner, calculator, sign-up sheet, flashcards, a site for a club or class) is an app: follow "Every app". Every app, even a small one, loads the Mirg toolkit and keeps what people would be upset to lose (a count, a list, their notes) with Mirg.data, so it is there on all their devices; that is also how Mirg knows to share it as an app.
 - "A phone app" or "a mobile app" means an app designed for phones first. Mirg makes web apps that open from a link on any phone or computer and can be added to the home screen; never make a native, app store or desktop program, and if asked for one say so in one sentence and build the web app.
 - When it could be either, pick the likelier one, say which in one short line, and build it.
 - Once a project is one or the other, keep it that way unless the user asks for something different.`,
@@ -1425,9 +1425,16 @@ The Share button at the top gives the user a link anyone can open on a computer 
 const systemFor = (p) => (appsOn() ? ANY_SYSTEM : p && p.kind === 'app' ? APP_SYSTEM : SYSTEM)
 /** A game or an app, as it will be shared: an app is one that uses the Mirg app toolkit. */
 function kindOf(p) {
-  if (p && p.kind === 'app') return 'app'
-  const code = p ? Object.keys(p.files).filter((f) => /\.(html?|m?js)$/i.test(f)).map((f) => p.files[f]).join('\n') : ''
-  return appsOn() && code.includes('play.mirg.ai/_mirg/app.js') ? 'app' : 'game'
+  if (!p) return 'game'
+  if (usesToolkit(p)) return 'app'
+  return p.kind === 'app' ? 'app' : 'game'
+}
+/** An app built on Mirg's toolkit (saving, sign-in, AI) is always an app: only apps get the toolkit's host. */
+function usesToolkit(p) {
+  if (!p || !appsOn()) return false
+  return Object.keys(p.files)
+    .filter((f) => /\.(html?|m?js)$/i.test(f))
+    .some((f) => typeof p.files[f] === 'string' && p.files[f].includes('play.mirg.ai/_mirg/app.js'))
 }
 
 const SUMMARY_REQUEST =
@@ -2277,7 +2284,7 @@ function setRunning(on) {
   $('send').title = on ? 'Sends when the agent finishes' : ''
   $('stop').hidden = !on
   $('elapsed').hidden = !on
-  $('input').placeholder = on ? 'Mirg is working. Type to queue your next message…' : 'Ask for a change: a double jump, a boss, more enemies…'
+  $('input').placeholder = on ? 'Mirg is working. Type to queue your next message…' : 'Ask for a change: a new feature, a different look, something to fix…'
   $('new-chat').disabled = on
   $('source').readOnly = on
   clearInterval(ticker)
@@ -4104,12 +4111,12 @@ let pictureTicket = 0
 async function takeSharePicture() {
   const ticket = ++pictureTicket
   const forProject = project
-  showSharePicture(null, 'Taking a picture of the game…')
+  showSharePicture(null, 'Taking a picture of it…')
   const shot = await snapshot().catch(() => null)
   // A picture that arrives after the box moved on to something else is not used.
   if (ticket !== pictureTicket || forProject !== project || !$('sharebox').open) return
-  if (shot) showSharePicture(shot, 'A picture of your game as it is now.')
-  else showSharePicture(titleCard(titleOf(project.files) || project.name), "Your game couldn't be pictured, so it gets a card with its name. Take a picture when it shows something, or upload your own.")
+  if (shot) showSharePicture(shot, 'A picture of it as it is now.')
+  else showSharePicture(titleCard(titleOf(project.files) || project.name), "It couldn't be pictured, so it gets a card with its name. Take a picture when it shows something, or upload your own.")
 }
 
 $('share-retake').onclick = async () => {
@@ -4129,7 +4136,7 @@ $('share-upload-input').onchange = async (e) => {
     project.cover = await readCover(f)
     pictureTicket++
     save()
-    showSharePicture(project.cover, 'Your picture. It shows on the games page.')
+    showSharePicture(project.cover, 'Your picture. It shows on mirg.ai.')
   } catch (err) {
     toast('Could not read that picture. Try a PNG or JPEG.')
   }
@@ -4158,13 +4165,12 @@ $('share').onclick = async () => {
     $('share-listed').checked = shared.listed !== false
     $('share-phone').checked = Boolean(shared.phone)
   }
-  // An app: its own wording (listed apps show once apps launch). The phone tick is for the iPhone
-  // app, which shows games only, so apps never set it.
-  const isApp = kindOf(project) === 'app'
-  $('share-phone').closest('label').hidden = isApp
-  $('share-listed').closest('label').lastChild.textContent = isApp ? " Show it on mirg.ai's apps page" : " Show it on mirg.ai's games page"
-  $('share-description').placeholder = isApp ? 'What does the app do, and who is it for?' : 'What do you do in the game, and what makes it fun?'
-  $('share-go').textContent = shared ? (isApp ? 'Update shared app' : 'Update shared game') : 'Share'
+  // Game or app: what it was shared as, what the maker picked, or Mirg's guess (below). Built on the
+  // toolkit, it is an app and cannot be changed.
+  $('share-kind-row').hidden = !appsOn()
+  $('share-kind').disabled = usesToolkit(project)
+  $('share-kind-note').textContent = usesToolkit(project) ? 'It saves or uses AI through Mirg, so it is shared as an app.' : ''
+  showShareKind()
   $('share-go').disabled = false
   // Tags and description as last shared; a game with no tags yet gets Mirg's suggestions.
   shareTags = shared && Array.isArray(shared.tags) ? shared.tags.slice(0, TAGS_MAX) : []
@@ -4172,19 +4178,52 @@ $('share').onclick = async () => {
   $('share-tags-note').textContent = ''
   renderTags()
   $('sharebox').showModal()
-  if (!shareTags.length) {
+  // Mirg's AI suggests tags for something not tagged yet, and whether it is a game or an app for
+  // something not shared or picked yet (like the tags, the maker can change it).
+  const guessKind = appsOn() && !shared && !project.kind && !usesToolkit(project)
+  if (!shareTags.length || guessKind) {
     const asked = project
-    $('share-tags-note').textContent = 'Suggesting tags…'
+    if (!shareTags.length) $('share-tags-note').textContent = 'Suggesting tags…'
+    if (guessKind) $('share-kind-note').textContent = 'Mirg is checking…'
     suggestDetails(false)
       .then((out) => {
-        if (project !== asked || shareTags.length) return
+        if (project !== asked) return
+        if (guessKind && !project.kind) {
+          project.kind = out.kind === 'app' ? 'app' : 'game'
+          save()
+          showShareKind()
+          $('share-kind-note').textContent = 'Mirg\'s guess. Change it if it is wrong.'
+        }
+        if (shareTags.length) return
         for (const t of out.tags || []) addTag(t)
         $('share-tags-note').textContent = shareTags.length ? 'Suggested by Mirg. Remove any, or add your own.' : ''
       })
-      .catch(() => ($('share-tags-note').textContent = ''))
+      .catch(() => {
+        $('share-tags-note').textContent = ''
+        if (guessKind) $('share-kind-note').textContent = ''
+      })
   }
-  if (project.cover) showSharePicture(project.cover, 'Your picture. It shows on the games page.')
+  if (project.cover) showSharePicture(project.cover, 'Your picture. It shows on mirg.ai.')
   else await takeSharePicture()
+}
+/** The Share window's wording for a game or an app. The phone tick is for the iPhone app, which shows games only. */
+function showShareKind() {
+  const isApp = kindOf(project) === 'app'
+  const shared = project.share
+  $('share-kind').value = isApp ? 'app' : 'game'
+  $('share-title').textContent = isApp ? 'Share your app' : 'Share your game'
+  $('share-lead').textContent = isApp ? 'Anyone with the link can use it, on a computer or a phone.' : 'Anyone with the link can play it, on a computer or a phone.'
+  $('share-phone').closest('label').hidden = isApp
+  $('share-description').placeholder = isApp ? 'What does the app do, and who is it for?' : 'What do you do in the game, and what makes it fun?'
+  $('share-description-hint').textContent = isApp ? 'optional, shown under the app' : 'optional, shown under the game'
+  $('share-go').textContent = shared ? (isApp ? 'Update shared app' : 'Update shared game') : 'Share'
+}
+$('share-kind').onchange = () => {
+  if (!project || usesToolkit(project)) return
+  project.kind = $('share-kind').value === 'app' ? 'app' : 'game'
+  save()
+  $('share-kind-note').textContent = ''
+  showShareKind()
 }
 $('share-close').onclick = () => $('sharebox').close()
 $('share-copy').onclick = () => {

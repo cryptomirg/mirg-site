@@ -1832,6 +1832,10 @@ html.play-filled body {
   margin: -50px 0 40px;
   font-size: 14px;
 }
+/* Under a description or tags, the row sits below them instead of pulling up into the bar's space. */
+.play-about:not([hidden]) + .play-report-row {
+  margin-top: 0;
+}
 .play-report-row .linklike {
   color: var(--muted);
 }

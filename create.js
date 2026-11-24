@@ -1655,7 +1655,74 @@ function cutNote(kept, tokens) {
   )
 }
 
-async function postModel(path, body, signal, extra) {
+// The one-time "confirm you're a person" check (Cloudflare Turnstile) that new accounts pass before
+// their first free build. The server asks for it with mirg_human; one box at a time.
+let humanWait = null
+function loadTurnstile() {
+  if (window.turnstile) return Promise.resolve()
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+    script.async = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('The check could not load. Check your connection and try again.'))
+    document.head.appendChild(script)
+  })
+}
+function humanCheck() {
+  if (humanWait) return humanWait
+  humanWait = new Promise((resolve, reject) => {
+    const key = me && me.humanSiteKey
+    if (!key) return reject(new Error('Mirg could not start the quick check. Reload the page and try again.'))
+    const back = document.createElement('div')
+    back.className = 'human-check'
+    back.setAttribute('role', 'dialog')
+    back.setAttribute('aria-modal', 'true')
+    back.setAttribute('aria-labelledby', 'human-check-title')
+    back.innerHTML =
+      '<div class="human-box"><h2 id="human-check-title">One quick check</h2>' +
+      "<p>Confirm you're a person to start building on the free plan. You only do this once.</p>" +
+      '<div class="human-widget"></div><button type="button" class="btn">Cancel</button></div>'
+    document.body.appendChild(back)
+    const close = () => back.remove()
+    back.querySelector('button').onclick = () => {
+      close()
+      reject(new Error('Building on the free plan needs the quick check first. Send your message again to do it.'))
+    }
+    loadTurnstile().then(
+      () => {
+        window.turnstile.render(back.querySelector('.human-widget'), {
+          sitekey: key,
+          callback: (answer) => {
+            call('POST', '/human', { token: answer }).then(
+              () => {
+                close()
+                resolve()
+              },
+              (e) => {
+                close()
+                reject(e)
+              }
+            )
+          },
+          'error-callback': () => {
+            close()
+            reject(new Error('The check did not go through. Reload the page and try again.'))
+          }
+        })
+      },
+      (e) => {
+        close()
+        reject(e)
+      }
+    )
+  }).finally(() => {
+    humanWait = null
+  })
+  return humanWait
+}
+
+async function postModel(path, body, signal, extra, checked) {
   const t = await token()
   if (!t) throw Object.assign(new Error('Your session ended. Sign in again.'), { signin: true })
   const response = await fetch(API + '/proxy/' + path, {
@@ -1667,6 +1734,10 @@ async function postModel(path, body, signal, extra) {
   if (!response.ok) {
     const data = await response.json().catch(() => ({}))
     const err = (Array.isArray(data) ? data[0] && data[0].error : data && data.error) || {}
+    if ((err.type || err.code) === 'mirg_human' && !checked) {
+      await humanCheck()
+      return postModel(path, body, signal, extra, true)
+    }
     const message = err.message || 'The model request failed (' + response.status + ').'
     throw Object.assign(new Error(message), { code: err.type || err.code, status: response.status, param: err.param })
   }

@@ -16,12 +16,12 @@
   var API = SUPABASE + '/functions/v1/api'
   var DATA = SUPABASE + '/functions/v1/app-data'
   var SESSION_KEY = 'mirg-web-session'
-  var AI_MODEL = 'gemini-3.8-flash'
   var DEVICE_LIMIT = 2 * 1024 * 1024 // characters of on-device data per app
   var AI_MAX_OUTPUT = 4096
   var AI_MAX_PROMPT = 60000
   var AI_MAX_FILE = 15 * 1024 * 1024
   var AI_PER_APP_PER_DAY = 60 // AI requests one app may make for one person on one device in a day
+  var AI_TOKENS_PER_APP_PER_DAY = 50000 // Mirg tokens one app may use for one person on one device in a day
 
   function lsGet(k) {
     try {
@@ -444,11 +444,18 @@
 
     // ---------- AI, paid from the visitor's own Mirg tokens ----------
     var aiBusy = 0
-    function aiConsent() {
-      if (preview || lsGet(aiAllowedKey) === 'yes') return Promise.resolve()
+    var TIER_RANK = { standard: 0, smart: 1, best: 2 }
+    /** Asked before an app first uses AI, and again before it first uses a pricier model. */
+    function aiConsent(tier) {
+      var allowed = lsGet(aiAllowedKey)
+      var had = allowed === 'yes' ? 0 : TIER_RANK[allowed] === undefined ? -1 : TIER_RANK[allowed]
+      if (preview || had >= TIER_RANK[tier]) return Promise.resolve()
+      var pricier = tier !== 'standard'
       return ask(
-        'Let this app use AI?',
-        'This app uses Mirg AI. Each request uses some of your Mirg tokens, usually a few hundred to a few thousand. You can stop at any time by closing the app.',
+        pricier ? 'Let this app use a more powerful AI?' : 'Let this app use AI?',
+        pricier
+          ? 'This app uses a more powerful AI model, so each request uses more of your Mirg tokens than usual. Mirg limits how much one app can use in a day. You can stop at any time by closing the app.'
+          : 'This app uses Mirg AI. Each request uses a small amount of your Mirg tokens. Mirg limits how much one app can use in a day. You can stop at any time by closing the app.',
         [
           { label: 'Not now', value: false },
           { label: 'Allow', value: true, primary: true }
@@ -456,9 +463,123 @@
         title
       ).then(function (yes) {
         if (!yes) throw error('ai_declined', 'AI was not allowed.')
-        lsSet(aiAllowedKey, 'yes')
+        lsSet(aiAllowedKey, tier)
       })
     }
+
+    // Which model answers. Apps may ask for a tier ('standard', the default; 'smart'; 'best') or a
+    // model by name. Text, pictures and PDFs go to the chosen model; recordings, video and other
+    // files go to the Gemini model of the same tier, since only Gemini reads audio and video.
+    var AI_TIERS = {
+      standard: { text: ['anthropic', 'claude-haiku-5-5'], media: ['gemini', 'gemini-3.5-flash-lite'] },
+      smart: { text: ['anthropic', 'claude-sonnet-5-5'], media: ['gemini', 'gemini-4-hydrogen'] },
+      best: { text: ['anthropic', 'claude-opus-5-5'], media: ['gemini', 'gemini-4-carbon'] }
+    }
+    var AI_MODELS = {
+      'claude-haiku-5-5': ['anthropic', 'standard'],
+      'claude-sonnet-5-5': ['anthropic', 'smart'],
+      'claude-opus-5-5': ['anthropic', 'best'],
+      'claude-fable-5-2': ['anthropic', 'best'],
+      'gpt-6-luna': ['openai', 'standard'],
+      'gpt-6.2-sol': ['openai', 'smart'],
+      'gpt-6.2-astra': ['openai', 'best'],
+      'gemini-3.5-flash-lite': ['gemini', 'standard'],
+      'gemini-4-hydrogen': ['gemini', 'smart'],
+      'gemini-4-argon': ['gemini', 'best'],
+      'gemini-4-carbon': ['gemini', 'best']
+    }
+    // Dollars per million tokens (input, output), to keep each app within its daily allowance.
+    var AI_PRICES = {
+      'claude-haiku-5-5': [0.1, 0.5], 'claude-sonnet-5-5': [2, 10], 'claude-opus-5-5': [4, 20], 'claude-fable-5-2': [8, 40],
+      'gpt-6-luna': [0.1, 0.5], 'gpt-6.2-sol': [2, 10], 'gpt-6.2-astra': [8, 40],
+      'gemini-3.5-flash-lite': [0.3, 2.5], 'gemini-4-hydrogen': [1.5, 7.5], 'gemini-4-argon': [4, 20], 'gemini-4-carbon': [4, 20]
+    }
+    function pickModel(a) {
+      var want = a.model === undefined || a.model === null || a.model === '' ? 'standard' : String(a.model)
+      var tier, chosen
+      if (AI_TIERS[want]) {
+        tier = want
+        chosen = AI_TIERS[want].text
+      } else if (AI_MODELS[want]) {
+        tier = AI_MODELS[want][1]
+        chosen = [AI_MODELS[want][0], want]
+      } else {
+        throw error('ai_model', 'Mirg does not offer "' + want + '" inside apps. Use "standard", "smart", "best" or one of: ' + Object.keys(AI_MODELS).join(', ') + '.')
+      }
+      var type = a.file ? String(a.file.type || '') : ''
+      var readable = !a.file || /^image\/(png|jpeg|gif|webp)$/.test(type) || type === 'application/pdf'
+      if (!readable && chosen[0] !== 'gemini') chosen = AI_TIERS[tier].media
+      return { tier: tier, provider: chosen[0], model: chosen[1] }
+    }
+
+    var SYSTEM_BASE = 'You are an AI feature inside an app someone made with Mirg, used by a member of the public. Be helpful and safe; do not ask for passwords or payment details.'
+    function requestFor(pick, a, prompt, data) {
+      var system = String(a.system || '').slice(0, 8000)
+      system = SYSTEM_BASE + (system ? '\n\nThe app\'s instructions:\n' + system : '') + (a.json ? '\n\nAnswer with only valid JSON: no other text and no code fences.' : '')
+      var max = Math.min(Math.max(Number(a.maxTokens) || 2048, 64), AI_MAX_OUTPUT)
+      var type = a.file ? a.file.type || 'application/octet-stream' : ''
+      if (pick.provider === 'anthropic') {
+        var content = []
+        if (data !== null) content.push(type === 'application/pdf' ? { type: 'document', source: { type: 'base64', media_type: type, data: data } } : { type: 'image', source: { type: 'base64', media_type: type, data: data } })
+        if (prompt.trim()) content.push({ type: 'text', text: prompt })
+        var body = { model: pick.model, max_tokens: max, system: system, messages: [{ role: 'user', content: content }] }
+        // Short answers inside an app: as little thinking as each model allows.
+        if (pick.model === 'claude-haiku-5-5') {
+          body.thinking = { type: 'disabled' }
+          body.output_config = { effort: 'low' }
+        } else body.output_config = { effort: 'low' }
+        return { path: '/proxy/anthropic/v1/messages', headers: { 'anthropic-version': '2023-06-01' }, body: body }
+      }
+      if (pick.provider === 'openai') {
+        var input = []
+        if (data !== null) input.push(type === 'application/pdf' ? { type: 'input_file', filename: a.file.name || 'file.pdf', file_data: 'data:' + type + ';base64,' + data } : { type: 'input_image', image_url: 'data:' + type + ';base64,' + data })
+        if (prompt.trim()) input.push({ type: 'input_text', text: prompt })
+        var req = { model: pick.model, instructions: system, input: [{ role: 'user', content: input }], max_output_tokens: max, reasoning: { effort: 'low' } }
+        if (a.json) req.text = { format: { type: 'json_object' } }
+        return { path: '/proxy/openai/v1/responses', headers: {}, body: req }
+      }
+      var parts = []
+      if (data !== null) parts.push({ inline_data: { mime_type: type, data: data } })
+      if (prompt.trim()) parts.push({ text: prompt })
+      return {
+        path: '/proxy/gemini/v1beta/models/' + pick.model + ':generateContent',
+        headers: {},
+        body: {
+          contents: [{ role: 'user', parts: parts }],
+          systemInstruction: { parts: [{ text: system }] },
+          generationConfig: Object.assign({ maxOutputTokens: max }, a.json ? { responseMimeType: 'application/json' } : {})
+        }
+      }
+    }
+    /** The answer's text and how many tokens it used, from any of the three providers. */
+    function readAnswer(provider, d) {
+      if (provider === 'anthropic') {
+        if (d.stop_reason === 'refusal') return { blocked: true }
+        return {
+          text: (d.content || []).filter(function (b) { return b.type === 'text' }).map(function (b) { return b.text }).join(''),
+          input: (d.usage && (d.usage.input_tokens || 0) + (d.usage.cache_creation_input_tokens || 0) + (d.usage.cache_read_input_tokens || 0)) || 0,
+          output: (d.usage && d.usage.output_tokens) || 0
+        }
+      }
+      if (provider === 'openai') {
+        var text = ''
+        ;(d.output || []).forEach(function (o) {
+          ;(o.content || []).forEach(function (c) {
+            if (c.type === 'output_text') text += c.text
+          })
+        })
+        return { text: text, input: (d.usage && d.usage.input_tokens) || 0, output: (d.usage && d.usage.output_tokens) || 0 }
+      }
+      var c = d.candidates && d.candidates[0]
+      var said = ((c && c.content && c.content.parts) || []).map(function (p) { return p.thought ? '' : p.text || '' }).join('')
+      var u = d.usageMetadata || {}
+      return { text: said, blocked: !said && c && c.finishReason && c.finishReason !== 'STOP', input: u.promptTokenCount || 0, output: (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0) }
+    }
+    function parseJson(text) {
+      var t = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
+      return JSON.parse(t)
+    }
+
     function askAi(a) {
       var prompt = String(a.prompt || '')
       if (!prompt.trim() && !a.file) throw error('ai_empty', 'There is nothing to ask.')
@@ -466,39 +587,41 @@
       if (a.file && !(a.file instanceof Blob)) throw error('ai_file', 'Send a recording, picture or file as a Blob.')
       if (a.file && a.file.size > AI_MAX_FILE) throw error('ai_file', 'That file is too big to ask about (15 MB at most).')
       if (aiBusy >= 3) throw error('ai_busy', 'Wait for the last answers before asking more.')
-      // A limit per app per day on this device, kept by Mirg's page (an app cannot change it), so an
-      // app cannot keep spending someone's tokens after they allowed it once.
+      var pick = pickModel(a)
+      // Limits per app per day on this device, kept by Mirg's page (an app cannot change them), so an
+      // app cannot keep spending someone's tokens after they allowed it once: a number of requests,
+      // and an amount of Mirg tokens (a few requests on the most powerful models use it up).
       var today = new Date().toISOString().slice(0, 10)
-      var used = readJson(aiDayKey, { day: today, n: 0 })
-      if (used.day !== today) used = { day: today, n: 0 }
-      if (!preview && used.n >= AI_PER_APP_PER_DAY) throw error('ai_daily_limit', 'This app has used AI as many times as Mirg allows in a day. Try again tomorrow.')
+      var used = readJson(aiDayKey, { day: today, n: 0, tokens: 0 })
+      if (used.day !== today) used = { day: today, n: 0, tokens: 0 }
+      if (!preview && (used.n >= AI_PER_APP_PER_DAY || (used.tokens || 0) >= AI_TOKENS_PER_APP_PER_DAY)) throw error('ai_daily_limit', 'This app has used as much AI as Mirg allows in a day. Try again tomorrow.')
       var why = 'Sign in to Mirg to use this app\'s AI features. It uses your Mirg tokens; the app never sees your email.'
       return (preview ? Promise.resolve() : needSignIn(why))
-        .then(aiConsent)
+        .then(function () {
+          return aiConsent(pick.tier)
+        })
         .then(function () {
           return Promise.all([token(), a.file ? base64(a.file) : Promise.resolve(null)])
         })
         .then(function (got) {
           var t = got[0]
           if (!t) throw error('sign_in', 'Sign in to Mirg first.')
-          var parts = []
-          if (got[1] !== null) parts.push({ inline_data: { mime_type: a.file.type || 'application/octet-stream', data: got[1] } })
-          if (prompt.trim()) parts.push({ text: prompt })
-          var body = {
-            contents: [{ role: 'user', parts: parts }],
-            generationConfig: Object.assign({ maxOutputTokens: Math.min(Math.max(Number(a.maxTokens) || 2048, 64), AI_MAX_OUTPUT) }, a.json ? { responseMimeType: 'application/json' } : {})
-          }
-          var system = String(a.system || '').slice(0, 8000)
-          body.systemInstruction = { parts: [{ text: 'You are an AI feature inside an app someone made with Mirg, used by a member of the public. Be helpful and safe; do not ask for passwords or payment details.' + (system ? '\n\nThe app\'s instructions:\n' + system : '') }] }
+          var req = requestFor(pick, a, prompt, got[1])
           aiBusy++
-          if (!preview) {
-            var count = readJson(aiDayKey, { day: today, n: 0 })
-            lsSet(aiDayKey, JSON.stringify({ day: today, n: (count.day === today ? count.n : 0) + 1 }))
+          var note = function (input, output) {
+            if (preview) return
+            var price = AI_PRICES[pick.model] || [4, 20]
+            var count = readJson(aiDayKey, { day: today, n: 0, tokens: 0 })
+            if (count.day !== today) count = { day: today, n: 0, tokens: 0 }
+            count.n++
+            // Mirg tokens: 125,000 to a dollar of AI cost.
+            count.tokens = (count.tokens || 0) + Math.ceil(((input * price[0] + output * price[1]) / 1e6) * 125000)
+            lsSet(aiDayKey, JSON.stringify(count))
           }
-          return fetch(API + '/proxy/gemini/v1beta/models/' + AI_MODEL + ':generateContent', {
+          return fetch(API + req.path, {
             method: 'POST',
-            headers: { authorization: 'Bearer ' + t, 'x-mirg-device': device(), 'x-mirg-client': 'web-other', 'content-type': 'application/json' },
-            body: JSON.stringify(body)
+            headers: Object.assign({ authorization: 'Bearer ' + t, 'x-mirg-device': device(), 'x-mirg-client': 'web-other', 'content-type': 'application/json' }, req.headers),
+            body: JSON.stringify(req.body)
           })
             .catch(function () {
               throw error('offline', 'Mirg could not be reached. Check the connection.')
@@ -515,21 +638,17 @@
                   }
                   throw error('ai_error', msg)
                 }
-                var c = d.candidates && d.candidates[0]
-                var text = ((c && c.content && c.content.parts) || [])
-                  .map(function (p) {
-                    return p.text || ''
-                  })
-                  .join('')
-                if (!text && c && c.finishReason && c.finishReason !== 'STOP') throw error('ai_blocked', 'The AI would not answer that.')
+                var out = readAnswer(pick.provider, d)
+                note(out.input || 0, out.output || 0)
+                if (out.blocked) throw error('ai_blocked', 'The AI would not answer that.')
                 if (a.json) {
                   try {
-                    return JSON.parse(text)
+                    return parseJson(out.text)
                   } catch (e) {
                     throw error('ai_json', 'The AI did not answer in the expected format. Try again.')
                   }
                 }
-                return text
+                return out.text
               })
             })
             .finally(function () {

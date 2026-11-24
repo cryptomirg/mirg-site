@@ -1208,15 +1208,20 @@ function fileChanged(path) {
 const MODELS = [
   { id: 'claude-opus-5-5', label: 'Opus 5.5', group: 'Claude', hint: 'Best for building. The default.' },
   { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5', group: 'Claude', hint: 'Faster and half the cost.' },
-  { id: 'claude-haiku-4-5', label: 'Haiku 4.5', group: 'Claude', hint: 'Fastest and cheapest. Good for small tweaks.', effort: false },
+  { id: 'claude-haiku-5-5', label: 'Haiku 5.5', group: 'Claude', hint: 'Fastest and cheapest. Good for small tweaks.' },
   { id: 'claude-fable-5-2', label: 'Fable 5.2', group: 'Claude', hint: 'Most capable, most expensive.' },
-  { id: 'gpt-6-astra', label: 'GPT-6 Astra', group: 'OpenAI', hint: "OpenAI's most capable model." },
-  { id: 'gpt-6.1-sol', label: 'GPT-6.1 Sol', group: 'OpenAI', hint: 'Near-Astra quality at lower cost.' },
+  { id: 'gpt-6.2-astra', label: 'GPT-6.2 Astra', group: 'OpenAI', hint: "OpenAI's most capable model." },
+  { id: 'gpt-6.2-sol', label: 'GPT-6.2 Sol', group: 'OpenAI', hint: 'Near-Astra quality at lower cost.' },
   { id: 'gpt-6-luna', label: 'GPT-6 Luna', group: 'OpenAI', hint: "OpenAI's fastest, cheapest model." },
-  { id: 'gemini-4-argon', label: 'Gemini 4 Argon', group: 'Google', hint: "Google's flagship." },
-  { id: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro (preview)', group: 'Google', hint: "Google's previous flagship." },
-  { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash', group: 'Google', hint: 'Fast and inexpensive.' },
-  { id: 'claude-fable-5-1', label: 'Fable 5.1', group: 'More models', hint: 'The previous Fable.' }
+  { id: 'gemini-4-carbon', label: 'Gemini 4 Carbon', group: 'Google', hint: "Google's most capable model." },
+  { id: 'gemini-4-argon', label: 'Gemini 4 Argon', group: 'Google', hint: 'Near-Carbon quality, faster.' },
+  { id: 'gemini-4-hydrogen', label: 'Gemini 4 Hydrogen', group: 'Google', hint: 'Fast and inexpensive.' },
+  { id: 'claude-fable-5-1', label: 'Fable 5.1', group: 'More models', hint: 'The previous Fable.' },
+  { id: 'gpt-6-astra', label: 'GPT-6 Astra', group: 'More models', hint: 'The previous Astra.' },
+  { id: 'gpt-6.1-sol', label: 'GPT-6.1 Sol', group: 'More models', hint: 'The previous Sol.' },
+  { id: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro (preview)', group: 'More models', hint: 'Older Pro.' },
+  { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash', group: 'More models', hint: 'The previous Flash.' },
+  { id: 'claude-haiku-4-5', label: 'Haiku 4.5', group: 'More models', hint: 'The previous Haiku.', effort: false }
 ]
 const EFFORTS = [
   { id: 'low', label: 'Low', hint: 'Fastest and uses the fewest tokens. Good for small changes.' },
@@ -1377,7 +1382,7 @@ The loop is: build, run, fix. The user tries the app themselves and tells you wh
   - await Mirg.data.set(key, value) / get / remove / keys: kept in the person's Mirg account, on every device they use. Use it for what people would be upset to lose (their notes, habits, budget). Mirg asks them to sign in the first time it is needed.
   - const list = Mirg.shared('name') with await list.all(), list.add(data), list.update(id, data), list.remove(id): one list that everyone using the app sees (sign-up sheets, polls, guest books, team checklists). all() returns [{ id, data, by, mine, createdAt }], newest first; only the person who added a record (mine) or the app's maker can change it. Everyone using the app, including its maker, can read a shared list, and Mirg tells people so before they add to one: never put private things (finances, health, IDs, personal notes) in a shared list; keep them with Mirg.data. Load the list again to see others' changes.
   - await Mirg.user() returns { signedIn, id, name }. Never ask anyone for their name, email or password.
-  - await Mirg.ai.ask(prompt, { system, json: true, maxTokens }) for AI features (summaries, ideas, quizzes from notes); await Mirg.ai.ask(prompt, { file: blob }) to ask about a recording, photo or PDF; await Mirg.ai.transcribe(audioBlob) for speech to text. Each use costs the person their Mirg tokens, so call it only when they press a button for it, and show that it is working.
+  - await Mirg.ai.ask(prompt, { system, json: true, maxTokens }) for AI features (summaries, ideas, quizzes from notes); await Mirg.ai.ask(prompt, { file: blob }) to ask about a recording, photo or PDF; await Mirg.ai.transcribe(audioBlob) for speech to text. Each use costs the person their Mirg tokens, so call it only when they press a button for it, and show that it is working. Pass { model } to choose the AI: leave it out for 'standard' (fast and cheapest, right for most features: summaries, sorting, short answers, transcripts), 'smart' (better for long documents or tricky reasoning, and uses more of each person's tokens) or 'best' (the most capable, and much more expensive for each person); a model id also works (claude-haiku-5-5, claude-sonnet-5-5, claude-opus-5-5, claude-fable-5-2, gpt-6-luna, gpt-6.2-sol, gpt-6.2-astra, gemini-3.5-flash-lite, gemini-4-hydrogen, gemini-4-argon, gemini-4-carbon), and Mirg picks a model that can read a recording when one is sent. The first time you add AI to an app, unless the user already said which model or tier they want, ask them in one short question which to use (Standard, recommended; Smarter; Best), saying in a few words that the pricier ones use more of their visitors' tokens; then build with their answer and do not ask again in that project unless they bring it up. Use 'smart' or 'best' only when the user chose it.
   - Values are anything JSON can hold (store recordings and photos on the device as data URLs only if small; prefer offering a download).
   - Any call can fail: catch it, show a short friendly message, and never lose what the person typed. error.code is 'sign_in' when they chose not to sign in.
   - Mirg.download(blobOrText, 'name.ext') saves a file to their device (a recording as .webm, a list as .csv).

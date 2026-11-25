@@ -1777,8 +1777,28 @@ function withFiles(text, files) {
   return text + docs.map((f) => '\n\n<attached_file name="' + f.name.replace(/"/g, '') + '">\n' + f.text + '\n</attached_file>').join('')
 }
 
+// A step the model asked for that never got an answer (the tab was closed, reloaded or put to sleep
+// while it ran) leaves the saved chat in a state every model refuses, so each send first answers it.
+const NOT_RUN = 'Not run: the page was closed or reloaded before this step finished. Check the files before carrying on.'
+
 const ADAPTERS = {
   anthropic: {
+    mend(messages) {
+      for (let i = 0; i < messages.length; i++) {
+        const m = messages[i]
+        if (m.role !== 'assistant' || !Array.isArray(m.content)) continue
+        const ids = m.content.filter((b) => b.type === 'tool_use').map((b) => b.id)
+        if (!ids.length) continue
+        const next = messages[i + 1]
+        const blocks = next && next.role === 'user' ? (typeof next.content === 'string' ? [{ type: 'text', text: next.content }] : next.content) : null
+        const have = new Set((blocks || []).filter((b) => b.type === 'tool_result').map((b) => b.tool_use_id))
+        const missing = ids.filter((id) => !have.has(id)).map((id) => ({ type: 'tool_result', tool_use_id: id, content: NOT_RUN, is_error: true }))
+        if (!missing.length) continue
+        // Answers come first in the message that follows the calls.
+        if (blocks) messages[i + 1] = { role: 'user', content: blocks.filter((b) => b.type === 'tool_result').concat(missing, blocks.filter((b) => b.type !== 'tool_result')) }
+        else messages.splice(i + 1, 0, { role: 'user', content: missing })
+      }
+    },
     addUser(messages, text, files) {
       const content = files
         .filter((f) => f.kind === 'image')
@@ -1896,6 +1916,13 @@ const ADAPTERS = {
     addResults(messages, results) {
       for (const r of results) messages.push({ type: 'function_call_output', call_id: r.call.id, output: r.isError ? 'ERROR: ' + r.content : r.content })
     },
+    mend(messages) {
+      const answered = new Set(messages.filter((m) => m.type === 'function_call_output').map((m) => m.call_id))
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const m = messages[i]
+        if (m.type === 'function_call' && !answered.has(m.call_id)) messages.splice(i + 1, 0, { type: 'function_call_output', call_id: m.call_id, output: 'ERROR: ' + NOT_RUN })
+      }
+    },
     summaries: true,
     async turn(model, messages, signal, ui, opts) {
       const body = {
@@ -1999,6 +2026,21 @@ const ADAPTERS = {
         role: 'user',
         parts: results.map((r) => ({ functionResponse: Object.assign(r.call.gid ? { id: r.call.gid } : {}, { name: r.call.name, response: r.isError ? { error: r.content } : { output: r.content } }) }))
       })
+    },
+    mend(messages) {
+      for (let i = 0; i < messages.length; i++) {
+        const m = messages[i]
+        if (m.role !== 'model' || !Array.isArray(m.parts)) continue
+        const calls = m.parts.filter((p) => p.functionCall).map((p) => p.functionCall)
+        if (!calls.length) continue
+        const next = messages[i + 1]
+        const parts = next && next.role === 'user' ? next.parts : null
+        const got = (parts || []).filter((p) => p.functionResponse).length
+        if (got >= calls.length) continue
+        const missing = calls.slice(got).map((f) => ({ functionResponse: Object.assign(f.id ? { id: f.id } : {}, { name: f.name, response: { error: NOT_RUN } }) }))
+        if (parts) next.parts = parts.filter((p) => p.functionResponse).concat(missing, parts.filter((p) => !p.functionResponse))
+        else messages.splice(i + 1, 0, { role: 'user', parts: missing })
+      }
     },
     async turn(model, messages, signal, ui, opts) {
       const body = {
@@ -2150,6 +2192,7 @@ async function agent(text, files) {
       c.provider = provider
     }
     const adapter = ADAPTERS[provider]
+    adapter.mend(c.messages)
     if (!recap) recap = await compact(c, controller.signal)
     let note = ''
     if (!c.messages.length && !recap && Object.keys(project.files).length) note = '\n\n(The project already has these files: ' + Object.keys(project.files).sort().join(', ') + '.)'

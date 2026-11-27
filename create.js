@@ -2331,7 +2331,7 @@ async function agent(text, files) {
       pendingMark = null
       save()
       if (controller.signal.aborted) break
-      if (round === MAX_ROUNDS - 1) addItem({ kind: 'notice', text: 'Paused after many steps. Send "keep going" to continue.' })
+      if (round === MAX_ROUNDS - 1) addItem({ kind: 'notice', text: 'Paused after many steps. Send "continue" to keep going.' })
     }
   } catch (e) {
     if (e.name === 'AbortError' || controller.signal.aborted) addItem({ kind: 'notice', text: 'Stopped.' })
@@ -4557,7 +4557,7 @@ if (!(await finishGoogleSignIn())) {
 }
 // Arriving from "Make a game" with an idea already typed: /create?idea=...
 const idea = new URLSearchParams(location.search).get('idea')
-if (idea && !location.hash) $('start-text').value = idea.slice(0, 4000)
+if (idea && !location.hash) $('start-text').value = idea.slice(0, 200000)
 
 // Testing hooks, for checking the game frame and chat without a model.
 window.__mirgCreate = {

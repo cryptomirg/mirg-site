@@ -39,7 +39,7 @@
           } catch (e) {}
         </script>
         <form id="start-form" class="prompt">
-          <textarea id="start-text" rows="3" maxlength="4000" placeholder="A platformer where a fox collects coins and dodges spikes" required></textarea>
+          <textarea id="start-text" rows="3" maxlength="200000" placeholder="A platformer where a fox collects coins and dodges spikes" required></textarea>
           <div class="prompt-row">
             <select id="start-model" aria-label="Model"></select>
             <select id="start-effort" aria-label="Thinking level"></select>
@@ -93,7 +93,7 @@
           <div class="queue" id="queue" hidden></div>
           <form class="composer" id="composer">
             <div class="pending" id="pending" hidden></div>
-            <textarea id="input" rows="2" maxlength="8000" placeholder="Ask for a change: a new feature, a different look, something to fix…"></textarea>
+            <textarea id="input" rows="2" maxlength="200000" placeholder="Ask for a change: a new feature, a different look, something to fix…"></textarea>
             <div class="options">
               <select id="pick-model" aria-label="Model"></select>
               <select id="pick-effort" aria-label="Thinking level"></select>
@@ -277,6 +277,6 @@
 
     <script src="site.js?v=31"></script>
     <script src="apphost.js?v=3"></script>
-    <script type="module" src="create.js?v=39"></script>
+    <script type="module" src="create.js?v=40"></script>
   </body>
 </html>
